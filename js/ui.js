@@ -5,6 +5,8 @@ import { CHAPTERS } from './bank.js';
 export const $ = (s, el = document) => el.querySelector(s);
 export const $$ = (s, el = document) => [...el.querySelectorAll(s)];
 export const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+// עוטף ביטויים מתמטיים בכיווניות שמאל-לימין כדי שלא יתהפכו בטקסט עברי
+export const bm = s => String(s ?? '').replace(/[0-9a-z(][0-9a-z()★#@×÷+−\-=²³ .,/]*[0-9a-z)²³]/g, m => /[★#@×÷+−=]/.test(m) && /\d/.test(m) ? `<span class="ltrm">${m}</span>` : m);
 export const LETTERS = ['א', 'ב', 'ג', 'ד', 'ה'];
 export const today = (d = new Date()) => `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
 export const weekKey = (d = new Date()) => { const x = new Date(d); x.setDate(x.getDate() - x.getDay()); return today(x); };

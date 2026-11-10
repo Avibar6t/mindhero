@@ -4,7 +4,7 @@ import { LS } from './store.js';
 import { CHAPTERS, CH_ORDER, VERBAL, ANALOGY, LOGIC, MATH, ACADEMY } from './bank.js';
 import { generate } from './gen.js';
 import { STYLES, SKINS, ITEMS, POWERS, SLOT_HE, heroSVG, itemName, strongestPowerColor, levelUpOffers, rankOf, xpForLevel } from './hero.js';
-import { $, $$, esc, toast, modal, beep, confetti, sound, prepareQ, isCorrect, answerText, renderQuestion, markResult, today, weekKey, fmtTime, isMobile, bars, LETTERS } from './ui.js';
+import { $, $$, esc, toast, modal, beep, confetti, sound, prepareQ, isCorrect, answerText, renderQuestion, markResult, today, weekKey, fmtTime, isMobile, bars, LETTERS, bm } from './ui.js';
 import { startExam } from './exam.js';
 import { parentScreen } from './parent.js';
 
@@ -399,7 +399,7 @@ function runQuiz(cfg) {
     if (R.hintIdx >= q.hints.length) return;
     let free = false;
     if (R.insight > 0) { R.insight--; free = true; } else R.hintsUsed++;
-    $('#fb').insertAdjacentHTML('beforeend', `<div class="hint">${mentorFace()}<div><b>רמז ${R.hintIdx + 1}${free ? ' (חינם 💡)' : ''}:</b> ${q.hints[R.hintIdx]}</div></div>`);
+    $('#fb').insertAdjacentHTML('beforeend', `<div class="hint">${mentorFace()}<div><b>רמז ${R.hintIdx + 1}${free ? ' (חינם 💡)' : ''}:</b> ${bm(q.hints[R.hintIdx])}</div></div>`);
     R.hintIdx++; beep('click');
     const hb = $('#hint');
     if (R.hintIdx >= q.hints.length) { if (hb) hb.outerHTML = '<button class="btn small" id="reveal">🔓 הסבר מלא</button>'; const rv = $('#reveal'); if (rv) rv.onclick = () => answer(null, true); }
@@ -438,7 +438,7 @@ function runQuiz(cfg) {
     const praise = ['מצוין!', 'בול!', 'יפה מאוד!', 'כל הכבוד!', 'מוח של גיבור!', 'חד כמו תער!'];
     const comfort = ['לא נורא – עכשיו אתה יודע את הטריק.', 'טעות באימון = נקודה במבחן.', 'גם גיבורים טועים. העיקר להבין למה.', 'זו בדיוק המטרה של אימון.'];
     $('#fb').innerHTML = `<div class="feedback ${ok ? 'ok' : 'no'}"><div class="fb-head">${ok ? `✅ ${praise[Math.floor(Math.random() * praise.length)]} <span class="xp">+${xp} XP</span>${R.combo >= R.thr ? ` <span class="combo hot">🔥×${R.combo}</span>` : ''}` : `${revealed ? '🔓' : '❌'} ${revealed ? 'הנה ההסבר:' : comfort[Math.floor(Math.random() * comfort.length)]}`}</div>
-      ${!ok ? `<div class="fb-ans">התשובה הנכונה: <b>${answerText(q)}</b></div>` : ''}<div class="fb-exp">${q.exp}</div>
+      ${!ok ? `<div class="fb-ans">התשובה הנכונה: <b>${answerText(q)}</b></div>` : ''}<div class="fb-exp">${bm(q.exp)}</div>
       <button class="btn primary big" id="next">${R.i < R.qs.length - 1 ? 'לשאלה הבאה ←' : 'סיום המשימה 🏁'}</button></div>`;
     $('#qtools').innerHTML = '';
     $('#next').onclick = () => { if (R.i < R.qs.length - 1) { R.i++; show(); } else finish(); };
@@ -473,7 +473,7 @@ function runQuiz(cfg) {
       <div class="res-hero">${heroSVG(p, { aura: strongestPowerColor(p) })}</div>
       <div class="res-stats"><div><b>${okN}/${R.res.length}</b><small>נכונות</small></div><div><b>+${R.xp}</b><small>XP</small></div><div><b>+${Math.round(R.coins * (1 + pw('telek') * .1))}</b><small>🪙</small></div>${!boss ? `<div><b>${R.maxCombo}</b><small>קומבו שיא</small></div>` : `<div><b>${extra.score}%</b><small>ציון</small></div>`}</div>
       ${boss && extra.empty ? `<p class="warn">השארת ${extra.empty} שאלות ריקות. במבחן – תמיד לנחש! 🎯</p>` : ''}
-      ${boss && review.length ? `<details class="review"><summary>מה היה כדאי לעשות אחרת? (${review.length})</summary>${review.map(x => `<div class="rv"><div class="rv-q">${CHAPTERS[x.q.ch].icon} ${x.q.q}</div><div class="rv-a">✔ ${answerText(x.q)}</div><div class="rv-e">${x.q.exp}</div></div>`).join('')}</details>` : ''}
+      ${boss && review.length ? `<details class="review"><summary>מה היה כדאי לעשות אחרת? (${review.length})</summary>${review.map(x => `<div class="rv"><div class="rv-q">${CHAPTERS[x.q.ch].icon} ${x.q.q}</div><div class="rv-a">✔ ${answerText(x.q)}</div><div class="rv-e">${bm(x.q.exp)}</div></div>`).join('')}</details>` : ''}
       <button class="btn primary big" id="cont">המשך ←</button></div>`);
     if (okN / R.res.length >= 0.8) confetti();
     $('#cont').onclick = () => { if (P().pendingLevels > 0) levelUpFlow(() => cfg.onDone(R.res, extra)); else cfg.onDone(R.res, extra); };

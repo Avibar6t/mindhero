@@ -126,12 +126,12 @@ export function genMath(diff, seed) {
     const op = pick(r, OPS);
     if (kind === 'op') {
       const a = ri(r, 2, 7), b = ri(r, 1, 6); ans = op.f(a, b);
-      q = `נגדיר פעולה חדשה: <b dir="ltr">${op.s}</b><br>חשבו: <b dir="ltr">${a} ★ ${b}</b>`;
+      q = `נגדיר פעולה חדשה (הסימן ★ הומצא לשאלה): <b class="ltr">${op.s}</b><br>חשבו: <b class="ltr">${a} ★ ${b}</b>`;
       h1 = 'הציבו את המספר הראשון במקום a ואת השני במקום b.'; h2 = `${a} ★ ${b} = ${op.w(a, b)}`; exp = `${op.w(a, b)} = ${ans}.`;
     } else {
       const a = ri(r, 1, 5), b = ri(r, 1, 4), c = ri(r, 1, 4); const inner = op.f(b, c); ans = op.f(a, inner);
       if (Math.abs(ans) > 200) return genMath(diff, seed + 3);
-      q = `נגדיר פעולה חדשה: <b dir="ltr">${op.s}</b><br>חשבו: <b dir="ltr">${a} ★ (${b} ★ ${c})</b>`;
+      q = `נגדיר פעולה חדשה (הסימן ★ הומצא לשאלה): <b class="ltr">${op.s}</b><br>חשבו: <b class="ltr">${a} ★ (${b} ★ ${c})</b>`;
       h1 = 'מתחילים תמיד מהסוגריים.'; h2 = `${b} ★ ${c} = ${op.w(b, c)} = ${inner}. עכשיו חשבו ${a} ★ ${inner}.`;
       exp = `בסוגריים: ${b} ★ ${c} = ${inner}. אחר כך ${a} ★ ${inner} = ${op.w(a, inner)} = ${ans}.`;
     }
