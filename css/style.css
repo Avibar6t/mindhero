@@ -394,3 +394,5 @@ input:focus,textarea:focus,select:focus{outline:none;border-color:var(--mind);bo
 .foot{background:#0e1630f2;border-radius:999px;padding:0 10px;bottom:4px}
 @media (max-width:860px){.foot{width:100%;border-radius:0;bottom:0;padding:2px 0 6px;justify-content:center}.dock{bottom:38px}}
 @media (max-width:860px){body:has(.dock)::after{content:"";position:fixed;left:0;right:0;bottom:0;height:120px;background:linear-gradient(transparent,var(--ink) 45%);z-index:29;pointer-events:none}}
+.mission.locked{opacity:.5}.mission.locked .node{border-style:dashed}
+.dock button.locked{opacity:.4}

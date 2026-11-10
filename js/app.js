@@ -1,13 +1,13 @@
 // MindHero – האפליקציה הראשית
-import * as DB from './store.js?v=10';
-import { LS } from './store.js?v=10';
-import { CHAPTERS, CH_ORDER, VERBAL, ANALOGY, LOGIC, MATH, ACADEMY } from './bank.js?v=10';
-import { generate } from './gen.js?v=10';
-import { STYLES, SKINS, ITEMS, POWERS, SLOT_HE, heroSVG, itemName, strongestPowerColor, levelUpOffers, rankOf, xpForLevel } from './hero.js?v=10';
-import { $, $$, esc, toast, modal, beep, confetti, sound, prepareQ, isCorrect, answerText, renderQuestion, markResult, today, weekKey, fmtTime, isMobile, bars, LETTERS, bm } from './ui.js?v=10';
-import { ic, moodFace, lobbyScene } from './icons.js?v=10';
-import { startExam } from './exam.js?v=10';
-import { parentScreen } from './parent.js?v=10';
+import * as DB from './store.js?v=11';
+import { LS } from './store.js?v=11';
+import { CHAPTERS, CH_ORDER, VERBAL, ANALOGY, LOGIC, MATH, ACADEMY } from './bank.js?v=11';
+import { generate } from './gen.js?v=11';
+import { STYLES, SKINS, ITEMS, POWERS, SLOT_HE, heroSVG, itemName, strongestPowerColor, levelUpOffers, rankOf, xpForLevel } from './hero.js?v=11';
+import { $, $$, esc, toast, modal, beep, confetti, sound, prepareQ, isCorrect, answerText, renderQuestion, markResult, today, weekKey, fmtTime, isMobile, bars, LETTERS, bm } from './ui.js?v=11';
+import { ic, moodFace, lobbyScene } from './icons.js?v=11';
+import { startExam } from './exam.js?v=11';
+import { parentScreen } from './parent.js?v=11';
 
 const app = $('#app');
 export const S = { team: null, teamData: null, pid: null, p: null, active: false, lastInput: Date.now(), inQuestion: null, messages: [] };
@@ -343,7 +343,8 @@ async function home() {
       </section>
       <div id="msg-banner"></div>
       <section class="quest"><h3>המסלול של היום <small>${doneN}/${plan.missions.length} הושלמו</small></h3><div class="path">
-        ${plan.missions.map((m, i) => { const done = plan.done[m.id]; const next = !done && plan.missions.slice(0, i).every(x => plan.done[x.id]); return `<button class="mission ${done ? 'done' : ''} ${next ? 'next' : ''}" data-id="${m.id}"><span class="node">${ic(done ? 'check' : m.icon)}</span><span class="m-t"><b>${m.title}</b><small>${m.sub}</small></span>${next ? '<span class="go">התחלה</span>' : `<span class="m-min">${ic('clock')}${m.min}′</span>`}</button>`; }).join('')}
+        ${plan.missions.map((m, i) => { const done = plan.done[m.id]; const next = !done && plan.missions.slice(0, i).every(x => plan.done[x.id]); const lock = !p.diag && m.kind !== 'diag'; const dn = m.kind === 'diag' ? (p.diagState?.res?.length || 0) : 0;
+          return `<button class="mission ${done ? 'done' : ''} ${next ? 'next' : ''} ${lock ? 'locked' : ''}" data-id="${m.id}"><span class="node">${ic(done ? 'check' : lock ? 'lock' : m.icon)}</span><span class="m-t"><b>${m.title}</b><small>${dn ? `עצרת בשאלה ${dn + 1} מתוך 18 – ממשיכים מאותה נקודה` : m.sub}</small></span>${next ? `<span class="go">${dn ? 'המשך' : 'התחלה'}</span>` : `<span class="m-min">${ic('clock')}${m.min}′</span>`}</button>`; }).join('')}
       </div></section>
     </div>
   </main>
@@ -354,9 +355,10 @@ async function home() {
   </nav>`);
   $('#snd').onclick = () => { sound.on = !sound.on; localStorage.setItem('mh_sound', sound.on ? '1' : '0'); home(); };
   $('#wardrobe').onclick = wardrobe; $('#powers').onclick = powersScreen;
-  $$('.mission').forEach(b => b.onclick = () => startMission(plan.missions.find(m => m.id === b.dataset.id)));
+  const lockedMsg = () => mentorPopup(`קודם מסיימים את <b>משימת הגילוי</b>. ${p.diagState?.res?.length ? `נשארו לך ${18 - p.diagState.res.length} שאלות.` : '18 שאלות, אפשר לעצור ולחזור מתי שרוצים.'}<br>ככה אדע בדיוק מה הרמה שלך בכל פרק, ואבנה לך אימון שמתאים רק לך. אחרי זה כל המשחק נפתח.`, [{ t: 'למשימת הגילוי', primary: true, fn: () => startMission(plan.missions.find(m => m.kind === 'diag')) }, { t: 'אחר כך' }]);
+  $$('.mission').forEach(b => b.onclick = () => b.classList.contains('locked') ? lockedMsg() : startMission(plan.missions.find(m => m.id === b.dataset.id)));
   const go = { practice: practicePick, academy: academy, sim: simPick, duel: duelScreen, board: leaderboard, records: recordsScreen };
-  $$('.dock button').forEach(b => b.onclick = () => go[b.dataset.go]());
+  $$('.dock button').forEach(b => { if (!p.diag) b.classList.add('locked'); b.onclick = () => p.diag ? go[b.dataset.go]() : lockedMsg(); });
   $('#switch').onclick = () => { DB.flushSave(); LS.set('mh_session', null); S.p = null; joinTeam(S.team); };
   $('#parentbtn').onclick = () => parentEntry(S.team);
   if (p.pendingLevels > 0) return levelUpFlow(home);
@@ -377,9 +379,12 @@ function startMission(m) {
   const p = P();
   const done = () => { const plan = dailyPlan(); plan.done[m.id] = true; save(); };
   if (m.kind === 'diag') {
-    const qs = buildQs(CH_ORDER.map(ch => ({ ch, n: 3, diffs: [2, 3, 4] }))).sort(() => Math.random() - .5);
-    return runQuiz({ title: 'משימת גילוי', qs, kind: 'diag', onDone: (res) => {
-      CH_ORDER.forEach(ch => { const r = res.filter(x => x.q.ch === ch); const ok = r.filter(x => x.ok).length; p.ch[ch].lvl = 1.5 + ok; });
+    if (!p.diagState) { p.diagState = { qs: buildQs(CH_ORDER.map(ch => ({ ch, n: 3, diffs: [2, 3, 4] }))).sort(() => Math.random() - .5), res: [] }; save(true); }
+    const ds = p.diagState;
+    return runQuiz({ title: 'משימת גילוי', qs: ds.qs.map(q => JSON.parse(JSON.stringify(q))), prior: ds.res, kind: 'diag', onDone: (res) => {
+      const per = {};
+      CH_ORDER.forEach(ch => { const r = res.filter(x => x.q.ch === ch); const ok = r.filter(x => x.ok).length; per[ch] = ok; p.ch[ch].lvl = 1.5 + ok; });
+      p.diagResult = { date: today(), per }; delete p.diagState;
       p.diag = true; done(); p.daily = null; save(true);
       const sorted = CH_ORDER.slice().sort((a, b) => p.ch[b].lvl - p.ch[a].lvl);
       mentorPopup(`סיימת את משימת הגילוי.<br><br><b>החוזקות שלך:</b> <b>${CHAPTERS[sorted[0]].name}</b> ו<b>${CHAPTERS[sorted[1]].name}</b>.<br><b>כדאי לחזק:</b> <b>${CHAPTERS[sorted[5]].name}</b> ו<b>${CHAPTERS[sorted[4]].name}</b>.<br><br>מעכשיו לוח המשימות היומי ייבנה במיוחד בשבילך.`, [{ t: 'מעולה!', primary: true, fn: home }]);
@@ -405,12 +410,13 @@ function bossIntro(after) {
 
 // ================== מנוע השאלות ==================
 function runQuiz(cfg) {
-  const R = { ...cfg, i: 0, res: [], resp: Array(cfg.qs.length).fill(null), combo: 0, maxCombo: 0, xp: 0, coins: 0,
+  const prior = (cfg.prior || []).map(x => ({ q: { ch: x.ch, id: 'prev' }, ok: x.ok }));
+  const R = { ...cfg, i: prior.length, res: prior, resp: Array(cfg.qs.length).fill(null), combo: 0, maxCombo: 0, xp: 0, coins: 0,
     hawk: pw('hawk'), insight: pw('insight'), shield: pw('shield'), thr: 4 - pw('storm'), start: Date.now(), qStart: Date.now(), hintsUsed: 0, elim: {} };
   if (cfg.timed) R.endAt = Date.now() + cfg.timed * 1000;
   const boss = cfg.kind === 'boss';
   let timerInt = null;
-  const quit = () => { clearInterval(timerInt); if (R.res.length && !boss) finish(); else home(); };
+  const quit = () => { clearInterval(timerInt); if (cfg.kind === 'diag') { save(true); toast(`ההתקדמות נשמרה: ${R.res.length}/${R.qs.length}. ממשיכים מאותה נקודה.`); return home(); } if (R.res.length && !boss) finish(); else home(); };
 
   const show = () => {
     const q = R.qs[R.i]; R.qStart = Date.now(); R.hintsUsed = 0; R.hintIdx = 0;
@@ -422,7 +428,7 @@ function runQuiz(cfg) {
       <div class="qcard" id="qcard"></div>
       <div class="qtools" id="qtools"></div>
       <div id="fb"></div></div>`, { active: true });
-    $('#qx').onclick = () => mentorPopup(boss ? 'לצאת מקרב הבוס? ההתקדמות בקרב לא תישמר.' : 'לצאת מהמשימה? מה שכבר פתרת נשמר.', [{ t: 'כן, לצאת', fn: quit }, { t: 'להמשיך', primary: true }]);
+    $('#qx').onclick = () => mentorPopup(boss ? 'לצאת מקרב הבוס? ההתקדמות בקרב לא תישמר.' : cfg.kind === 'diag' ? 'לעצור עכשיו? ההתקדמות נשמרת, ובפעם הבאה ממשיכים מאותה שאלה. כדי לפתוח את שאר המשחק צריך לסיים את משימת הגילוי.' : 'לצאת מהמשימה? מה שכבר פתרת נשמר.', [{ t: 'כן, לצאת', fn: quit }, { t: 'להמשיך', primary: true }]);
     if (cfg.timed) { const tick = () => { const left = (R.endAt - Date.now()) / 1000; const t = $('#timer'); if (t) { t.innerHTML = ic('clock') + fmtTime(left); t.classList.toggle('low', left < 120); } if (left <= 0) { clearInterval(timerInt); finishBoss(); } }; clearInterval(timerInt); tick(); timerInt = setInterval(tick, 500); }
     renderQuestion(q, $('#qcard'), { exam: boss, response: R.resp[R.i], eliminated: R.elim[R.i], onAnswer: (r, final) => boss ? bossAnswer(r) : (final && answer(r)) });
     tools();
@@ -486,6 +492,7 @@ function runQuiz(cfg) {
     }
     xp = Math.round(xp); R.xp += xp; addXP(xp);
     R.res.push({ q, ok, t, r });
+    if (cfg.kind === 'diag' && p.diagState) p.diagState.res = R.res.map(x => ({ ch: x.q.ch, ok: x.ok }));
     beep(ok ? 'ok' : 'bad');
     const praise = ['מצוין', 'בול', 'יפה מאוד', 'כל הכבוד', 'חשיבה חדה', 'בדיוק ככה'];
     const comfort = ['לא נורא – עכשיו אתה יודע את הטריק.', 'טעות באימון היא נקודה שתרוויח במבחן.', 'גם גיבורים טועים. העיקר להבין למה.', 'זו בדיוק המטרה של אימון.'];

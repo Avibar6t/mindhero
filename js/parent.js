@@ -1,9 +1,9 @@
 // MindHero – מסך הורה (תומך בשני הורים)
-import * as DB from './store.js?v=10';
-import { CHAPTERS, CH_ORDER } from './bank.js?v=10';
-import { heroSVG, rankOf } from './hero.js?v=10';
-import { $, $$, esc, toast, today, bars, fmtTime, renderQuestion, isCorrect, markResult, answerText, bm } from './ui.js?v=10';
-import { ic, moodFace } from './icons.js?v=10';
+import * as DB from './store.js?v=11';
+import { CHAPTERS, CH_ORDER } from './bank.js?v=11';
+import { heroSVG, rankOf } from './hero.js?v=11';
+import { $, $$, esc, toast, today, bars, fmtTime, renderQuestion, isCorrect, markResult, answerText, bm } from './ui.js?v=11';
+import { ic, moodFace } from './icons.js?v=11';
 
 const ago = ts => { const m = Math.round((Date.now() - ts) / 60000); return m < 1 ? 'עכשיו' : m < 60 ? `לפני ${m} דק׳` : m < 1440 ? `לפני ${Math.round(m / 60)} שע׳` : `לפני ${Math.round(m / 1440)} ימים`; };
 const HARD = ['stressed', 'quit', 'frustrated'];
@@ -43,7 +43,7 @@ export async function parentScreen(ctx) {
     const lastDay = Object.keys(p.days || {}).filter(k => p.days[k].sec > 30).sort().pop();
     const sims = (p.records?.sims || []).slice(-5);
     const rec = [];
-    if (!p.diag) rec.push(`${esc(p.name)} עוד לא השלים את <b>משימת הגילוי</b>. אחריה המערכת יודעת מאיפה להתחיל איתו.`);
+    if (!p.diag) rec.push(`${esc(p.name)} עוד לא השלים את <b>משימת הגילוי</b>${p.diagState ? ` (${p.diagState.res.length}/18)` : ''}. עד שיסיים, שאר המשחק נעול – כדאי לעודד אותו לסיים.`);
     if (wMin < goal * 3) rec.push(`השבוע ${wMin} דקות אימון. שעה קבועה ביום (למשל אחרי ארוחת הצהריים) עוזרת לבנות הרגל.`);
     else rec.push(`השבוע ${wMin} דקות אימון, ${daysGoal} ימים ביעד. ${daysGoal >= 5 ? 'התמדה מצוינת – שווה לפרגן לו.' : 'כדאי לעודד אותו לשמור על רצף.'}`);
     if (sorted.length >= 2) rec.push(`הפרקים לחיזוק: <b>${CHAPTERS[sorted[0].c].name}</b> ו<b>${CHAPTERS[sorted[1].c].name}</b>. המשימות היומיות כבר מתמקדות בהם.`);
@@ -53,6 +53,8 @@ export async function parentScreen(ctx) {
     el.innerHTML = `${kidTabs()}
       <div class="p-head"><div class="mini-h big">${heroSVG(p)}</div><div><h2>${esc(p.name)}</h2><p>רמה ${p.level} · ${rankOf(p.level)} · רצף ${p.streak || 0} ימים</p><p class="muted">פעילות אחרונה: ${lastDay || 'עדיין אין'}</p></div></div>
       <div class="rec-grid"><div><b>${days[13].v}′</b><small>היום (יעד ${goal}′)</small></div><div><b>${wMin}′</b><small>7 ימים אחרונים</small></div><div><b>${wQ ? Math.round(wOk / wQ * 100) : 0}%</b><small>דיוק השבוע · ${wQ} שאלות</small></div><div><b>${p.records?.bestBoss || 0}%</b><small>שיא בקרב בוס</small></div></div>
+      ${p.diagResult ? `<div class="p-card"><h4>${ic('radar')} תוצאות משימת הגילוי · ${p.diagResult.date}</h4><p class="muted small" style="margin:0 0 8px">3 שאלות מכל פרק, ברמות קושי עולות. נקודת הפתיחה שלפיה נבנה האימון.</p>${CH_ORDER.map(c => `<div class="mast-row" style="--c:${CHAPTERS[c].color}"><span>${ic(c)} ${CHAPTERS[c].name}</span><span class="mastery big"><i style="width:${(p.diagResult.per[c] || 0) / 3 * 100}%"></i></span><b>${p.diagResult.per[c] || 0}/3</b></div>`).join('')}</div>`
+        : p.diagState ? `<div class="p-card"><h4>${ic('radar')} משימת הגילוי בתהליך</h4><p>${esc(p.name)} ענה על ${p.diagState.res.length} מתוך 18 שאלות. שאר המשחק נפתח אחרי שיסיים.</p></div>` : ''}
       <div class="p-card rec"><h4>${ic('bulb')} תובנות והמלצות</h4><ul>${rec.map(r => `<li>${r}</li>`).join('')}</ul></div>
       <div class="p-card"><h4>${ic('clock')} דקות אימון ביום</h4>${bars(days.map(d => ({ l: d.l, v: d.v, c: d.v >= goal ? '#4ade80' : '#3ee6d2' })), { goal, h: 130 })}
         <p class="muted small" style="margin:6px 0 0">הקו הצהוב הוא היעד היומי. ירוק = יום שבו היעד הושלם.</p>
