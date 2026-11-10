@@ -1,18 +1,45 @@
 // MindHero – מסך הורה (תומך בשני הורים)
-import * as DB from './store.js?v=18';
-import { CHAPTERS, CH_ORDER } from './bank.js?v=18';
-import { heroSVG, rankOf } from './hero.js?v=18';
-import { $, $$, esc, toast, modal, today, bars, fmtTime, renderQuestion, isCorrect, markResult, answerText, bm, explainHTML } from './ui.js?v=18';
-import { ic, moodFace } from './icons.js?v=18';
-import { analysisHTML } from './analysis.js?v=18';
+import * as DB from './store.js?v=19';
+import { CHAPTERS, CH_ORDER } from './bank.js?v=19';
+import { heroSVG, rankOf } from './hero.js?v=19';
+import { $, $$, esc, toast, modal, today, bars, fmtTime, renderQuestion, isCorrect, markResult, answerText, bm, explainHTML } from './ui.js?v=19';
+import { ic, moodFace } from './icons.js?v=19';
+import { analysisHTML } from './analysis.js?v=19';
 
 const ago = ts => { const m = Math.round((Date.now() - ts) / 60000); return m < 1 ? 'עכשיו' : m < 60 ? `לפני ${m} דק׳` : m < 1440 ? `לפני ${Math.round(m / 60)} שע׳` : `לפני ${Math.round(m / 1440)} ימים`; };
 const HARD = ['stressed', 'quit', 'frustrated'];
 
 
+
+const ACT = { diag: ['radar', 'משימת גילוי'], practice: ['target', 'אימון'], boss: ['boss', 'קרב בוס'], lab: ['flask', 'מעבדת טעויות'], duel: ['duel', 'דו-קרב'], learn: ['bulb', 'בית ספר לגיבורים'], tactic: ['academy', 'אקדמיה – טקטיקות'], sim: ['exam', 'סימולציה'], breath: ['breath', 'נשימת קופסה'] };
+const mins = sec => sec >= 60 ? `${Math.round(sec / 60)} דק׳` : sec > 0 ? 'פחות מדקה' : '';
+function activityHTML(p, day) {
+  const log = p.log || {}; const days = Array.from({ length: 7 }, (_, i) => { const d = new Date(); d.setDate(d.getDate() - i); return today(d); });
+  const list = (log[day] || []).slice().sort((a, b) => a.t - b.t);
+  const byKind = {}; list.forEach(a => byKind[a.kind] = (byKind[a.kind] || 0) + a.sec);
+  const dayName = d => { const i = days.indexOf(d); return i === 0 ? 'היום' : i === 1 ? 'אתמול' : new Date(d).toLocaleDateString('he-IL', { weekday: 'short', day: 'numeric', month: 'numeric' }); };
+  const ach = a => { const o = [];
+    if (a.kind === 'learn') o.push(a.passed ? `עבר את מבחן השליטה (${a.mastery})` : a.mastery ? `מבחן שליטה ${a.mastery} – עוד לא עבר` : 'באמצע השיעור');
+    if (a.kind === 'tactic') o.push(a.done ? 'השלים את השיעור' : 'קרא ולא סיים');
+    if (a.kind === 'diag') o.push(a.done ? 'סיים את משימת הגילוי' : 'עצר באמצע – ההתקדמות נשמרה');
+    if ((a.kind === 'boss' || a.kind === 'sim') && a.score != null) o.push(`ציון ${a.score}%`);
+    if (a.kind === 'sim' && a.empty) o.push(`${a.empty} שאלות ריקות`);
+    if (a.combo >= 5) o.push(`קומבו ${a.combo}`);
+    if (!a.done && ['practice', 'lab', 'boss', 'duel'].includes(a.kind)) o.push('יצא לפני הסוף');
+    return o; };
+  return `<div class="p-card"><h4>${ic('clock')} מה עשה ${dayName(day)}</h4>
+    <div class="kid-tabs day-tabs">${days.map(d => `<button class="${d === day ? 'on' : ''}" data-day="${d}">${dayName(d)}${log[d]?.length ? ` <small>· ${log[d].length}</small>` : ''}</button>`).join('')}</div>
+    ${list.length ? `<div class="act-sum">${Object.entries(byKind).filter(([, v]) => v >= 30).sort((a, b) => b[1] - a[1]).map(([k, v]) => `<span class="stat">${ic(ACT[k]?.[0] || 'star')}${ACT[k]?.[1] || k} · ${mins(v)}</span>`).join('')}</div>
+      <div class="act-list">${list.map(a => `<div class="act"><span class="act-time">${new Date(a.t).toLocaleTimeString('he-IL', { hour: '2-digit', minute: '2-digit' })}</span><span class="tile">${ic(ACT[a.kind]?.[0] || 'star')}</span>
+        <span class="act-main"><b>${esc(a.kind === 'learn' ? 'שיעור: ' + a.title : a.title || ACT[a.kind]?.[1])}</b><small>${[mins(a.sec), a.q ? `${a.ok}/${a.q} נכונות (${Math.round(a.ok / a.q * 100)}%)` : '', a.xp ? `<span class="ltrm">+${a.xp} XP</span>` : ''].filter(Boolean).join(' · ')}</small>
+        ${ach(a).length ? `<span class="act-ach">${ach(a).map(x => `<i>${esc(x)}</i>`).join('')}</span>` : ''}</span></div>`).join('')}</div>`
+      : `<p class="muted">לא נרשמה פעילות ${dayName(day) === 'היום' ? 'היום עד עכשיו' : 'ביום הזה'}.</p>`}
+    <p class="muted small">נספר רק זמן פעיל (בלי מסך פתוח ללא פעילות). היומן נשמר לשבועיים.</p></div>`;
+}
+
 export async function parentScreen(ctx) {
   const { code, setScreen, back } = ctx;
-  let team = ctx.team, me = ctx.me || DB.parentsOf(ctx.team)[0], tab = 'overview', kid = null;
+  let team = ctx.team, me = ctx.me || DB.parentsOf(ctx.team)[0], tab = 'overview', kid = null, actDay = today();
   let players = [], msgs = [], duels = [];
   const load = async () => { [players, msgs, duels] = await Promise.all([DB.listPlayers(code), DB.listMessages(code), DB.listDuels(code)]); team = await DB.getTeam(code) || team; if (!kid && players[0]) kid = players[0].id; };
   await load();
@@ -55,6 +82,7 @@ export async function parentScreen(ctx) {
     el.innerHTML = `${kidTabs()}
       <div class="p-head"><div class="mini-h big">${heroSVG(p)}</div><div><h2>${esc(p.name)}</h2><p>רמה ${p.level} · ${rankOf(p.level)} · רצף ${p.streak || 0} ימים</p><p class="muted">פעילות אחרונה: ${lastDay || 'עדיין אין'}</p></div></div>
       <div class="rec-grid"><div><b>${days[13].v}′</b><small>היום (יעד ${goal}′)</small></div><div><b>${wMin}′</b><small>7 ימים אחרונים</small></div><div><b>${wQ ? Math.round(wOk / wQ * 100) : 0}%</b><small>דיוק השבוע · ${wQ} שאלות</small></div><div><b>${p.records?.bestBoss || 0}%</b><small>שיא בקרב בוס</small></div></div>
+      ${activityHTML(p, actDay)}
       ${analysisHTML(p, ic)}
       ${p.diagResult ? `<div class="p-card"><h4>${ic('radar')} תוצאות משימת הגילוי · ${p.diagResult.date}</h4><p class="muted small" style="margin:0 0 8px">3 שאלות מכל פרק, ברמות קושי עולות. נקודת הפתיחה שלפיה נבנה האימון.</p>${CH_ORDER.map(c => `<div class="mast-row" style="--c:${CHAPTERS[c].color}"><span>${ic(c)} ${CHAPTERS[c].name}</span><span class="mastery big"><i style="width:${(p.diagResult.per[c] || 0) / 3 * 100}%"></i></span><b>${p.diagResult.per[c] || 0}/3</b></div>`).join('')}</div>`
         : p.diagState ? `<div class="p-card"><h4>${ic('radar')} משימת הגילוי בתהליך</h4><p>${esc(p.name)} ענה על ${p.diagState.res.length} מתוך 18 שאלות. שאר המשחק נפתח אחרי שיסיים.</p></div>` : ''}
@@ -68,6 +96,7 @@ export async function parentScreen(ctx) {
       <div class="p-card"><h4>${ic('mail')} מילה טובה ל${esc(p.name)}</h4><div class="quick">${['גאה בך!', 'ראיתי שהתאמנת היום – כל הכבוד!', 'אתה בדרך הנכונה, תמשיך ככה', 'דו-קרב איתי הערב?'].map(t => `<button class="btn small" data-q="${esc(t)}">${esc(t)}</button>`).join('')}</div>
         <textarea id="enc" placeholder="או כתבו הודעה משלכם"></textarea><button class="btn primary" id="encsend">${ic('send')} שליחה – תופיע לו במסך הבית</button></div>`;
     bindKid(el);
+    $$('[data-day]', el).forEach(b => b.onclick = () => { actDay = b.dataset.day; render(); });
     $$('[data-q]', el).forEach(b => b.onclick = () => $('#enc').value = b.dataset.q);
     $('#encsend').onclick = async () => { const t = $('#enc').value.trim(); if (!t) return toast('כתבו הודעה'); await DB.addMessage(code, { from: me.id, fromName: me.name, to: p.id, kind: 'encourage', text: t }); $('#enc').value = ''; toast('ההודעה נשלחה'); };
   }

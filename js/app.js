@@ -1,14 +1,14 @@
 // MindHero – האפליקציה הראשית
-import * as DB from './store.js?v=18';
-import { LS } from './store.js?v=18';
-import { CHAPTERS, CH_ORDER, VERBAL, ANALOGY, LOGIC, MATH, ACADEMY } from './bank.js?v=18';
-import { generate } from './gen.js?v=18';
-import { STYLES, SKINS, ITEMS, POWERS, SLOT_HE, heroSVG, itemName, strongestPowerColor, levelUpOffers, rankOf, xpForLevel } from './hero.js?v=18';
-import { $, $$, esc, toast, modal, beep, confetti, sound, prepareQ, isCorrect, answerText, renderQuestion, markResult, today, weekKey, fmtTime, isMobile, bars, LETTERS, bm, explainHTML } from './ui.js?v=18';
-import { ic, moodFace, lobbyScene } from './icons.js?v=18';
-import { TOPICS, topicById, grid100 } from './learn.js?v=18';
-import { startExam } from './exam.js?v=18';
-import { parentScreen } from './parent.js?v=18';
+import * as DB from './store.js?v=19';
+import { LS } from './store.js?v=19';
+import { CHAPTERS, CH_ORDER, VERBAL, ANALOGY, LOGIC, MATH, ACADEMY } from './bank.js?v=19';
+import { generate } from './gen.js?v=19';
+import { STYLES, SKINS, ITEMS, POWERS, SLOT_HE, heroSVG, itemName, strongestPowerColor, levelUpOffers, rankOf, xpForLevel } from './hero.js?v=19';
+import { $, $$, esc, toast, modal, beep, confetti, sound, prepareQ, isCorrect, answerText, renderQuestion, markResult, today, weekKey, fmtTime, isMobile, bars, LETTERS, bm, explainHTML } from './ui.js?v=19';
+import { ic, moodFace, lobbyScene } from './icons.js?v=19';
+import { TOPICS, topicById, grid100 } from './learn.js?v=19';
+import { startExam } from './exam.js?v=19';
+import { parentScreen } from './parent.js?v=19';
 
 const app = $('#app');
 export const S = { team: null, teamData: null, pid: null, p: null, active: false, lastInput: Date.now(), inQuestion: null, messages: [] };
@@ -28,8 +28,22 @@ const pw = id => P().powers?.[id] || 0;
 
 function addXP(n) {
   const p = P(); n = Math.round(n);
-  p.xp += n; dayRec().xp += n; const wk = weekKey(); p.weekXp[wk] = (p.weekXp[wk] || 0) + n;
+  p.xp += n; dayRec().xp += n; if (S.act) S.act.xp += n; const wk = weekKey(); p.weekXp[wk] = (p.weekXp[wk] || 0) + n;
   while (p.xp >= xpForLevel(p.level)) { p.xp -= xpForLevel(p.level); p.level++; p.pendingLevels = (p.pendingLevels || 0) + 1; }
+}
+// ----- יומן פעילות להורה -----
+function startAct(kind, title) {
+  if (S.act) endAct();
+  if (!S.p) return; S.act = { kind, title, t: Date.now(), sec: 0, q: 0, ok: 0, xp: 0 };
+}
+function endAct(extra) {
+  const a = S.act; S.act = null; if (!a || !S.p) return;
+  if (extra) Object.assign(a, extra);
+  if (a.sec < 20 && !a.q && !a.done && !extra) return; // פעילות של שניות בודדות לא נרשמת
+  const p = P(); p.log = p.log || {}; const d = today(new Date(a.t));
+  (p.log[d] = p.log[d] || []).push(a); if (p.log[d].length > 40) p.log[d].shift();
+  const keep = Object.keys(p.log).sort().slice(-14); Object.keys(p.log).forEach(k => { if (!keep.includes(k)) delete p.log[k]; });
+  save();
 }
 function addCoins(n) { P().coins += Math.round(n * (1 + pw('telek') * 0.1)); }
 
@@ -48,7 +62,7 @@ let tickN = 0;
 setInterval(() => {
   if (!S.p || !S.active || document.hidden) return;
   if (Date.now() - S.lastInput > 120000) return;
-  const d = dayRec(); d.sec++; tickN++;
+  const d = dayRec(); d.sec++; tickN++; if (S.act) S.act.sec++;
   if (tickN % 20 === 0) save();
   const ring = $('#mini-ring'); if (ring) ring.textContent = Math.floor(d.sec / 60) + '′';
   if (!d.goal && d.sec >= goalMin() * 60) reachGoal();
@@ -127,6 +141,7 @@ function dailyPlan() {
 let keyHandler = null;
 function setScreen(html, { active = false, cls = '' } = {}) {
   if (keyHandler) { document.removeEventListener('keydown', keyHandler); keyHandler = null; }
+  if (!active && S.act && !S.keepAct) endAct();
   S.active = active; S.inQuestion = null;
   app.className = cls; app.innerHTML = html; window.scrollTo(0, 0);
   $('#comms-btn').style.display = S.p ? 'flex' : 'none';
@@ -416,6 +431,7 @@ function bossIntro(after) {
 // ================== מנוע השאלות ==================
 function runQuiz(cfg) {
   const prior = (cfg.prior || []).map(x => ({ q: { ch: x.ch, id: 'prev' }, ok: x.ok }));
+  startAct(cfg.kind === 'diag' ? 'diag' : cfg.kind === 'boss' ? 'boss' : cfg.kind === 'lab' ? 'lab' : cfg.kind === 'duel' ? 'duel' : 'practice', cfg.title);
   const R = { ...cfg, i: prior.length, res: prior, resp: Array(cfg.qs.length).fill(null), combo: 0, maxCombo: 0, xp: 0, coins: 0,
     hawk: pw('hawk'), insight: pw('insight'), shield: pw('shield'), thr: 4 - pw('storm'), start: Date.now(), qStart: Date.now(), hintsUsed: 0, elim: {} };
   if (cfg.timed) R.endAt = Date.now() + cfg.timed * 1000;
@@ -474,7 +490,7 @@ function runQuiz(cfg) {
     const t = (Date.now() - R.qStart) / 1000;
     markResult(q, $('#qcard'), r);
     // סטטיסטיקה
-    const c = p.ch[q.ch]; c.n++; if (ok) c.ok++; c.time += t;
+    const c = p.ch[q.ch]; c.n++; if (ok) c.ok++; c.time += t; if (S.act) { S.act.q++; if (ok) S.act.ok++; }
     const delta = 0.22 * (1 + ((ok ? q.diff - c.lvl : c.lvl - q.diff) || 0) * 0.3);
     if (cfg.kind !== 'diag') c.lvl = Math.max(1, Math.min(5, c.lvl + (ok ? delta : -delta)));
     p.seen[q.id] = { n: (p.seen[q.id]?.n || 0) + 1, lastOk: ok };
@@ -518,7 +534,7 @@ function runQuiz(cfg) {
       const r = R.resp[i]; const ok = isCorrect(q, r); R.res.push({ q, ok, r });
       const c = p.ch[q.ch]; c.n++; if (ok) c.ok++;
       c.lvl = Math.max(1, Math.min(5, c.lvl + (ok ? 0.15 : -0.15)));
-      p.records.totalQ++; if (ok) p.records.totalOk++; const d = dayRec(); d.q++; if (ok) d.ok++;
+      p.records.totalQ++; if (ok) p.records.totalOk++; const d = dayRec(); d.q++; if (ok) d.ok++; if (S.act) { S.act.q++; if (ok) S.act.ok++; }
       if (!ok && !p.mistakes.some(m => m.id === q.id)) { p.mistakes.unshift(q); if (p.mistakes.length > 40) p.mistakes.pop(); }
       if (ok) { const x = 10 + q.diff * 5; R.xp += x; addXP(x); R.coins += 3 + q.diff; }
     });
@@ -531,6 +547,7 @@ function runQuiz(cfg) {
   function finish(extra = {}) {
     clearInterval(timerInt); const p = P();
     const okN = R.res.filter(x => x.ok).length;
+    endAct({ done: true, score: extra.score, combo: R.maxCombo, total: R.res.length, totalOk: okN });
     addCoins(R.coins); p.records.bestCombo = Math.max(p.records.bestCombo, R.maxCombo); save(true);
     S.active = false;
     const review = R.res.filter(x => !x.ok);
@@ -615,6 +632,7 @@ function academy(tab = 'learn') {
   $$('.ch-card[data-i]').forEach(b => b.onclick = () => lesson(ACADEMY[+b.dataset.i], () => academy('tact')));
 }
 function lesson(a, after) {
+  startAct('tactic', a.title);
   S.active = true;
   setScreen(`<header class="topbar"><button class="icon-btn" id="bk" aria-label="חזרה">${ic('back')}</button><b>${a.title}</b><span></span></header>
   <main class="lesson"><div class="mentor-say">${mentorFace()}<div class="bubble">${a.body}</div></div>
@@ -624,7 +642,7 @@ function lesson(a, after) {
     const i = +b.dataset.i; if ($('.lesson-q').classList.contains('locked')) return;
     if (i === a.quiz.ans) {
       $('.lesson-q').classList.add('locked'); b.classList.add('right'); beep('ok');
-      const first = !P().academy[a.id]; P().academy[a.id] = true; if (first) { addXP(30); addCoins(20); } save();
+      const first = !P().academy[a.id]; P().academy[a.id] = true; if (first) { addXP(30); addCoins(20); } save(); if (S.act) S.act.done = true;
       $('#lfb').innerHTML = `<div class="feedback ok"><div class="fb-head">${ic('check')} נכון${first ? `<span class="xp">${ic('xp')}+30</span>` : ''}</div><button class="btn primary big" id="ldone">המשך</button></div>`;
       $('#ldone').onclick = () => P().pendingLevels ? levelUpFlow(after) : after();
     } else { b.classList.add('wrong'); beep('bad'); toast('לא בדיוק. קרא שוב את ההסבר ונסה שוב.'); }
@@ -633,6 +651,7 @@ function lesson(a, after) {
 
 // ---------- בית ספר לגיבורים: שיעורי תוכן ----------
 function lessonPlayer(t, after) {
+  startAct('learn', t.title);
   const p = P(); p.learnStep = p.learnStep || {}; p.learned = p.learned || {};
   const total = t.steps.length + 1;
   const frame = (inner, i) => setScreen(`<header class="topbar"><button class="icon-btn" id="bk" aria-label="חזרה">${ic('back')}</button><b>${ic(t.icon)} ${t.title}</b><span class="muted small">${Math.min(i + 1, total)}/${total}</span></header>
@@ -688,6 +707,7 @@ function lessonPlayer(t, after) {
     };
     const result = () => {
       const pass = ok >= 4;
+      if (S.act) { S.act.mastery = `${ok}/5`; S.act.passed = pass; S.act.done = pass; }
       if (pass) { const first = !p.learned[t.id]; p.learned[t.id] = true; p.learnStep[t.id] = 0; if (first) { addXP(80); addCoins(40); } save(true); confetti(); beep('level'); }
       frame(`<div class="center-screen" style="min-height:auto"><h2>${pass ? `שלטת ב${t.title}!` : `${ok} מתוך 5 – כמעט`}</h2>
         <div class="mentor-say">${mentorFace()}<div class="bubble">${pass ? `מעולה! מעכשיו גם שאלות על <b>${t.title}</b> יופיעו באימונים ובסימולציות – ואתה כבר יודע איך לפתור אותן.${p.learned[t.id] ? ' <b>+80 XP</b>' : ''}` : 'צריך 4 נכונות כדי לסיים. כדאי לעבור שוב על ההסבר, ואז לנסות שוב – זה בדיוק איך לומדים.'}</div></div>
@@ -766,7 +786,8 @@ function comms() {
   };
 }
 function breathing() {
-  const m = modal(`<div class="breath"><div class="b-box"><div class="b-dot"></div></div><div class="b-txt">מתכוננים...</div><div class="b-n"></div></div>`);
+  S.keepAct = true; const prevAct = S.act; S.act = null; startAct('breath', 'נשימת קופסה'); const restore = () => { endAct({ done: true }); S.act = prevAct; S.keepAct = false; };
+  const m = modal(`<div class="breath"><div class="b-box"><div class="b-dot"></div></div><div class="b-txt">מתכוננים...</div><div class="b-n"></div></div>`, { onClose: restore });
   const steps = ['שאיפה', 'החזקה', 'נשיפה', 'החזקה']; let i = 0, cyc = 0;
   const box = $('.b-box', m.el);
   const run = () => {
@@ -797,11 +818,12 @@ function simPick() {
     const qs = CH_ORDER.map(ch => buildQs([{ ch, n, diffs: Array.from({ length: n }, (_, i) => 1 + Math.floor(i * 4.99 / (n - 1 || 1))) }]));
     const mins = (mini ? 30 : 90) + ($('#extra').checked ? (mini ? 5 : 15) : 0);
     S.active = true;
+    startAct('sim', mini ? 'מיני-סימולציה' : 'סימולציה מלאה');
     startExam({ app, qsByCh: qs, minutes: mins, mini, onExit: home, onFinish: (r) => {
       const p = P(); p.records.sims.push({ date: today(), mini, score: r.score, perCh: r.perCh, empty: r.empty });
       CH_ORDER.forEach((ch, i) => { const c = p.ch[ch]; c.n += r.perCh[i].n; c.ok += r.perCh[i].ok; c.lvl = Math.max(1, Math.min(5, c.lvl + (r.perCh[i].ok / r.perCh[i].n - 0.6))); });
       r.wrong.forEach(q => { if (!p.mistakes.some(m => m.id === q.id)) { p.mistakes.unshift(q); } }); p.mistakes = p.mistakes.slice(0, 40);
-      const xp = Math.round(r.ok * 6 + (mini ? 40 : 150)); addXP(xp); addCoins(mini ? 40 : 150); save(true);
+      const xp = Math.round(r.ok * 6 + (mini ? 40 : 150)); addXP(xp); addCoins(mini ? 40 : 150); endAct({ done: true, q: r.n, ok: r.ok, score: r.score, empty: r.empty }); save(true);
       return xp;
     } });
   });

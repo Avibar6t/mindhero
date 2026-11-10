@@ -1,5 +1,5 @@
 // MindHero – בית ספר לגיבורים: שיעורי תוכן מאפס (הסבר → המחשה → ניסיון מודרך → מבחן שליטה)
-import { rng, genSeries } from './gen.js?v=18';
+import { rng, genSeries } from './gen.js?v=19';
 
 const ri = (r, a, b) => a + Math.floor(r() * (b - a + 1));
 const pick = (r, a) => a[Math.floor(r() * a.length)];
