@@ -54,7 +54,7 @@ export const xpForLevel = lvl => Math.round(120 + (lvl - 1) * 60);
 export function itemName(id, style) { const it = ITEMS[id]; return it ? it.name[style] || it.name.comic : id; }
 
 // ---------- ציור ----------
-export { heroSVG } from './heroart.js?v=6';
+export { heroSVG } from './heroart.js?v=7';
 
 export function strongestPowerColor(h) {
   const p = Object.entries(h.powers || {}).sort((a, b) => b[1] - a[1])[0];

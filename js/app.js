@@ -1,12 +1,12 @@
 // MindHero – האפליקציה הראשית
-import * as DB from './store.js?v=6';
-import { LS } from './store.js?v=6';
-import { CHAPTERS, CH_ORDER, VERBAL, ANALOGY, LOGIC, MATH, ACADEMY } from './bank.js?v=6';
-import { generate } from './gen.js?v=6';
-import { STYLES, SKINS, ITEMS, POWERS, SLOT_HE, heroSVG, itemName, strongestPowerColor, levelUpOffers, rankOf, xpForLevel } from './hero.js?v=6';
-import { $, $$, esc, toast, modal, beep, confetti, sound, prepareQ, isCorrect, answerText, renderQuestion, markResult, today, weekKey, fmtTime, isMobile, bars, LETTERS, bm } from './ui.js?v=6';
-import { startExam } from './exam.js?v=6';
-import { parentScreen } from './parent.js?v=6';
+import * as DB from './store.js?v=7';
+import { LS } from './store.js?v=7';
+import { CHAPTERS, CH_ORDER, VERBAL, ANALOGY, LOGIC, MATH, ACADEMY } from './bank.js?v=7';
+import { generate } from './gen.js?v=7';
+import { STYLES, SKINS, ITEMS, POWERS, SLOT_HE, heroSVG, itemName, strongestPowerColor, levelUpOffers, rankOf, xpForLevel } from './hero.js?v=7';
+import { $, $$, esc, toast, modal, beep, confetti, sound, prepareQ, isCorrect, answerText, renderQuestion, markResult, today, weekKey, fmtTime, isMobile, bars, LETTERS, bm } from './ui.js?v=7';
+import { startExam } from './exam.js?v=7';
+import { parentScreen } from './parent.js?v=7';
 
 const app = $('#app');
 export const S = { team: null, teamData: null, pid: null, p: null, active: false, lastInput: Date.now(), inQuestion: null, messages: [] };
@@ -176,7 +176,7 @@ function pinPad(title, onDone, { sub = '', back } = {}) {
   const press = k => {
     if (done) return; beep('click');
     const btn = $(`.pinpad button[data-k="${k}"]`); if (btn) { btn.classList.add('pressed'); setTimeout(() => btn.classList.remove('pressed'), 120); }
-    if (k === '⌫') v = v.slice(0, -1); else if (k === '✓') { if (v.length === 4) { done = true; onDone(v); } } else if (v.length < 4) { v += k; if (v.length === 4) { done = true; setTimeout(() => onDone(v), 150); } }
+    if (k === '⌫') v = v.slice(0, -1); else if (k === '✓') { if (v.length === 4) { done = true; onDone(v); } } else if (v.length < 4) { v += k; if (v.length === 4) { done = true; draw(); onDone(v); return; } }
     draw();
   };
   $$('.pinpad button').forEach(b => b.onclick = () => press(b.dataset.k));
@@ -268,7 +268,37 @@ function onboarding() {
   step1();
 }
 
-const mentorFace = () => `<div class="mentor"><svg viewBox="0 0 60 60"><defs><radialGradient id="mg"><stop offset="0" stop-color="#a5f3fc"/><stop offset="1" stop-color="#0891b2"/></radialGradient></defs><circle cx="30" cy="30" r="27" fill="url(#mg)" opacity=".9"/><circle cx="30" cy="30" r="27" fill="none" stroke="#67e8f9" stroke-width="2"><animate attributeName="r" values="26;28;26" dur="2.5s" repeatCount="indefinite"/></circle><ellipse cx="22" cy="27" rx="4" ry="5" fill="#082f49"/><ellipse cx="38" cy="27" rx="4" ry="5" fill="#082f49"/><path d="M21 39 Q30 45 39 39" stroke="#082f49" stroke-width="3" fill="none" stroke-linecap="round"/></svg></div>`;
+let mfN = 0;
+const mentorFace = () => { const u = 'mf' + (++mfN); return `<div class="mentor"><svg viewBox="0 0 100 100"><defs>
+<radialGradient id="${u}bg" cx=".5" cy=".4" r=".7"><stop offset="0" stop-color="#4c1d95"/><stop offset="1" stop-color="#0f172a"/></radialGradient>
+<radialGradient id="${u}sk" cx=".42" cy=".38" r=".7"><stop offset="0" stop-color="#fde3c8"/><stop offset=".75" stop-color="#f3c9a1"/><stop offset="1" stop-color="#d9a77c"/></radialGradient>
+<linearGradient id="${u}hr" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#b45309"/><stop offset="1" stop-color="#7c2d12"/></linearGradient>
+<linearGradient id="${u}ct" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#ffffff"/><stop offset="1" stop-color="#cbd5e1"/></linearGradient>
+<clipPath id="${u}c"><circle cx="50" cy="50" r="48"/></clipPath></defs>
+<circle cx="50" cy="50" r="48" fill="url(#${u}bg)"/>
+<g clip-path="url(#${u}c)" stroke="#1e1b4b" stroke-width="1.8" stroke-linejoin="round" stroke-linecap="round">
+<path d="M22 46 C18 70 26 86 34 92 L66 92 C74 86 82 70 78 46 Z" fill="url(#${u}hr)"/>
+<path d="M14 104 C14 84 30 76 50 76 C70 76 86 84 86 104 Z" fill="url(#${u}ct)"/>
+<path d="M40 77 L50 92 L60 77 C56 75 44 75 40 77 Z" fill="#7c3aed"/>
+<path d="M40 77 L46 98 M60 77 L54 98" fill="none"/>
+<rect x="44" y="64" width="12" height="13" rx="4" fill="#e7b48b"/>
+<path d="M28 48 C28 30 38 22 50 22 C62 22 72 30 72 48 C72 64 62 74 50 74 C38 74 28 64 28 48 Z" fill="url(#${u}sk)"/>
+<circle cx="50" cy="14" r="9" fill="url(#${u}hr)"/>
+<path d="M27 52 C22 30 34 18 50 19 C66 18 78 30 73 52 C70 40 66 34 60 31 C52 36 40 37 33 34 C30 39 28 45 27 52 Z" fill="url(#${u}hr)"/>
+<path d="M36 26 Q44 21 54 23" stroke="#fdba74" stroke-width="2" fill="none" opacity=".7"/>
+<path d="M35 44 Q40 41 45 43 M55 43 Q60 41 65 44" stroke="#5b2a12" stroke-width="2.2" fill="none"/>
+<ellipse cx="40" cy="51" rx="3" ry="3.6" fill="#1e1b4b" stroke="none"/><ellipse cx="60" cy="51" rx="3" ry="3.6" fill="#1e1b4b" stroke="none"/>
+<circle cx="41" cy="49.6" r="1.1" fill="#fff" stroke="none"/><circle cx="61" cy="49.6" r="1.1" fill="#fff" stroke="none"/>
+<circle cx="40" cy="51" r="8.5" fill="#a5f3fc" fill-opacity=".18" stroke="#d4a017" stroke-width="2"/><circle cx="60" cy="51" r="8.5" fill="#a5f3fc" fill-opacity=".18" stroke="#d4a017" stroke-width="2"/>
+<path d="M48.5 51 Q50 49 51.5 51" stroke="#d4a017" stroke-width="2" fill="none"/>
+<path d="M35 47 l3 -2" stroke="#fff" stroke-width="1.4" opacity=".8"/><path d="M55 47 l3 -2" stroke="#fff" stroke-width="1.4" opacity=".8"/>
+<ellipse cx="33" cy="61" rx="4" ry="2.2" fill="#fb7185" opacity=".35" stroke="none"/><ellipse cx="67" cy="61" rx="4" ry="2.2" fill="#fb7185" opacity=".35" stroke="none"/>
+<path d="M43 63 Q50 68 57 63" stroke="#9f1239" stroke-width="2" fill="none"/>
+<circle cx="29" cy="58" r="1.8" fill="#22d3ee" stroke="none"/>
+</g>
+<g transform="translate(80 22)"><circle r="3" fill="#22d3ee"/><ellipse rx="10" ry="4" fill="none" stroke="#67e8f9" stroke-width="1.4"><animateTransform attributeName="transform" type="rotate" from="0" to="360" dur="6s" repeatCount="indefinite"/></ellipse><ellipse rx="10" ry="4" fill="none" stroke="#c4b5fd" stroke-width="1.4" transform="rotate(60)"/></g>
+<circle cx="50" cy="50" r="48" fill="none" stroke="#67e8f9" stroke-width="2.5"><animate attributeName="stroke-opacity" values="1;.4;1" dur="2.6s" repeatCount="indefinite"/></circle>
+</svg></div>`; };
 function mentorPopup(html, buttons = [{ t: 'יאללה!', primary: true }]) {
   const m = modal(`<div class="mentor-say">${mentorFace()}<div class="bubble">${html}</div></div><div class="row-btns">${buttons.map((b, i) => `<button class="btn ${b.primary ? 'primary' : ''}" data-i="${i}">${b.t}</button>`).join('')}</div>`);
   $$('.row-btns .btn', m.el).forEach(x => x.onclick = () => { m.close(); buttons[+x.dataset.i].fn && buttons[+x.dataset.i].fn(); });

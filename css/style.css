@@ -50,7 +50,7 @@ input:focus,textarea:focus,select:focus{outline:2px solid var(--acc);border-colo
 /* יצירת גיבור */
 .onb{padding:20px 0}
 .mentor-say{display:flex;gap:12px;align-items:flex-start;text-align:right;margin:8px 0}
-.mentor{flex:0 0 56px;width:56px;height:56px;filter:drop-shadow(0 0 10px #22d3ee88)}
+.mentor{flex:0 0 72px;width:72px;height:72px;filter:drop-shadow(0 0 10px #22d3ee88)}
 .mentor svg{width:100%;height:100%}
 .bubble{background:var(--card);border:1px solid #22d3ee55;border-radius:4px 16px 16px 16px;padding:12px 14px;flex:1}
 .style-cards{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:14px;margin-top:14px}
@@ -151,7 +151,7 @@ input:focus,textarea:focus,select:focus{outline:2px solid var(--acc);border-colo
 .drag-tip{color:var(--mut);font-size:.8rem;text-align:center}
 .drag.right .slot{border-color:var(--ok)}.drag.wrong .slot{border-color:var(--no)}
 .qtools{display:flex;gap:8px;justify-content:center;margin:12px 0;flex-wrap:wrap}
-.hint{display:flex;gap:10px;align-items:flex-start;background:#0e749022;border:1px solid #22d3ee55;border-radius:12px;padding:10px;margin:8px 0}.hint .mentor{flex-basis:36px;width:36px;height:36px}
+.hint{display:flex;gap:10px;align-items:flex-start;background:#0e749022;border:1px solid #22d3ee55;border-radius:12px;padding:10px;margin:8px 0}.hint .mentor{flex-basis:44px;width:44px;height:44px}
 .feedback{border-radius:var(--r);padding:14px;margin:10px 0;animation:pop .25s}
 @keyframes pop{from{transform:scale(.96);opacity:0}}
 .feedback.ok{background:#14532d55;border:1px solid var(--ok)}.feedback.no{background:#7f1d1d44;border:1px solid var(--no)}
