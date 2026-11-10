@@ -1,13 +1,13 @@
 // MindHero – האפליקציה הראשית
-import * as DB from './store.js?v=9';
-import { LS } from './store.js?v=9';
-import { CHAPTERS, CH_ORDER, VERBAL, ANALOGY, LOGIC, MATH, ACADEMY } from './bank.js?v=9';
-import { generate } from './gen.js?v=9';
-import { STYLES, SKINS, ITEMS, POWERS, SLOT_HE, heroSVG, itemName, strongestPowerColor, levelUpOffers, rankOf, xpForLevel } from './hero.js?v=9';
-import { $, $$, esc, toast, modal, beep, confetti, sound, prepareQ, isCorrect, answerText, renderQuestion, markResult, today, weekKey, fmtTime, isMobile, bars, LETTERS, bm } from './ui.js?v=9';
-import { ic, moodFace, lobbyScene } from './icons.js?v=9';
-import { startExam } from './exam.js?v=9';
-import { parentScreen } from './parent.js?v=9';
+import * as DB from './store.js?v=10';
+import { LS } from './store.js?v=10';
+import { CHAPTERS, CH_ORDER, VERBAL, ANALOGY, LOGIC, MATH, ACADEMY } from './bank.js?v=10';
+import { generate } from './gen.js?v=10';
+import { STYLES, SKINS, ITEMS, POWERS, SLOT_HE, heroSVG, itemName, strongestPowerColor, levelUpOffers, rankOf, xpForLevel } from './hero.js?v=10';
+import { $, $$, esc, toast, modal, beep, confetti, sound, prepareQ, isCorrect, answerText, renderQuestion, markResult, today, weekKey, fmtTime, isMobile, bars, LETTERS, bm } from './ui.js?v=10';
+import { ic, moodFace, lobbyScene } from './icons.js?v=10';
+import { startExam } from './exam.js?v=10';
+import { parentScreen } from './parent.js?v=10';
 
 const app = $('#app');
 export const S = { team: null, teamData: null, pid: null, p: null, active: false, lastInput: Date.now(), inQuestion: null, messages: [] };

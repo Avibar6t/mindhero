@@ -384,3 +384,13 @@ input:focus,textarea:focus,select:focus{outline:none;border-color:var(--mind);bo
   .ptable th:nth-child(4),.ptable td:nth-child(4),.ptable th:nth-child(6),.ptable td:nth-child(6){display:none}
   .ptable td:first-child{min-width:96px}
 }
+/* קישורי החלפת גיבור / מסך הורה – מתחת לסרגל הניווט */
+.dock{bottom:40px}
+.foot{position:fixed;bottom:6px;left:50%;transform:translateX(-50%);z-index:30;margin:0;gap:14px;white-space:nowrap}
+.foot .btn.link{font-size:.85rem;padding:4px 6px;color:var(--dim)}.foot .btn.link:hover{color:var(--tx)}
+.foot .ic{width:16px;height:16px}
+#app{padding-bottom:150px}
+@media (max-width:860px){.dock{bottom:36px}#comms-btn{bottom:114px}#app{padding-bottom:140px}}
+.foot{background:#0e1630f2;border-radius:999px;padding:0 10px;bottom:4px}
+@media (max-width:860px){.foot{width:100%;border-radius:0;bottom:0;padding:2px 0 6px;justify-content:center}.dock{bottom:38px}}
+@media (max-width:860px){body:has(.dock)::after{content:"";position:fixed;left:0;right:0;bottom:0;height:120px;background:linear-gradient(transparent,var(--ink) 45%);z-index:29;pointer-events:none}}
