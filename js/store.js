@@ -1,5 +1,5 @@
 // MindHero – שמירה וסנכרון (Firebase, עם גיבוי מקומי כשאין רשת)
-import { firebaseConfig } from './firebase-config.js?v=7';
+import { firebaseConfig } from './firebase-config.js?v=9';
 
 const V = '10.12.2';
 let fb = null, db = null, cloud = false;
@@ -107,4 +107,23 @@ export async function listDuels(code) {
 export async function submitDuel(code, id, pid, result) {
   const lt = localTeam(code); if (lt?.duels[id]) { lt.duels[id].results[pid] = result; saveLocalTeam(code, lt); }
   if (cloud) { try { await fb.setDoc(fb.doc(db, 'teams', code, 'duels', id), { results: { [pid]: result } }, { merge: true }); } catch (e) { console.warn(e); } }
+}
+
+// ----- הורים -----
+export const parentsOf = t => t?.parents?.length ? t.parents : [{ id: 'parent', name: t?.parentName || 'אבא', pinHash: t?.parentPinHash }];
+
+// ----- אתגרים פתוחים (קישור לכל אחד, מחוץ לצוות) -----
+export async function createChallenge(ch) {
+  const id = newCode(12); const d = { ...ch, ts: Date.now(), results: {} };
+  LS.set('mh_ch_' + id, d);
+  if (cloud) { try { await fb.setDoc(fb.doc(db, 'challenges', id), JSON.parse(JSON.stringify(d))); } catch (e) { console.warn(e); } }
+  return id;
+}
+export async function getChallenge(id) {
+  if (cloud) { try { const s = await fb.getDoc(fb.doc(db, 'challenges', id)); if (s.exists()) return s.data(); } catch (e) { console.warn(e); } }
+  return LS.get('mh_ch_' + id, null);
+}
+export async function submitChallenge(id, key, result) {
+  const l = LS.get('mh_ch_' + id, null); if (l) { l.results[key] = result; LS.set('mh_ch_' + id, l); }
+  if (cloud) { try { await fb.setDoc(fb.doc(db, 'challenges', id), { results: { [key]: result } }, { merge: true }); } catch (e) { console.warn(e); } }
 }

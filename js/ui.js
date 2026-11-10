@@ -1,6 +1,7 @@
 // MindHero – רכיבי ממשק משותפים והצגת שאלות
-import { cellSVG } from './gen.js?v=7';
-import { CHAPTERS } from './bank.js?v=7';
+import { cellSVG } from './gen.js?v=9';
+import { CHAPTERS } from './bank.js?v=9';
+import { ic } from './icons.js?v=9';
 
 export const $ = (s, el = document) => el.querySelector(s);
 export const $$ = (s, el = document) => [...el.querySelectorAll(s)];
@@ -86,7 +87,7 @@ export function answerText(q) {
 export function renderQuestion(q, el, opts = {}) {
   const ch = CHAPTERS[q.ch];
   const exam = !!opts.exam;
-  let html = exam ? '' : `<div class="qch" style="--c:${ch.color}">${ch.icon} ${ch.name}${q.diff ? ` · <span class="stars">${'★'.repeat(q.diff)}${'☆'.repeat(5 - q.diff)}</span>` : ''}</div>`;
+  let html = exam ? '' : `<div class="qch" style="--c:${ch.color}">${ic(q.ch)}${ch.name}${q.diff ? `<span class="stars" title="רמת קושי ${q.diff} מתוך 5">${[1, 2, 3, 4, 5].map(i => `<i class="${i <= q.diff ? 'on' : ''}"></i>`).join('')}</span>` : ''}</div>`;
   html += `<div class="qtext">${q.q}</div>`;
   if (q.type === 'shape') {
     html += `<div class="matrix">${q.cells.map(c => `<div class="mcell">${cellSVG(c, 72)}</div>`).join('')}<div class="mcell q">${cellSVG(null, 72)}</div></div>`;

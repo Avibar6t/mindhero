@@ -1,6 +1,7 @@
 // MindHero – סימולציית מבחן בממשק שדומה למבחן הממוחשב האמיתי
-import { CHAPTERS, CH_ORDER } from './bank.js?v=7';
-import { $, $$, esc, fmtTime, renderQuestion, isCorrect, answerText, modal, confetti, bars, bm } from './ui.js?v=7';
+import { CHAPTERS, CH_ORDER } from './bank.js?v=9';
+import { $, $$, esc, fmtTime, renderQuestion, isCorrect, answerText, modal, confetti, bars, bm } from './ui.js?v=9';
+import { ic } from './icons.js?v=9';
 
 const INSTR = {
   verbal: 'בפרק זה תופענה שאלות על משמעות של מילים והשלמת משפטים. קראו בעיון את המשפט ואת כל האפשרויות, ובחרו את התשובה המתאימה ביותר.',
@@ -24,7 +25,7 @@ export function startExam({ app, qsByCh, minutes, mini, onExit, onFinish }) {
         <div class="ex-nav"><button class="ex-btn" id="exprev">→ הקודם</button><button class="ex-btn nx" id="exnext">הבא ←</button></div>
         <div class="ex-mid"><label>פרק: <select id="exch">${CH_ORDER.map((c, i) => `<option value="${i}" ${i === E.ch ? 'selected' : ''}>${CHAPTERS[c].name}</option>`).join('')}<option value="6" ${E.ch === 6 ? 'selected' : ''}>סיום המבחן</option></select></label>
           ${E.ch < 6 ? `<span class="ex-ql">שאלות:</span><div class="ex-nums">${qsByCh[E.ch].map((_, i) => `<button class="${i === E.i ? 'cur' : ''} ${E.resp[E.ch][i] != null && E.resp[E.ch][i] !== '' ? 'ans' : ''} ${E.flag[E.ch][i] ? 'flg' : ''}" data-i="${i}">${i + 1}</button>`).join('')}</div>` : ''}
-          ${E.ch < 6 && E.i >= 0 ? `<button class="ex-flag ${E.flag[E.ch][E.i] ? 'on' : ''}" id="exflag" title="סימון לחזרה">🚩</button>` : ''}</div>
+          ${E.ch < 6 && E.i >= 0 ? `<button class="ex-flag ${E.flag[E.ch][E.i] ? 'on' : ''}" id="exflag" title="סימון לחזרה">${ic('flag')} סימון</button>` : ''}</div>
         <button class="ex-quit" id="exquit">יציאה</button>
       </div>
       <div class="ex-body" id="exbody"></div></div>`;
@@ -52,8 +53,8 @@ export function startExam({ app, qsByCh, minutes, mini, onExit, onFinish }) {
   const empties = () => E.resp.map(arr => arr.filter(r => r == null || r === '' || (Array.isArray(r) && r.some(x => !x))).length);
   const summary = b => {
     const em = empties();
-    b.innerHTML = `<div class="ex-intro"><h2>סיום המבחן</h2><table class="ex-sum"><tr><th>פרק</th><th>ללא תשובה</th><th>מסומנות 🚩</th></tr>${CH_ORDER.map((c, i) => `<tr><td><a href="#" data-c="${i}">${CHAPTERS[c].name}</a></td><td class="${em[i] ? 'warnc' : ''}">${em[i]}</td><td>${E.flag[i].filter(Boolean).length}</td></tr>`).join('')}</table>
-      ${em.some(x => x) ? '<p class="warnc">💡 יש שאלות בלי תשובה. אין עונש על ניחוש – כדאי לחזור ולסמן תשובה בכל אחת!</p>' : '<p>ענית על כל השאלות 👏</p>'}
+    b.innerHTML = `<div class="ex-intro"><h2>סיום המבחן</h2><table class="ex-sum"><tr><th>פרק</th><th>ללא תשובה</th><th>מסומנות</th></tr>${CH_ORDER.map((c, i) => `<tr><td><a href="#" data-c="${i}">${CHAPTERS[c].name}</a></td><td class="${em[i] ? 'warnc' : ''}">${em[i]}</td><td>${E.flag[i].filter(Boolean).length}</td></tr>`).join('')}</table>
+      ${em.some(x => x) ? '<p class="warnc">יש שאלות בלי תשובה. אין עונש על ניחוש – כדאי לחזור ולסמן תשובה בכל אחת.</p>' : '<p>ענית על כל השאלות.</p>'}
       <button class="btn gold big" id="exsub">הגשת המבחן</button></div>`;
     $$('a[data-c]', b).forEach(a => a.onclick = e => { e.preventDefault(); const c = +a.dataset.c; const firstEmpty = E.resp[c].findIndex(r => r == null || r === ''); go(c, firstEmpty >= 0 ? firstEmpty : 0); });
     $('#exsub').onclick = () => submit(false);
@@ -68,16 +69,16 @@ export function startExam({ app, qsByCh, minutes, mini, onExit, onFinish }) {
     const xp = onFinish({ score, perCh, ok, n, wrong, empty: em });
     const weakest = CH_ORDER.map((c, i) => [c, perCh[i].ok / perCh[i].n]).sort((a, b) => a[1] - b[1]);
     app.className = '';
-    app.innerHTML = `<header class="topbar"><span></span><b>📝 תוצאות הסימולציה</b><span></span></header><main class="list-screen sim-res">
-      ${timeUp ? '<p class="warn">⏱ הזמן נגמר – המבחן הוגש אוטומטית.</p>' : ''}
+    app.innerHTML = `<header class="topbar"><span></span><b>${ic('exam')} תוצאות הסימולציה</b><span></span></header><main class="list-screen sim-res">
+      ${timeUp ? '<p class="warn">הזמן נגמר, והמבחן הוגש אוטומטית.</p>' : ''}
       <div class="big-score">${score}%</div><p class="center">${ok} תשובות נכונות מתוך ${n} · +${xp} XP</p>
       <h4>לפי פרקים</h4>${bars(CH_ORDER.map((c, i) => ({ l: CHAPTERS[c].name, v: Math.round(perCh[i].ok / perCh[i].n * 100), c: CHAPTERS[c].color })), { max: 100, h: 140 })}
-      <h4>זמן בכל פרק</h4><div class="time-row">${CH_ORDER.map((c, i) => `<span>${CHAPTERS[c].icon} ${fmtTime(E.chTime[i])}</span>`).join('')}</div>
+      <h4>זמן בכל פרק</h4><div class="time-row">${CH_ORDER.map((c, i) => `<span style="--c:${CHAPTERS[c].color}">${ic(c)} ${fmtTime(E.chTime[i])}</span>`).join('')}</div>
       <div class="tips"><b>מה לומדים מהסימולציה:</b><ul>
-        ${em ? `<li>נשארו <b>${em}</b> שאלות ריקות – במבחן האמיתי תמיד מנחשים.</li>` : '<li>✅ לא השארת אף שאלה ריקה – מצוין!</li>'}
+        ${em ? `<li>נשארו <b>${em}</b> שאלות ריקות – במבחן האמיתי תמיד מנחשים.</li>` : '<li>לא השארת אף שאלה ריקה – מצוין.</li>'}
         <li>כדאי לחזק: <b>${CHAPTERS[weakest[0][0]].name}</b> ו<b>${CHAPTERS[weakest[1][0]].name}</b>. השאלות שטעית בהן נכנסו למעבדת הטעויות.</li>
-        ${E.chTime.some(t => t > minutes * 60 / 6 * 1.4) ? '<li>⏱ בחלק מהפרקים בילית הרבה יותר מ-15 דקות. זכור: תקוע? מסמנים 🚩, מנחשים, ממשיכים.</li>' : ''}</ul></div>
-      <details class="review"><summary>מעבר על הטעויות (${wrong.length})</summary>${wrong.slice(0, 40).map(q => `<div class="rv"><div class="rv-q">${CHAPTERS[q.ch].icon} ${q.q}</div><div class="rv-a">✔ ${answerText(q)}</div><div class="rv-e">${bm(q.exp)}</div></div>`).join('')}</details>
+        ${E.chTime.some(t => t > minutes * 60 / 6 * 1.4) ? '<li>בחלק מהפרקים בילית הרבה יותר מ-15 דקות. תקוע? מסמנים, מנחשים וממשיכים.</li>' : ''}</ul></div>
+      <details class="review"><summary>מעבר על הטעויות (${wrong.length})</summary>${wrong.slice(0, 40).map(q => `<div class="rv"><div class="rv-q">${q.q}</div><div class="rv-a">✔ ${answerText(q)}</div><div class="rv-e">${bm(q.exp)}</div></div>`).join('')}</details>
       <button class="btn primary big" id="exback">חזרה לבסיס</button></main>`;
     if (score >= 70) confetti();
     $('#exback').onclick = onExit;

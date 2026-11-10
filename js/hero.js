@@ -17,13 +17,13 @@ export const ITEMS = {
   // גב
   cape:     { slot: 'back', tier: 1, name: { pixel: 'גלימת צמר', comic: 'גלימת גיבור', tactical: 'שכמיית הסוואה' }, desc: 'מתנופפת ברוח' },
   jetpack:  { slot: 'back', tier: 2, name: { pixel: 'תרמיל רקטות', comic: 'תרמיל סילון', tactical: 'מנוע סילון' }, desc: 'מעוף מהיר' },
-  wings:    { slot: 'back', tier: 3, name: { pixel: 'כנפי אליטרה', comic: 'כנפי אור', tactical: 'כנפי פלזמה' }, desc: 'שליטה בשמיים' },
+  wings:    { slot: 'back', tier: 3, name: { pixel: 'כנפי סערה', comic: 'כנפי אור', tactical: 'כנפי פלזמה' }, desc: 'שליטה בשמיים' },
   // נשק
-  sword:    { slot: 'weapon', tier: 1, name: { pixel: 'חרב יהלום', comic: 'חרב אנרגיה', tactical: 'להב פלזמה' }, desc: 'חותך כל בעיה' },
+  sword:    { slot: 'weapon', tier: 1, name: { pixel: 'חרב פלדה', comic: 'חרב אנרגיה', tactical: 'להב פלזמה' }, desc: 'חותך כל בעיה' },
   shield:   { slot: 'weapon2', tier: 1, name: { pixel: 'מגן עץ', comic: 'מגן כוכב', tactical: 'מגן אנרגיה' }, desc: 'הגנה מפני מלכודות' },
   staff:    { slot: 'weapon', tier: 2, name: { pixel: 'מטה קסמים', comic: 'מטה תודעה', tactical: 'מוט פריקה' }, desc: 'מרכז אנרגיה מנטלית' },
   blaster:  { slot: 'weapon', tier: 2, name: { pixel: 'קשת', comic: 'רובה פוטונים', tactical: 'רובה לייזר' }, desc: 'מכה מרחוק' },
-  hammer:   { slot: 'weapon', tier: 3, name: { pixel: 'פטיש נת׳רייט', comic: 'פטיש הרעם', tactical: 'פטיש כבידה' }, desc: 'עוצמה אדירה' },
+  hammer:   { slot: 'weapon', tier: 3, name: { pixel: 'פטיש אבן-ברק', comic: 'פטיש הרעם', tactical: 'פטיש כבידה' }, desc: 'עוצמה אדירה' },
   // סמל
   bolt:     { slot: 'emblem', tier: 1, name: { pixel: 'סמל ברק', comic: 'סמל ברק', tactical: 'סמל ברק' }, desc: 'מהירות מחשבה' },
   star:     { slot: 'emblem', tier: 1, name: { pixel: 'סמל כוכב', comic: 'סמל כוכב', tactical: 'סמל כוכב' }, desc: 'אור מוביל' },
@@ -32,7 +32,7 @@ export const ITEMS = {
   // שריון
   silver:   { slot: 'suit', tier: 2, name: { pixel: 'שריון ברזל', comic: 'חליפת כסף', tactical: 'שריון קרמי' }, desc: 'שדרוג לחליפה' },
   gold:     { slot: 'suit', tier: 3, name: { pixel: 'שריון זהב', comic: 'חליפת זהב', tactical: 'שריון נאנו-זהב' }, desc: 'שדרוג מלכותי' },
-  cosmic:   { slot: 'suit', tier: 4, name: { pixel: 'שריון נת׳רייט', comic: 'חליפה קוסמית', tactical: 'שריון קוונטי' }, desc: 'השדרוג האגדי' },
+  cosmic:   { slot: 'suit', tier: 4, name: { pixel: 'שריון אובסידיאן', comic: 'חליפה קוסמית', tactical: 'שריון קוונטי' }, desc: 'השדרוג האגדי' },
 };
 export const SLOT_HE = { head: 'ראש', back: 'גב', weapon: 'נשק', weapon2: 'יד שנייה', emblem: 'סמל', suit: 'חליפה' };
 
@@ -54,7 +54,7 @@ export const xpForLevel = lvl => Math.round(120 + (lvl - 1) * 60);
 export function itemName(id, style) { const it = ITEMS[id]; return it ? it.name[style] || it.name.comic : id; }
 
 // ---------- ציור ----------
-export { heroSVG } from './heroart.js?v=7';
+export { heroSVG } from './heroart.js?v=9';
 
 export function strongestPowerColor(h) {
   const p = Object.entries(h.powers || {}).sort((a, b) => b[1] - a[1])[0];
