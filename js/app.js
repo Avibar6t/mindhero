@@ -1,14 +1,14 @@
 // MindHero – האפליקציה הראשית
-import * as DB from './store.js?v=13';
-import { LS } from './store.js?v=13';
-import { CHAPTERS, CH_ORDER, VERBAL, ANALOGY, LOGIC, MATH, ACADEMY } from './bank.js?v=13';
-import { generate } from './gen.js?v=13';
-import { STYLES, SKINS, ITEMS, POWERS, SLOT_HE, heroSVG, itemName, strongestPowerColor, levelUpOffers, rankOf, xpForLevel } from './hero.js?v=13';
-import { $, $$, esc, toast, modal, beep, confetti, sound, prepareQ, isCorrect, answerText, renderQuestion, markResult, today, weekKey, fmtTime, isMobile, bars, LETTERS, bm } from './ui.js?v=13';
-import { ic, moodFace, lobbyScene } from './icons.js?v=13';
-import { TOPICS, topicById, grid100 } from './learn.js?v=13';
-import { startExam } from './exam.js?v=13';
-import { parentScreen } from './parent.js?v=13';
+import * as DB from './store.js?v=16';
+import { LS } from './store.js?v=16';
+import { CHAPTERS, CH_ORDER, VERBAL, ANALOGY, LOGIC, MATH, ACADEMY } from './bank.js?v=16';
+import { generate } from './gen.js?v=16';
+import { STYLES, SKINS, ITEMS, POWERS, SLOT_HE, heroSVG, itemName, strongestPowerColor, levelUpOffers, rankOf, xpForLevel } from './hero.js?v=16';
+import { $, $$, esc, toast, modal, beep, confetti, sound, prepareQ, isCorrect, answerText, renderQuestion, markResult, today, weekKey, fmtTime, isMobile, bars, LETTERS, bm } from './ui.js?v=16';
+import { ic, moodFace, lobbyScene } from './icons.js?v=16';
+import { TOPICS, topicById, grid100 } from './learn.js?v=16';
+import { startExam } from './exam.js?v=16';
+import { parentScreen } from './parent.js?v=16';
 
 const app = $('#app');
 export const S = { team: null, teamData: null, pid: null, p: null, active: false, lastInput: Date.now(), inQuestion: null, messages: [] };
@@ -935,7 +935,7 @@ function parentEntry(code) {
     const h = await DB.sha(pin); const me = DB.parentsOf(team).find(x => x.pinHash === h);
     if (!me) { toast('קוד ההורה לא נכון'); return parentEntry(code); }
     S.team = code; S.teamData = team;
-    parentScreen({ app, code, team, me, setScreen, back: () => S.p ? home() : startScreen(), mixed: n => mixedFor(n), pickOne });
+    parentScreen({ app, code, team, me, setScreen, back: () => S.p ? home() : startScreen(), mixed: n => mixedFor(n), pickOne, onDelete: pid => { if (S.pid === pid) { S.p = null; S.pid = null; LS.set('mh_session', null); } } });
   }, { sub: 'הקלידו את קוד ההורה שלכם', back: () => S.p ? home() : startScreen() });
 }
 function mixedFor(n) { const out = [], avoid = new Set(); for (let i = 0; i < n; i++) out.push(pickOne(CH_ORDER[i % 6], 3, avoid)); return out.sort(() => Math.random() - .5); }

@@ -407,3 +407,6 @@ input:focus,textarea:focus,select:focus{outline:none;border-color:var(--mind);bo
 .slider-row{display:flex;align-items:center;gap:12px;width:100%;max-width:320px}.slider-row input{flex:1;padding:0;accent-color:var(--mind)}.slider-row b{font:700 1.4rem var(--fd);color:var(--mind);min-width:64px;text-align:center}
 .qtext .viz{display:block;margin:10px auto}
 .ptabs .muted{font-size:.8rem}
+.p-card.ask{border-color:#0f9f91;background:linear-gradient(180deg,#0f2f3a,var(--deep))}
+.pmsg .btn.link{margin-top:6px;display:inline-flex;align-items:center;gap:6px}
+.btn.danger{background:#7f1d1d;border-color:#b91c1c;color:#fff}.btn.danger:hover{background:#991b1b}

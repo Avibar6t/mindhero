@@ -1,13 +1,14 @@
 // MindHero – מסך הורה (תומך בשני הורים)
-import * as DB from './store.js?v=13';
-import { CHAPTERS, CH_ORDER } from './bank.js?v=13';
-import { heroSVG, rankOf } from './hero.js?v=13';
-import { $, $$, esc, toast, today, bars, fmtTime, renderQuestion, isCorrect, markResult, answerText, bm } from './ui.js?v=13';
-import { ic, moodFace } from './icons.js?v=13';
-import { analysisHTML } from './analysis.js?v=13';
+import * as DB from './store.js?v=16';
+import { CHAPTERS, CH_ORDER } from './bank.js?v=16';
+import { heroSVG, rankOf } from './hero.js?v=16';
+import { $, $$, esc, toast, modal, today, bars, fmtTime, renderQuestion, isCorrect, markResult, answerText, bm } from './ui.js?v=16';
+import { ic, moodFace } from './icons.js?v=16';
+import { analysisHTML } from './analysis.js?v=16';
 
 const ago = ts => { const m = Math.round((Date.now() - ts) / 60000); return m < 1 ? 'עכשיו' : m < 60 ? `לפני ${m} דק׳` : m < 1440 ? `לפני ${Math.round(m / 60)} שע׳` : `לפני ${Math.round(m / 1440)} ימים`; };
 const HARD = ['stressed', 'quit', 'frustrated'];
+
 
 export async function parentScreen(ctx) {
   const { code, setScreen, back } = ctx;
@@ -67,7 +68,7 @@ export async function parentScreen(ctx) {
       <div class="p-card"><h4>${ic('mail')} מילה טובה ל${esc(p.name)}</h4><div class="quick">${['גאה בך!', 'ראיתי שהתאמנת היום – כל הכבוד!', 'אתה בדרך הנכונה, תמשיך ככה', 'דו-קרב איתי הערב?'].map(t => `<button class="btn small" data-q="${esc(t)}">${esc(t)}</button>`).join('')}</div>
         <textarea id="enc" placeholder="או כתבו הודעה משלכם"></textarea><button class="btn primary" id="encsend">${ic('send')} שליחה – תופיע לו במסך הבית</button></div>`;
     bindKid(el);
-    $$('.quick button', el).forEach(b => b.onclick = () => $('#enc').value = b.dataset.q);
+    $$('[data-q]', el).forEach(b => b.onclick = () => $('#enc').value = b.dataset.q);
     $('#encsend').onclick = async () => { const t = $('#enc').value.trim(); if (!t) return toast('כתבו הודעה'); await DB.addMessage(code, { from: me.id, fromName: me.name, to: p.id, kind: 'encourage', text: t }); $('#enc').value = ''; toast('ההודעה נשלחה'); };
   }
 
@@ -118,10 +119,17 @@ export async function parentScreen(ctx) {
         ${parents().map(x => `<div class="parent-row"><input value="${esc(x.name)}" data-pid="${x.id}" class="pname" maxlength="14"/>${x.id === me.id ? '<span class="muted small">(אתם)</span>' : ''}</div>`).join('')}
         ${parents().length < 2 ? `<h4 style="margin-top:14px">הוספת הורה שני</h4><div class="parent-row"><input id="np-name" placeholder="שם (למשל אמא)" maxlength="14"/><input id="np-pin" inputmode="numeric" maxlength="4" placeholder="קוד – 4 ספרות" dir="ltr"/><button class="btn small primary" id="np-add">הוספה</button></div>` : ''}
         <p class="muted small">לכל הורה קוד משלו. שניכם רואים את אותן הודעות, ותשובות מופיעות עם השם של מי שענה.</p></div>
+      <div class="p-card"><h4>${ic('users')} גיבורים בצוות</h4>${players.length ? players.map(x => `<div class="duel-row"><span class="mini-h">${heroSVG(x)}</span><span style="flex:1"><b>${esc(x.name)}</b> <small class="muted">רמה ${x.level}</small></span><button class="btn small" data-del="${x.id}">מחיקה</button></div>`).join('') : '<p class="muted">אין גיבורים.</p>'}<p class="muted small">מחיקה היא סופית: הגיבור, הציוד וכל ההתקדמות שלו יימחקו.</p></div>
       <div class="p-card"><h4>${ic('clock')} תאריך המבחן</h4><input type="date" id="exd" value="${team.examDate || ''}"/><p class="muted small">כשיפורסם התאריך – עדכנו כאן, ותופיע לילד ספירה לאחור.</p></div>
       <div class="p-card"><h4>${ic('target')} יעד אימון יומי</h4><select id="goal">${[30, 45, 60, 75, 90].map(m => `<option value="${m}" ${(team.goalMin || 60) === m ? 'selected' : ''}>${m} דקות</option>`).join('')}</select><p class="muted small">רצף הימים נספר בימים שבהם היעד הושלם. נספר רק זמן פעיל – לא מסך פתוח בלי פעילות.</p></div>
       <button class="btn primary big" id="psave">שמירת הגדרות</button>
       <div class="p-card"><h4>${ic('lock')} החלפת קוד ההורה שלי</h4><div class="parent-row"><input id="npin" inputmode="numeric" maxlength="4" placeholder="קוד חדש – 4 ספרות" dir="ltr"/><button class="btn small" id="npinb">עדכון</button></div></div>`;
+    $$('[data-del]', el).forEach(b => b.onclick = () => {
+      const pl = players.find(x => x.id === b.dataset.del);
+      const m = modal(`<h3>למחוק את ${esc(pl.name)}?</h3><p>הגיבור, הציוד וכל ההתקדמות שלו יימחקו לצמיתות. אי אפשר לבטל את זה.</p><div class="row-btns"><button class="btn" id="dno">ביטול</button><button class="btn danger" id="dyes">מחיקה סופית</button></div>`);
+      $('#dno', m.el).onclick = m.close;
+      $('#dyes', m.el).onclick = async () => { await DB.deletePlayer(code, pl.id); ctx.onDelete?.(pl.id); m.close(); toast(`${pl.name} נמחק`); if (kid === pl.id) kid = null; await load(); tab = 'settings'; render(); };
+    });
     const saveParents = async list => { await DB.updateTeam(code, { parents: list }); team.parents = list; };
     $('#cp').onclick = () => { navigator.clipboard?.writeText(link); toast('הקישור הועתק'); };
     $('#psave').onclick = async () => {
