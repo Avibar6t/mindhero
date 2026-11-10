@@ -1,7 +1,7 @@
 // MindHero – סימולציית מבחן בממשק שדומה למבחן הממוחשב האמיתי
-import { CHAPTERS, CH_ORDER } from './bank.js?v=16';
-import { $, $$, esc, fmtTime, renderQuestion, isCorrect, answerText, modal, confetti, bars, bm } from './ui.js?v=16';
-import { ic } from './icons.js?v=16';
+import { CHAPTERS, CH_ORDER } from './bank.js?v=18';
+import { $, $$, esc, fmtTime, renderQuestion, isCorrect, answerText, modal, confetti, bars, bm, explainHTML } from './ui.js?v=18';
+import { ic } from './icons.js?v=18';
 
 const INSTR = {
   verbal: 'בפרק זה תופענה שאלות על משמעות של מילים והשלמת משפטים. קראו בעיון את המשפט ואת כל האפשרויות, ובחרו את התשובה המתאימה ביותר.',
@@ -78,7 +78,7 @@ export function startExam({ app, qsByCh, minutes, mini, onExit, onFinish }) {
         ${em ? `<li>נשארו <b>${em}</b> שאלות ריקות – במבחן האמיתי תמיד מנחשים.</li>` : '<li>לא השארת אף שאלה ריקה – מצוין.</li>'}
         <li>כדאי לחזק: <b>${CHAPTERS[weakest[0][0]].name}</b> ו<b>${CHAPTERS[weakest[1][0]].name}</b>. השאלות שטעית בהן נכנסו למעבדת הטעויות.</li>
         ${E.chTime.some(t => t > minutes * 60 / 6 * 1.4) ? '<li>בחלק מהפרקים בילית הרבה יותר מ-15 דקות. תקוע? מסמנים, מנחשים וממשיכים.</li>' : ''}</ul></div>
-      <details class="review"><summary>מעבר על הטעויות (${wrong.length})</summary>${wrong.slice(0, 40).map(q => `<div class="rv"><div class="rv-q">${q.q}</div><div class="rv-a">✔ ${answerText(q)}</div><div class="rv-e">${bm(q.exp)}</div></div>`).join('')}</details>
+      <details class="review"><summary>מעבר על הטעויות (${wrong.length})</summary>${wrong.slice(0, 40).map(q => `<div class="rv"><div class="rv-q">${q.q}</div><div class="rv-a">✔ ${answerText(q)}</div><div class="rv-e">${explainHTML(q)}</div></div>`).join('')}</details>
       <button class="btn primary big" id="exback">חזרה לבסיס</button></main>`;
     if (score >= 70) confetti();
     $('#exback').onclick = onExit;

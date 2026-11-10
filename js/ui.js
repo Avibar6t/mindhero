@@ -1,13 +1,38 @@
 // MindHero – רכיבי ממשק משותפים והצגת שאלות
-import { cellSVG } from './gen.js?v=16';
-import { CHAPTERS } from './bank.js?v=16';
-import { ic } from './icons.js?v=16';
+import { cellSVG } from './gen.js?v=18';
+import { CHAPTERS } from './bank.js?v=18';
+import { ic } from './icons.js?v=18';
 
 export const $ = (s, el = document) => el.querySelector(s);
 export const $$ = (s, el = document) => [...el.querySelectorAll(s)];
 export const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
 // עוטף ביטויים מתמטיים בכיווניות שמאל-לימין כדי שלא יתהפכו בטקסט עברי
 export const bm = s => String(s ?? '').replace(/[0-9a-z(][0-9a-z()★#@×÷+−\-=²³ .,/]*[0-9a-z)²³]/g, m => /[★#@×÷+−=]/.test(m) && /\d/.test(m) ? `<span class="ltrm">${m}</span>` : m);
+
+// הסבר מלא בסגנון מורה: הכלל → צעד אחר צעד → טיפ לפעם הבאה
+const CH_TIP = {
+  verbal: 'בשאלות משמעות: נסו להחליף את המילה במילה נרדפת, ולבדוק באיזה משפט ההחלפה עובדת. בשאלות השלמה: חפשו מילות קישור (למרות, לכן, אבל) – הן מגלות את הכיוון.',
+  analogy: 'באנלוגיות: מנסחים משפט שמחבר את שתי המילים ("X הוא כלי של Y"), ואז בודקים אותו על כל זוג. אם כמה מתאימים – מחדדים את המשפט, ושמים לב לכיוון.',
+  logic: 'בהיגיון: לא מחזיקים הכל בראש – מציירים טבלה, חצים או עיגולים. ובשאלות "בהכרח" – מחפשים רק מה שנכון תמיד.',
+  math: 'בחשבון: כותבים כל שלב על הטיוטה, ובסוף מציבים את התשובה בחזרה בשאלה כדי לבדוק.',
+  series: 'בסדרות: קודם הפרשים, אחר כך הפרש שגדל, אחר כך כפל, ואם המספרים קופצים – שתי סדרות משולבות.',
+  shapes: 'בצורות: תכונה אחת בכל פעם – צורה, צבע, כמות, סיבוב, מילוי – לאורך שורה ולאורך עמודה.',
+};
+export const TOPIC_NAME = { percent: 'אחוזים', avg: 'ממוצע', speed: 'מהירות, דרך וזמן', fractions: 'שברים', series: 'סדרות' };
+export function explainHTML(q) {
+  const parts = [];
+  if (q.rule) parts.push(`<div class="ex-rule"><b>הכלל:</b> ${bm(q.rule)}</div>`);
+  if (q.steps?.length) parts.push(`<div class="ex-h">פתרון צעד אחר צעד</div><ol class="ex-steps">${q.steps.map(s => `<li>${bm(s)}</li>`).join('')}</ol>`);
+  else {
+    const sent = String(q.exp || '').split(/(?<=[.!?])\s+(?=\S)/).filter(x => x.trim());
+    if (sent.length >= 2 && ['math', 'logic', 'series'].includes(q.ch)) parts.push(`<div class="ex-h">פתרון צעד אחר צעד</div><ol class="ex-steps">${sent.map(x => `<li>${bm(x)}</li>`).join('')}</ol>`);
+    else parts.push(`<div class="ex-h">ההסבר</div><div class="ex-body">${bm(q.exp)}</div>`);
+  }
+  parts.push(`<div class="ex-tip"><b>בפעם הבאה:</b> ${bm(q.tip || CH_TIP[q.ch] || '')}</div>`);
+  if (q.topic && TOPIC_NAME[q.topic]) parts.push(`<div class="ex-learn">רוצה להבין את זה לעומק? באקדמיה יש שיעור מאפס על <b>${TOPIC_NAME[q.topic]}</b>.</div>`);
+  return `<div class="explain">${parts.join('')}</div>`;
+}
+
 export const LETTERS = ['א', 'ב', 'ג', 'ד', 'ה'];
 export const today = (d = new Date()) => `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
 export const weekKey = (d = new Date()) => { const x = new Date(d); x.setDate(x.getDate() - x.getDay()); return today(x); };

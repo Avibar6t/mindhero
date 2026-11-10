@@ -49,6 +49,9 @@ export function genSeries(diff, seed) {
       opts, ans: 0,
       hints: ['חשבו על המקום של כל אות באלף-בית: א=1, ב=2, ג=3...', kind === 'letters' ? `בין כל שתי אותיות צמודות מדלגים על ${step - 1} ${step - 1 === 1 ? 'אות' : 'אותיות'}.` : 'הדילוג גדל בכל פעם באחד.'],
       exp: kind === 'letters' ? `כל אות מתקדמת ${step} מקומות באלף-בית, ולכן אחרי ${shown[4]} מגיעה ${ans}.` : `הקפיצות גדלות: 1, 2, 3, 4, 5 מקומות. אחרי ${shown[4]} קופצים 5 מקומות ומגיעים ל-${ans}.`,
+      topic: 'series', rule: kind === 'letters' ? `כל אות מתקדמת ${step} מקומות באלף-בית.` : 'הקפיצה בין האותיות גדלה בכל פעם באחת.',
+      steps: [`הופכים כל אות למספר לפי המקום שלה באלף-בית: ${shown.map((l, i) => `${l}=${idx[i] + 1}`).join(', ')}.`, `ההפרשים בין המספרים: ${idx.slice(1, 5).map((x, i) => '+' + (x - idx[i])).join(', ')}.`, kind === 'letters' ? `ממשיכים באותו הפרש: ${idx[4] + 1} + ${step} = ${idx[5] + 1}.` : `ההפרש הבא גדל ב-1: ${idx[4] + 1} + ${idx[5] - idx[4]} = ${idx[5] + 1}.`, `האות במקום ה-${idx[5] + 1} היא ${ans}.`],
+      tip: 'בסדרות אותיות – תמיד להפוך למספרים. כדאי לכתוב את האלף-בית עם מספרים על דף הטיוטה.',
     };
   }
   const t = [];
@@ -100,9 +103,24 @@ export function genSeries(diff, seed) {
   if (diff >= 4 && r() < 0.35 && !['interleave', 'interMix'].includes(kind)) missing = ri(r, 2, t.length - 2);
   ans = t[missing];
   const shown = t.map((x, i) => i === missing ? '?' : x);
+  const m = missing, pv = t[m - 1], f = x => x < 0 ? `(${x})` : x;
+  const calc = (kind === 'arith' || kind === 'arithDown') ? `${pv} ${ans >= pv ? '+' : '−'} ${Math.abs(ans - pv)} = ${ans}`
+    : (kind === 'geo2' || kind === 'geo3') ? `${pv} × ${kind === 'geo2' ? 2 : 3} = ${ans}`
+    : (kind === 'interleave' || kind === 'interMix') ? `${t[m - 2]} ${kind === 'interMix' && m % 2 === 0 ? '× 2' : (ans >= t[m - 2] ? '+ ' + (ans - t[m - 2]) : '− ' + (t[m - 2] - ans))} = ${ans}`
+    : kind === 'linMul' ? `${pv} × 2 ${ans - pv * 2 >= 0 ? '+' : '−'} ${Math.abs(ans - pv * 2)} = ${ans}`
+    : kind === 'fib' ? `${t[m - 2]} + ${pv} = ${ans}`
+    : `${pv} + ${ans - pv} = ${ans}`;
+  const diffs = t.slice(1, Math.max(3, Math.min(m, 5))).map((x, i) => (x - t[i] >= 0 ? '+' : '−') + Math.abs(x - t[i]));
+  const TIP = { arith: 'הפרש קבוע הוא החוק הנפוץ ביותר – תמיד בודקים אותו ראשון.', arithDown: 'הפרש קבוע הוא החוק הנפוץ ביותר – תמיד בודקים אותו ראשון.', geo2: 'כשהמספרים גדלים מהר מאוד – בודקים כפל: מחלקים מספר בקודם לו.', geo3: 'כשהמספרים גדלים מהר מאוד – בודקים כפל: מחלקים מספר בקודם לו.', incDiff: 'אם ההפרשים לא קבועים – כותבים אותם בשורה ומחפשים חוק גם בהם.', incDiff2: 'אם ההפרשים לא קבועים – כותבים אותם בשורה ומחפשים חוק גם בהם.', diffGeo: 'אם ההפרשים לא קבועים – כותבים אותם בשורה ומחפשים חוק גם בהם.', alt: 'כשהמספרים עולים ויורדים לסירוגין – יש שני הפרשים שמתחלפים.', interleave: 'מספרים שקופצים למעלה ולמטה? מפרידים לשתי סדרות: המקומות האי-זוגיים והזוגיים.', interMix: 'מספרים שקופצים למעלה ולמטה? מפרידים לשתי סדרות: המקומות האי-זוגיים והזוגיים.', linMul: 'אם ×2 כמעט מתאים אבל לא בדיוק – בודקים ×2 ועוד או פחות מספר קטן.', fib: 'אם שום הפרש לא עובד – נסו לחבר שני מספרים צמודים.', squares: 'כדאי להכיר בעל-פה את הריבועים: 1, 4, 9, 16, 25, 36, 49, 64, 81, 100.', cubes: 'כדאי להכיר את החזקות השלישיות: 1, 8, 27, 64, 125.' };
+  const isInter = kind === 'interleave' || kind === 'interMix';
+  const steps = [
+    isInter ? `המספרים קופצים למעלה ולמטה – מפרידים לשתי סדרות. מקומות אי-זוגיים: ${t.filter((_, i) => i % 2 === 0 && i < m).join(', ')}. מקומות זוגיים: ${t.filter((_, i) => i % 2 === 1 && i < m).join(', ')}.` : `כותבים את ההפרשים בין כל שני מספרים צמודים: ${diffs.join(', ')}.`,
+    `מה רואים: ${exp}`,
+    `מפעילים את החוק על המקום של סימן השאלה: ${calc}.`,
+  ];
   const useInput = diff >= 3 && r() < 0.6;
   const q = `מה המספר שצריך לבוא במקום סימן השאלה?<div class="series" dir="ltr">${shown.join(' , ')}</div>`;
-  const base = { id: uid(r, 's'), ch: 'series', diff, gen: true, q, hints: [SERIES_H1, h2], exp: exp + ` לכן התשובה: ${ans}.` };
+  const base = { id: uid(r, 's'), ch: 'series', diff, gen: true, q, hints: [SERIES_H1, h2], exp: exp + ` לכן התשובה: ${ans}.`, topic: 'series', rule: exp, steps, tip: TIP[kind] };
   if (useInput) return { ...base, type: 'input', answer: String(ans), q: q + '<small>הקלידו את התשובה</small>' };
   const { opts } = numOptions(r, ans, Math.max(3, Math.abs(t[1] - t[0])));
   return { ...base, type: 'mc', opts, ans: 0 };
@@ -124,52 +142,76 @@ export function genMath(diff, seed, learned) {
   let kinds = diff <= 2 ? ['op', 'percent', 'avg', 'speed'] : ['op', 'opNest', 'percentBack', 'avgAdd', 'work', 'speed'];
   if (learned) kinds = kinds.filter(k => !KIND_TOPIC[k] || learned[KIND_TOPIC[k]]);
   const kind = pick(r, kinds);
-  let q, ans, h1, h2, exp;
+  let q, ans, h1, h2, exp, rule, steps, tip, topic;
   if (kind === 'op' || kind === 'opNest') {
     const op = pick(r, OPS);
     if (kind === 'op') {
       const a = ri(r, 2, 7), b = ri(r, 1, 6); ans = op.f(a, b);
       q = `נגדיר פעולה חדשה (הסימן ★ הומצא לשאלה): <b class="ltr">${op.s}</b><br>חשבו: <b class="ltr">${a} ★ ${b}</b>`;
       h1 = 'הציבו את המספר הראשון במקום a ואת השני במקום b.'; h2 = `${a} ★ ${b} = ${op.w(a, b)}`; exp = `${op.w(a, b)} = ${ans}.`;
+      rule = 'הסימן ★ הוא פעולה שהמציאו לשאלה הזו. ההגדרה אומרת בדיוק מה לעשות: במקום a שמים את המספר הראשון, ובמקום b את השני.';
+      steps = [`בשאלה: a = ${a} ו-b = ${b}.`, `מציבים בהגדרה: <span class="ltrm">${op.s.split('=')[1].trim()}</span> הופך ל-<span class="ltrm">${op.w(a, b)}</span>.`, `מחשבים (כפל לפני חיבור וחיסור): <span class="ltrm">${op.w(a, b)} = ${ans}</span>.`];
+      tip = 'בשאלות של פעולה מומצאת לא צריך לדעת שום דבר מראש – רק להציב בזהירות. כדאי לכתוב את ההצבה על דף.';
     } else {
       const a = ri(r, 1, 5), b = ri(r, 1, 4), c = ri(r, 1, 4); const inner = op.f(b, c); ans = op.f(a, inner);
       if (Math.abs(ans) > 200) return genMath(diff, seed + 3, learned);
       q = `נגדיר פעולה חדשה (הסימן ★ הומצא לשאלה): <b class="ltr">${op.s}</b><br>חשבו: <b class="ltr">${a} ★ (${b} ★ ${c})</b>`;
       h1 = 'מתחילים תמיד מהסוגריים.'; h2 = `${b} ★ ${c} = ${op.w(b, c)} = ${inner}. עכשיו חשבו ${a} ★ ${inner}.`;
       exp = `בסוגריים: ${b} ★ ${c} = ${inner}. אחר כך ${a} ★ ${inner} = ${op.w(a, inner)} = ${ans}.`;
+      rule = 'הסימן ★ הוא פעולה מומצאת. כמו בכל תרגיל – <b>קודם מה שבסוגריים</b>, ורק אחר כך השאר.';
+      steps = [`שלב 1 – הסוגריים: <span class="ltrm">${b} ★ ${c}</span>. מציבים a = ${b}, b = ${c}: <span class="ltrm">${op.w(b, c)} = ${inner}</span>.`, `עכשיו התרגיל הפך ל: <span class="ltrm">${a} ★ ${inner}</span>.`, `שלב 2 – מציבים a = ${a}, b = ${inner}: <span class="ltrm">${op.w(a, inner)} = ${ans}</span>.`];
+      tip = 'הטעות הנפוצה: להציב את המספרים בסדר הפוך. a הוא תמיד המספר שמשמאל לסימן ★, ו-b זה שמימין.';
     }
   } else if (kind === 'percent') {
     const p = pick(r, [40, 60, 80, 120, 200, 160]), d = pick(r, [10, 20, 25, 50]);
     ans = p - p * d / 100;
     q = `משחק מחשב עולה ${p} ₪ ויש עליו הנחה של ${d}%. כמה יעלה המשחק אחרי ההנחה (בשקלים)?`;
     h1 = `כמה זה ${d}% מ-${p}? (10% = חלקי 10)`; h2 = `${d}% מ-${p} הם ${p * d / 100} ₪.`; exp = `ההנחה: ${p * d / 100} ₪. ${p} − ${p * d / 100} = ${ans}.`;
+    topic = 'percent'; rule = 'הנחה של X% אומרת שמורידים X אחוזים מהמחיר.';
+    steps = [`מוצאים 10% מהמחיר: <span class="ltrm">${p} ÷ 10 = ${p / 10}</span>.`, `מזה מחשבים את ההנחה: ${d}% מ-${p} = <b>${p * d / 100} ₪</b>.`, `מורידים מהמחיר: <span class="ltrm">${p} − ${p * d / 100} = ${ans}</span>.`];
+    tip = '10% זה תמיד "לחלק ב-10". ממנו בונים כל אחוז אחר: 20% = פעמיים, 5% = חצי.';
   } else if (kind === 'percentBack') {
     const orig = pick(r, [40, 60, 80, 120, 200, 160]), d = pick(r, [20, 25, 50]); const now = orig * (100 - d) / 100; ans = orig;
     q = `אחרי הנחה של ${d}%, אוזניות עולות ${now} ₪. מה היה המחיר <b>לפני</b> ההנחה?`;
     h1 = `אחרי הנחה של ${d}% נשארים ${100 - d}% מהמחיר המקורי.`; h2 = `${now} ₪ = ${100 - d}% מהמחיר. כמה זה 1%? כמה 100%?`;
-    exp = `${now} הם ${100 - d}% מהמחיר, ולכן המחיר המקורי ${now} ÷ ${(100 - d) / 100} = ${ans}.`;
+    exp = `${now} הם ${100 - d}% מהמחיר המקורי, ולכן המחיר המקורי ${ans}.`;
+    topic = 'percent'; rule = `אחרי הנחה של ${d}% משלמים ${100 - d}% מהמחיר המקורי.`;
+    steps = [`${now} ₪ הם ${100 - d}% מהמחיר המקורי.`, `מוצאים כמה זה ${d}% מהמחיר: ${d === 50 ? `50% = ${now}` : d === 25 ? `75% = ${now}, אז 25% = <span class="ltrm">${now} ÷ 3 = ${now / 3}</span>` : `80% = ${now}, אז 20% = <span class="ltrm">${now} ÷ 4 = ${now / 4}</span>`}.`, `המחיר המלא (100%): <b>${ans} ₪</b>.`, `בדיקה: ${d}% מ-${ans} = ${ans * d / 100}, ו-<span class="ltrm">${ans} − ${ans * d / 100} = ${now}</span> ✓`];
+    tip = 'בשאלות "מה היה לפני" אפשר תמיד לבדוק כל תשובה: לחשב עליה את ההנחה ולראות אם יוצא המחיר שבשאלה.';
   } else if (kind === 'avg') {
     const nums = [ri(r, 2, 20), ri(r, 2, 20), ri(r, 2, 20)]; const s = nums[0] + nums[1] + nums[2];
     const fix = (3 - (s % 3)) % 3; nums[2] += fix; const sum = s + fix; ans = sum / 3;
     q = `מה הממוצע של המספרים ${nums.join(', ')}?`;
-    h1 = 'ממוצע = הסכום חלקי כמות המספרים.'; h2 = `הסכום הוא ${sum}.`; exp = `${sum} ÷ 3 = ${ans}.`;
+    h1 = 'ממוצע = הסכום חלקי כמות המספרים.'; h2 = `הסכום הוא ${sum}.`; exp = `הסכום ${sum}, חלקי 3 מספרים = ${ans}.`;
+    topic = 'avg'; rule = 'ממוצע הוא "מה כל אחד היה מקבל אם מחלקים שווה בשווה": <b>ממוצע = סכום ÷ כמות</b>.';
+    steps = [`מחברים את כל המספרים: <span class="ltrm">${nums.join(' + ')} = ${sum}</span>.`, 'סופרים כמה מספרים יש: 3.', `מחלקים: <span class="ltrm">${sum} ÷ 3 = ${ans}</span>.`];
+    tip = 'בדיקה מהירה: הממוצע תמיד נמצא בין המספר הקטן לגדול. אם יצא מחוץ לטווח – יש טעות.';
   } else if (kind === 'avgAdd') {
     const k = ri(r, 3, 5), A = ri(r, 6, 15), B = A + ri(r, 1, 4); ans = B * (k + 1) - A * k;
     q = `הממוצע של ${k} מספרים הוא ${A}. הוסיפו עוד מספר אחד, והממוצע עלה ל-${B}. מה המספר שהוסיפו?`;
     h1 = 'סכום = ממוצע × כמות. חשבו את הסכום לפני ואחרי.'; h2 = `לפני: ${k}×${A} = ${A * k}. אחרי: ${k + 1}×${B} = ${B * (k + 1)}.`;
-    exp = `${B * (k + 1)} − ${A * k} = ${ans}.`;
+    exp = `הסכום לפני: ${A * k}. הסכום אחרי: ${B * (k + 1)}. ההפרש הוא המספר שהוסיפו: ${ans}.`;
+    topic = 'avg'; rule = '<b>סכום = ממוצע × כמות</b>. כשיודעים ממוצע וכמות – יודעים את הסכום.';
+    steps = [`הסכום לפני: ${k} מספרים עם ממוצע ${A} → <span class="ltrm">${k} × ${A} = ${A * k}</span>.`, `הסכום אחרי: ${k + 1} מספרים עם ממוצע ${B} → <span class="ltrm">${k + 1} × ${B} = ${B * (k + 1)}</span>.`, `המספר שהוסיפו הוא ההפרש: <span class="ltrm">${B * (k + 1)} − ${A * k} = ${ans}</span>.`];
+    tip = 'כמעט כל שאלת ממוצע "קשה" נפתרת בהפיכת הממוצעים לסכומים.';
   } else if (kind === 'work') {
     const w = ri(r, 2, 6), t = pick(r, [6, 8, 10, 12, 15, 18, 20, 24]); const total = w * t;
     const opts = [2, 3, 4, 5, 6, 8, 10, 12].filter(x => x !== w && total % x === 0); const w2 = pick(r, opts); ans = total / w2;
     q = `${w} פועלים בונים קיר ב-${t} שעות. בכמה שעות יבנו את אותו קיר ${w2} פועלים (באותו קצב)?`;
     h1 = 'יותר פועלים – פחות זמן. כמה שעות היה לוקח לפועל אחד לבד?'; h2 = `פועל אחד: ${w} × ${t} = ${total} שעות.`;
     exp = `פועל אחד היה בונה ב-${total} שעות, ולכן ${w2} פועלים: ${total} ÷ ${w2} = ${ans}.`;
+    rule = 'יותר פועלים = פחות זמן. מחשבים קודם כמה זמן לוקח לפועל <b>אחד</b>.';
+    steps = [`פועל אחד לבד היה צריך פי ${w} יותר זמן: <span class="ltrm">${w} × ${t} = ${total}</span> שעות.`, `${w2} פועלים מחלקים את העבודה ביניהם: <span class="ltrm">${total} ÷ ${w2} = ${ans}</span> שעות.`];
+    tip = 'בדיקת שכל: אם יש יותר פועלים מבהתחלה – התשובה חייבת להיות קטנה יותר מהזמן המקורי.';
   } else {
     const v = pick(r, [40, 50, 60, 80, 90]), h = ri(r, 2, 5); ans = v * h;
     q = `מכונית נוסעת במהירות קבועה של ${v} קמ"ש. כמה קילומטרים תעבור ב-${h} שעות?`;
-    h1 = 'מהירות של X קמ"ש אומרת: בכל שעה עוברים X קילומטרים.'; h2 = `${v} ק"מ בכל שעה, ${h} שעות.`; exp = `${v} × ${h} = ${ans}.`;
+    h1 = 'מהירות של X קמ"ש אומרת: בכל שעה עוברים X קילומטרים.'; h2 = `${v} ק"מ בכל שעה, ${h} שעות.`; exp = `${v} ק"מ בכל שעה, במשך ${h} שעות: ${ans} ק"מ.`;
+    topic = 'speed'; rule = '<b>דרך = מהירות × זמן</b>. מהירות של X קמ"ש = בכל שעה עוברים X קילומטרים.';
+    steps = [`בכל שעה המכונית עוברת ${v} ק"מ.`, `במשך ${h} שעות: <span class="ltrm">${v} × ${h} = ${ans}</span> ק"מ.`];
+    tip = 'כשמתבלבלים בשאלות מהירות – שואלים "כמה עוברים בשעה אחת?" ומשם ממשיכים.';
   }
-  const base = { id: uid(r, 'm'), ch: 'math', diff, gen: true, q, hints: [h1, h2], exp: exp };
+  const base = { id: uid(r, 'm'), ch: 'math', diff, gen: true, q, hints: [h1, h2], exp, rule, steps, tip, topic };
   if (r() < 0.55) return { ...base, type: 'input', answer: String(ans), q: q + '<small>הקלידו את התשובה</small>' };
   const { opts } = numOptions(r, ans, 5);
   return { ...base, type: 'mc', opts, ans: 0 };
@@ -229,6 +271,9 @@ export function genShapes(diff, seed) {
     cells: cells.slice(0, 8), opts, ans: 0,
     hints: ['בדקו תכונה אחת בכל פעם: סוג הצורה, צבע, כמות, סיבוב, מלא/ריק. מה קורה לאורך כל שורה? ולאורך כל עמודה?', 'רמז: ' + desc[0] + '.'],
     exp: 'החוקיות: ' + desc.join('; ') + '. לכן בתא החסר: ' + `${answer.count > 1 ? answer.count + ' ' : ''}${SHAPE_HE[answer.shape]} ${COLOR_HE[answer.color]}${answer.fill ? '' : ' (ריק)'}.`,
+    rule: 'בודקים תכונה אחת בכל פעם: סוג הצורה, צבע, כמות, סיבוב, מלא/ריק.',
+    steps: [...desc.map(d => d + '.'), `מצרפים את כל התכונות לתא החסר: ${answer.count > 1 ? answer.count + ' ' : ''}${SHAPE_HE[answer.shape]} ${COLOR_HE[answer.color]}${answer.fill ? '' : ' (ריק)'}.`, 'בוחרים את האפשרות שמתאימה בכל התכונות – לא רק בחלק מהן.'],
+    tip: 'התשובות השגויות בנויות כך שהן נכונות כמעט – חוץ מתכונה אחת. לכן חשוב לבדוק את כל התכונות.',
   };
 }
 const same = (a, b) => a.shape === b.shape && a.color === b.color && a.count === b.count && a.rot === b.rot && a.fill === b.fill;

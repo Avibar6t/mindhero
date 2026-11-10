@@ -1,14 +1,14 @@
 // MindHero – האפליקציה הראשית
-import * as DB from './store.js?v=16';
-import { LS } from './store.js?v=16';
-import { CHAPTERS, CH_ORDER, VERBAL, ANALOGY, LOGIC, MATH, ACADEMY } from './bank.js?v=16';
-import { generate } from './gen.js?v=16';
-import { STYLES, SKINS, ITEMS, POWERS, SLOT_HE, heroSVG, itemName, strongestPowerColor, levelUpOffers, rankOf, xpForLevel } from './hero.js?v=16';
-import { $, $$, esc, toast, modal, beep, confetti, sound, prepareQ, isCorrect, answerText, renderQuestion, markResult, today, weekKey, fmtTime, isMobile, bars, LETTERS, bm } from './ui.js?v=16';
-import { ic, moodFace, lobbyScene } from './icons.js?v=16';
-import { TOPICS, topicById, grid100 } from './learn.js?v=16';
-import { startExam } from './exam.js?v=16';
-import { parentScreen } from './parent.js?v=16';
+import * as DB from './store.js?v=18';
+import { LS } from './store.js?v=18';
+import { CHAPTERS, CH_ORDER, VERBAL, ANALOGY, LOGIC, MATH, ACADEMY } from './bank.js?v=18';
+import { generate } from './gen.js?v=18';
+import { STYLES, SKINS, ITEMS, POWERS, SLOT_HE, heroSVG, itemName, strongestPowerColor, levelUpOffers, rankOf, xpForLevel } from './hero.js?v=18';
+import { $, $$, esc, toast, modal, beep, confetti, sound, prepareQ, isCorrect, answerText, renderQuestion, markResult, today, weekKey, fmtTime, isMobile, bars, LETTERS, bm, explainHTML } from './ui.js?v=18';
+import { ic, moodFace, lobbyScene } from './icons.js?v=18';
+import { TOPICS, topicById, grid100 } from './learn.js?v=18';
+import { startExam } from './exam.js?v=18';
+import { parentScreen } from './parent.js?v=18';
 
 const app = $('#app');
 export const S = { team: null, teamData: null, pid: null, p: null, active: false, lastInput: Date.now(), inQuestion: null, messages: [] };
@@ -504,7 +504,7 @@ function runQuiz(cfg) {
     const praise = ['מצוין', 'בול', 'יפה מאוד', 'כל הכבוד', 'חשיבה חדה', 'בדיוק ככה'];
     const comfort = ['לא נורא – עכשיו אתה יודע את הטריק.', 'טעות באימון היא נקודה שתרוויח במבחן.', 'גם גיבורים טועים. העיקר להבין למה.', 'זו בדיוק המטרה של אימון.'];
     $('#fb').innerHTML = `<div class="feedback ${ok ? 'ok' : 'no'}"><div class="fb-head">${ok ? `${ic('check')} ${praise[Math.floor(Math.random() * praise.length)]}${R.combo >= R.thr ? ` <span class="combo hot">${ic('flame')}${R.combo}</span>` : ''}<span class="xp">${ic('xp')}+${xp}</span>` : `${ic(revealed ? 'bulb' : 'x')} ${revealed ? 'הנה ההסבר' : comfort[Math.floor(Math.random() * comfort.length)]}`}</div>
-      ${!ok ? `<div class="fb-ans">התשובה הנכונה: <b>${answerText(q)}</b></div>` : ''}<div class="fb-exp">${bm(q.exp)}</div>
+      ${!ok ? `<div class="fb-ans">התשובה הנכונה: <b>${answerText(q)}</b></div>` : ''}<div class="fb-exp">${explainHTML(q)}</div>
       <button class="btn primary big" id="next">${R.i < R.qs.length - 1 ? 'לשאלה הבאה' : 'סיום המשימה'}</button></div>`;
     $('#qtools').innerHTML = '';
     $('#next').onclick = () => { if (R.i < R.qs.length - 1) { R.i++; show(); } else finish(); };
@@ -539,7 +539,7 @@ function runQuiz(cfg) {
       <div class="res-hero">${heroSVG(p, { aura: strongestPowerColor(p) })}</div>
       <div class="res-stats"><div><b>${okN}/${R.res.length}</b><small>נכונות</small></div><div class="gold"><b>+${R.xp}</b><small>XP</small></div><div class="gold"><b>+${Math.round(R.coins * (1 + pw('telek') * .1))}</b><small>מטבעות</small></div>${!boss ? `<div><b>${R.maxCombo}</b><small>קומבו שיא</small></div>` : `<div><b>${extra.score}%</b><small>ציון</small></div>`}</div>
       ${boss && extra.empty ? `<p class="warn">השארת ${extra.empty} שאלות ריקות. במבחן האמיתי – תמיד מנחשים.</p>` : ''}
-      ${boss && review.length ? `<details class="review"><summary>מה היה כדאי לעשות אחרת? (${review.length})</summary>${review.map(x => `<div class="rv"><div class="rv-q">${x.q.q}</div><div class="rv-a">✔ ${answerText(x.q)}</div><div class="rv-e">${bm(x.q.exp)}</div></div>`).join('')}</details>` : ''}
+      ${boss && review.length ? `<details class="review"><summary>מה היה כדאי לעשות אחרת? (${review.length})</summary>${review.map(x => `<div class="rv"><div class="rv-q">${x.q.q}</div><div class="rv-a">✔ ${answerText(x.q)}</div><div class="rv-e">${explainHTML(x.q)}</div></div>`).join('')}</details>` : ''}
       <button class="btn primary big" id="cont">המשך</button></div>`);
     if (okN / R.res.length >= 0.8) confetti();
     $('#cont').onclick = () => { if (P().pendingLevels > 0) levelUpFlow(() => cfg.onDone(R.res, extra)); else cfg.onDone(R.res, extra); };
@@ -656,7 +656,7 @@ function lessonPlayer(t, after) {
           if (!final) return; const ok = isCorrect(q, r); tries++;
           if (ok || tries >= 2) {
             markResult(q, $('#lq'), r); beep(ok ? 'ok' : 'bad'); if (ok) { addXP(6); save(); }
-            $('#lfb').innerHTML = `<div class="feedback ${ok ? 'ok' : 'no'}"><div class="fb-head">${ic(ok ? 'check' : 'bulb')} ${ok ? 'נכון!' : 'בוא נראה איך פותרים'}</div>${ok ? '' : `<div class="fb-ans">התשובה: <b>${answerText(q)}</b></div>`}<div class="fb-exp">${bm(q.exp)}</div><button class="btn primary big" id="nx">ממשיכים</button></div>`;
+            $('#lfb').innerHTML = `<div class="feedback ${ok ? 'ok' : 'no'}"><div class="fb-head">${ic(ok ? 'check' : 'bulb')} ${ok ? 'נכון!' : 'בוא נראה איך פותרים'}</div>${ok ? '' : `<div class="fb-ans">התשובה: <b>${answerText(q)}</b></div>`}<div class="fb-exp">${explainHTML(q)}</div><button class="btn primary big" id="nx">ממשיכים</button></div>`;
             $('#nx').onclick = () => step(i + 1);
           } else {
             beep('bad');
@@ -675,14 +675,14 @@ function lessonPlayer(t, after) {
   };
   const mastery = () => {
     const seed = (Math.random() * 1e9) | 0;
-    const qs = Array.from({ length: 5 }, (_, k) => prepareQ({ ch: 'math', diff: 3, id: 'L' + t.id + k, ...t.master(seed + k * 7919) }));
+    const qs = Array.from({ length: 5 }, (_, k) => prepareQ({ ch: 'math', diff: 3, id: 'L' + t.id + k, ...t.master(seed + k * 7919), topic: undefined }));
     let i = 0, ok = 0;
     const show = () => {
       frame(`<div class="qch" style="--c:${t.color}">${ic(t.icon)}מבחן שליטה · ${i + 1}/5</div><div class="qcard" id="mq"></div><div id="mfb"></div>`, t.steps.length);
       $('#bk').onclick = after;
       renderQuestion(qs[i], $('#mq'), { onAnswer: (r, final) => {
         if (!final) return; const good = isCorrect(qs[i], r); if (good) ok++; markResult(qs[i], $('#mq'), r); beep(good ? 'ok' : 'bad');
-        $('#mfb').innerHTML = `<div class="feedback ${good ? 'ok' : 'no'}"><div class="fb-head">${ic(good ? 'check' : 'x')} ${good ? 'נכון' : 'התשובה: ' + answerText(qs[i])}</div>${good ? '' : `<div class="fb-exp">${bm(qs[i].exp)}</div>`}<button class="btn primary big" id="nx">${i < 4 ? 'לשאלה הבאה' : 'לתוצאה'}</button></div>`;
+        $('#mfb').innerHTML = `<div class="feedback ${good ? 'ok' : 'no'}"><div class="fb-head">${ic(good ? 'check' : 'x')} ${good ? 'נכון' : 'התשובה: ' + answerText(qs[i])}</div>${good ? '' : `<div class="fb-exp">${explainHTML(qs[i])}</div>`}<button class="btn primary big" id="nx">${i < 4 ? 'לשאלה הבאה' : 'לתוצאה'}</button></div>`;
         $('#nx').onclick = () => { if (i < 4) { i++; show(); } else result(); };
       } });
     };
@@ -914,7 +914,7 @@ async function guestChallenge(id) {
       setScreen(`<div class="quiz"><header class="qbar"><b class="qtitle">האתגר של ${esc(d.fromName)}</b><span class="qprog">${i + 1}/8</span></header><div class="dots">${qs.map((_, k) => `<i class="${k < i ? 'ok' : k === i ? 'cur' : ''}"></i>`).join('')}</div><div class="qcard" id="gq"></div><div id="gfb"></div></div>`);
       renderQuestion(qs[i], $('#gq'), { onAnswer: (r, final) => {
         if (!final) return; const good = isCorrect(qs[i], r); if (good) ok++; markResult(qs[i], $('#gq'), r); beep(good ? 'ok' : 'bad');
-        $('#gfb').innerHTML = `<div class="feedback ${good ? 'ok' : 'no'}"><div class="fb-head">${ic(good ? 'check' : 'x')} ${good ? 'נכון' : 'התשובה: ' + answerText(qs[i])}</div><div class="fb-exp">${bm(qs[i].exp)}</div><button class="btn primary big" id="gn2">${i < 7 ? 'לשאלה הבאה' : 'לתוצאות'}</button></div>`;
+        $('#gfb').innerHTML = `<div class="feedback ${good ? 'ok' : 'no'}"><div class="fb-head">${ic(good ? 'check' : 'x')} ${good ? 'נכון' : 'התשובה: ' + answerText(qs[i])}</div><div class="fb-exp">${explainHTML(qs[i])}</div><button class="btn primary big" id="gn2">${i < 7 ? 'לשאלה הבאה' : 'לתוצאות'}</button></div>`;
         $('#gn2').onclick = async () => { if (i < qs.length - 1) { i++; show(); } else {
           const t = Math.round((Date.now() - t0) / 1000); await DB.submitChallenge(id, key, { name, ok, t });
           d.results = { ...(d.results || {}), [key]: { name, ok, t, me: true } };

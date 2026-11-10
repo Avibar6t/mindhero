@@ -1,10 +1,10 @@
 // MindHero – מסך הורה (תומך בשני הורים)
-import * as DB from './store.js?v=16';
-import { CHAPTERS, CH_ORDER } from './bank.js?v=16';
-import { heroSVG, rankOf } from './hero.js?v=16';
-import { $, $$, esc, toast, modal, today, bars, fmtTime, renderQuestion, isCorrect, markResult, answerText, bm } from './ui.js?v=16';
-import { ic, moodFace } from './icons.js?v=16';
-import { analysisHTML } from './analysis.js?v=16';
+import * as DB from './store.js?v=18';
+import { CHAPTERS, CH_ORDER } from './bank.js?v=18';
+import { heroSVG, rankOf } from './hero.js?v=18';
+import { $, $$, esc, toast, modal, today, bars, fmtTime, renderQuestion, isCorrect, markResult, answerText, bm, explainHTML } from './ui.js?v=18';
+import { ic, moodFace } from './icons.js?v=18';
+import { analysisHTML } from './analysis.js?v=18';
 
 const ago = ts => { const m = Math.round((Date.now() - ts) / 60000); return m < 1 ? 'עכשיו' : m < 60 ? `לפני ${m} דק׳` : m < 1440 ? `לפני ${Math.round(m / 60)} שע׳` : `לפני ${Math.round(m / 1440)} ימים`; };
 const HARD = ['stressed', 'quit', 'frustrated'];
@@ -105,7 +105,7 @@ export async function parentScreen(ctx) {
       setScreen(`<div class="quiz"><header class="qbar"><b class="qtitle">${ic('duel')} דו-קרב מול ${esc(d.from === me.id ? d.toName : d.fromName)}</b><span class="qprog">${i + 1}/8</span></header><div class="dots">${qs.map((_, k) => `<i class="${k < i ? 'ok' : k === i ? 'cur' : ''}"></i>`).join('')}</div><div class="qcard" id="pq"></div><div id="pfb"></div></div>`);
       renderQuestion(qs[i], $('#pq'), { onAnswer: (r, final) => {
         if (!final) return; const good = isCorrect(qs[i], r); if (good) ok++; markResult(qs[i], $('#pq'), r);
-        $('#pfb').innerHTML = `<div class="feedback ${good ? 'ok' : 'no'}"><div class="fb-head">${ic(good ? 'check' : 'x')} ${good ? 'נכון' : 'התשובה: ' + answerText(qs[i])}</div><div class="fb-exp">${bm(qs[i].exp)}</div><button class="btn primary big" id="pn">${i < 7 ? 'לשאלה הבאה' : 'סיום'}</button></div>`;
+        $('#pfb').innerHTML = `<div class="feedback ${good ? 'ok' : 'no'}"><div class="fb-head">${ic(good ? 'check' : 'x')} ${good ? 'נכון' : 'התשובה: ' + answerText(qs[i])}</div><div class="fb-exp">${explainHTML(qs[i])}</div><button class="btn primary big" id="pn">${i < 7 ? 'לשאלה הבאה' : 'סיום'}</button></div>`;
         $('#pn').onclick = async () => { if (i < qs.length - 1) { i++; show(); } else { const t = Math.round((Date.now() - t0) / 1000); await DB.submitDuel(code, d.id, me.id, { ok, t }); toast(`סיימת: ${ok}/8`); await load(); tab = 'duel'; render(); } };
       } });
     };

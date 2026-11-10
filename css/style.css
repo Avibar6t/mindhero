@@ -410,3 +410,13 @@ input:focus,textarea:focus,select:focus{outline:none;border-color:var(--mind);bo
 .p-card.ask{border-color:#0f9f91;background:linear-gradient(180deg,#0f2f3a,var(--deep))}
 .pmsg .btn.link{margin-top:6px;display:inline-flex;align-items:center;gap:6px}
 .btn.danger{background:#7f1d1d;border-color:#b91c1c;color:#fff}.btn.danger:hover{background:#991b1b}
+.explain{margin-top:8px;display:flex;flex-direction:column;gap:10px}
+.ex-rule{background:#0e1630;border-right:4px solid var(--amber);border-radius:var(--r-s);padding:10px 12px;line-height:1.7}
+.ex-h{font:600 .95rem var(--fd);color:var(--mut);margin-bottom:-4px}
+.ex-steps{margin:0;padding:0;list-style:none;counter-reset:st;display:flex;flex-direction:column;gap:8px}
+.ex-steps li{counter-increment:st;position:relative;padding-inline-start:38px;line-height:1.7}
+.ex-steps li::before{content:counter(st);position:absolute;right:0;top:1px;width:26px;height:26px;border-radius:8px;background:var(--s3);color:var(--mind);font:700 .9rem var(--fd);display:flex;align-items:center;justify-content:center}
+.ex-body{line-height:1.7}
+.ex-tip{background:#0f2f3a;border-radius:var(--r-s);padding:9px 12px;line-height:1.6;color:#c9f5ef}
+.ex-learn{color:var(--mut);font-size:.9rem}
+.ex .ex-rule,.ex .ex-tip{background:#f1f5f9;color:#111}
