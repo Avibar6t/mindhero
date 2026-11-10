@@ -41,7 +41,7 @@ input:focus,textarea:focus,select:focus{outline:2px solid var(--acc);border-colo
 .pin-dots{display:flex;gap:14px;margin:16px}.pin-dots i{width:18px;height:18px;border-radius:50%;border:2px solid var(--acc)}.pin-dots i.on{background:var(--acc);box-shadow:0 0 12px var(--acc)}
 .pinpad{display:grid;grid-template-columns:repeat(3,76px);gap:12px;direction:ltr}
 .pinpad button{height:66px;border-radius:18px;background:var(--card);border:1px solid var(--line);color:var(--tx);font-size:1.5rem;font-weight:700}
-.pinpad button:active{background:var(--card2);transform:scale(.95)}
+.pinpad button.pressed,.pinpad button:active{background:var(--card2);transform:scale(.95)}
 .hero-pick{display:flex;flex-wrap:wrap;gap:12px;justify-content:center;margin:10px 0}
 .hp{background:var(--card);border:1px solid var(--line);border-radius:var(--r);padding:10px;width:150px;color:var(--tx);display:flex;flex-direction:column;align-items:center}
 .hp:hover{border-color:var(--acc)}.hp-svg{width:100px;height:130px}.hp small{color:var(--mut)}

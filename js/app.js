@@ -1,12 +1,12 @@
 // MindHero – האפליקציה הראשית
-import * as DB from './store.js?v=4';
-import { LS } from './store.js?v=4';
-import { CHAPTERS, CH_ORDER, VERBAL, ANALOGY, LOGIC, MATH, ACADEMY } from './bank.js?v=4';
-import { generate } from './gen.js?v=4';
-import { STYLES, SKINS, ITEMS, POWERS, SLOT_HE, heroSVG, itemName, strongestPowerColor, levelUpOffers, rankOf, xpForLevel } from './hero.js?v=4';
-import { $, $$, esc, toast, modal, beep, confetti, sound, prepareQ, isCorrect, answerText, renderQuestion, markResult, today, weekKey, fmtTime, isMobile, bars, LETTERS, bm } from './ui.js?v=4';
-import { startExam } from './exam.js?v=4';
-import { parentScreen } from './parent.js?v=4';
+import * as DB from './store.js?v=5';
+import { LS } from './store.js?v=5';
+import { CHAPTERS, CH_ORDER, VERBAL, ANALOGY, LOGIC, MATH, ACADEMY } from './bank.js?v=5';
+import { generate } from './gen.js?v=5';
+import { STYLES, SKINS, ITEMS, POWERS, SLOT_HE, heroSVG, itemName, strongestPowerColor, levelUpOffers, rankOf, xpForLevel } from './hero.js?v=5';
+import { $, $$, esc, toast, modal, beep, confetti, sound, prepareQ, isCorrect, answerText, renderQuestion, markResult, today, weekKey, fmtTime, isMobile, bars, LETTERS, bm } from './ui.js?v=5';
+import { startExam } from './exam.js?v=5';
+import { parentScreen } from './parent.js?v=5';
 
 const app = $('#app');
 export const S = { team: null, teamData: null, pid: null, p: null, active: false, lastInput: Date.now(), inQuestion: null, messages: [] };
@@ -118,7 +118,9 @@ function dailyPlan() {
 }
 
 // ================== מסכים ==================
+let keyHandler = null;
 function setScreen(html, { active = false, cls = '' } = {}) {
+  if (keyHandler) { document.removeEventListener('keydown', keyHandler); keyHandler = null; }
   S.active = active; S.inQuestion = null;
   app.className = cls; app.innerHTML = html; window.scrollTo(0, 0);
   $('#comms-btn').style.display = S.p ? 'flex' : 'none';
@@ -170,11 +172,23 @@ function pinPad(title, onDone, { sub = '', back } = {}) {
     <div class="pinpad">${[1, 2, 3, 4, 5, 6, 7, 8, 9, '⌫', 0, '✓'].map(k => `<button data-k="${k}">${k}</button>`).join('')}</div>
     ${back ? '<button class="btn link" id="pback">חזרה</button>' : ''}</div>`);
   const draw = () => $$('.pin-dots i').forEach((d, i) => d.classList.toggle('on', i < v.length));
-  $$('.pinpad button').forEach(b => b.onclick = () => {
-    const k = b.dataset.k; beep('click');
-    if (k === '⌫') v = v.slice(0, -1); else if (k === '✓') { if (v.length === 4) onDone(v); } else if (v.length < 4) { v += k; if (v.length === 4) setTimeout(() => onDone(v), 150); }
+  let done = false;
+  const press = k => {
+    if (done) return; beep('click');
+    const btn = $(`.pinpad button[data-k="${k}"]`); if (btn) { btn.classList.add('pressed'); setTimeout(() => btn.classList.remove('pressed'), 120); }
+    if (k === '⌫') v = v.slice(0, -1); else if (k === '✓') { if (v.length === 4) { done = true; onDone(v); } } else if (v.length < 4) { v += k; if (v.length === 4) { done = true; setTimeout(() => onDone(v), 150); } }
     draw();
-  });
+  };
+  $$('.pinpad button').forEach(b => b.onclick = () => press(b.dataset.k));
+  keyHandler = e => {
+    if (/^[0-9]$/.test(e.key)) press(e.key);
+    else if (e.key === 'Backspace' || e.key === 'Delete') press('⌫');
+    else if (e.key === 'Enter') press('✓');
+    else if (e.key === 'Escape' && back) back();
+    else return;
+    e.preventDefault();
+  };
+  document.addEventListener('keydown', keyHandler);
   if (back) $('#pback').onclick = back;
 }
 

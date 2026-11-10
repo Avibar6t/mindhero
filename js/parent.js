@@ -1,8 +1,8 @@
 // MindHero – מסך הורה
-import * as DB from './store.js?v=4';
-import { CHAPTERS, CH_ORDER } from './bank.js?v=4';
-import { heroSVG, rankOf } from './hero.js?v=4';
-import { $, $$, esc, toast, today, bars, fmtTime, renderQuestion, isCorrect, markResult, answerText } from './ui.js?v=4';
+import * as DB from './store.js?v=5';
+import { CHAPTERS, CH_ORDER } from './bank.js?v=5';
+import { heroSVG, rankOf } from './hero.js?v=5';
+import { $, $$, esc, toast, today, bars, fmtTime, renderQuestion, isCorrect, markResult, answerText } from './ui.js?v=5';
 
 const MOOD_E = { great: '😄', ok: '🙂', tired: '😴', confused: '😕', frustrated: '😤', stressed: '😰', quit: '🏳️' };
 const ago = ts => { const m = Math.round((Date.now() - ts) / 60000); return m < 60 ? `לפני ${m} דק׳` : m < 1440 ? `לפני ${Math.round(m / 60)} שעות` : `לפני ${Math.round(m / 1440)} ימים`; };
