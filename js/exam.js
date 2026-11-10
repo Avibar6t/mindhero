@@ -1,7 +1,7 @@
 // MindHero – סימולציית מבחן בממשק שדומה למבחן הממוחשב האמיתי
-import { CHAPTERS, CH_ORDER } from './bank.js?v=11';
-import { $, $$, esc, fmtTime, renderQuestion, isCorrect, answerText, modal, confetti, bars, bm } from './ui.js?v=11';
-import { ic } from './icons.js?v=11';
+import { CHAPTERS, CH_ORDER } from './bank.js?v=12';
+import { $, $$, esc, fmtTime, renderQuestion, isCorrect, answerText, modal, confetti, bars, bm } from './ui.js?v=12';
+import { ic } from './icons.js?v=12';
 
 const INSTR = {
   verbal: 'בפרק זה תופענה שאלות על משמעות של מילים והשלמת משפטים. קראו בעיון את המשפט ואת כל האפשרויות, ובחרו את התשובה המתאימה ביותר.',

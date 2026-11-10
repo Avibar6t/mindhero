@@ -1,13 +1,13 @@
 // MindHero – האפליקציה הראשית
-import * as DB from './store.js?v=11';
-import { LS } from './store.js?v=11';
-import { CHAPTERS, CH_ORDER, VERBAL, ANALOGY, LOGIC, MATH, ACADEMY } from './bank.js?v=11';
-import { generate } from './gen.js?v=11';
-import { STYLES, SKINS, ITEMS, POWERS, SLOT_HE, heroSVG, itemName, strongestPowerColor, levelUpOffers, rankOf, xpForLevel } from './hero.js?v=11';
-import { $, $$, esc, toast, modal, beep, confetti, sound, prepareQ, isCorrect, answerText, renderQuestion, markResult, today, weekKey, fmtTime, isMobile, bars, LETTERS, bm } from './ui.js?v=11';
-import { ic, moodFace, lobbyScene } from './icons.js?v=11';
-import { startExam } from './exam.js?v=11';
-import { parentScreen } from './parent.js?v=11';
+import * as DB from './store.js?v=12';
+import { LS } from './store.js?v=12';
+import { CHAPTERS, CH_ORDER, VERBAL, ANALOGY, LOGIC, MATH, ACADEMY } from './bank.js?v=12';
+import { generate } from './gen.js?v=12';
+import { STYLES, SKINS, ITEMS, POWERS, SLOT_HE, heroSVG, itemName, strongestPowerColor, levelUpOffers, rankOf, xpForLevel } from './hero.js?v=12';
+import { $, $$, esc, toast, modal, beep, confetti, sound, prepareQ, isCorrect, answerText, renderQuestion, markResult, today, weekKey, fmtTime, isMobile, bars, LETTERS, bm } from './ui.js?v=12';
+import { ic, moodFace, lobbyScene } from './icons.js?v=12';
+import { startExam } from './exam.js?v=12';
+import { parentScreen } from './parent.js?v=12';
 
 const app = $('#app');
 export const S = { team: null, teamData: null, pid: null, p: null, active: false, lastInput: Date.now(), inQuestion: null, messages: [] };
@@ -473,6 +473,8 @@ function runQuiz(cfg) {
     const delta = 0.22 * (1 + ((ok ? q.diff - c.lvl : c.lvl - q.diff) || 0) * 0.3);
     if (cfg.kind !== 'diag') c.lvl = Math.max(1, Math.min(5, c.lvl + (ok ? delta : -delta)));
     p.seen[q.id] = { n: (p.seen[q.id]?.n || 0) + 1, lastOk: ok };
+    p.records.hints = (p.records.hints || 0) + R.hintIdx; if (revealed) p.records.reveals = (p.records.reveals || 0) + 1;
+    p.records.qTime = (p.records.qTime || 0) + Math.min(t, 300);
     p.records.totalQ++; if (ok) p.records.totalOk++;
     const d = dayRec(); d.q++; if (ok) d.ok++;
     // מעבדת טעויות
