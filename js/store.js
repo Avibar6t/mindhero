@@ -1,5 +1,5 @@
 // MindHero – שמירה וסנכרון (Firebase, עם גיבוי מקומי כשאין רשת)
-import { firebaseConfig } from './firebase-config.js?v=12';
+import { firebaseConfig } from './firebase-config.js?v=13';
 
 const V = '10.12.2';
 let fb = null, db = null, cloud = false;

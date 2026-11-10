@@ -118,9 +118,12 @@ const OPS = [
   { f: (a, b) => a * b - a - b, s: 'a ★ b = a × b − a − b', w: (a, b) => `${a}×${b} − ${a} − ${b}` },
 ];
 
-export function genMath(diff, seed) {
+export const KIND_TOPIC = { percent: 'percent', percentBack: 'percent', avg: 'avg', avgAdd: 'avg', speed: 'speed' };
+export function genMath(diff, seed, learned) {
   const r = rng(seed);
-  const kind = pick(r, diff <= 2 ? ['op', 'percent', 'avg', 'speed'] : ['op', 'opNest', 'percentBack', 'avgAdd', 'work', 'speed']);
+  let kinds = diff <= 2 ? ['op', 'percent', 'avg', 'speed'] : ['op', 'opNest', 'percentBack', 'avgAdd', 'work', 'speed'];
+  if (learned) kinds = kinds.filter(k => !KIND_TOPIC[k] || learned[KIND_TOPIC[k]]);
+  const kind = pick(r, kinds);
   let q, ans, h1, h2, exp;
   if (kind === 'op' || kind === 'opNest') {
     const op = pick(r, OPS);
@@ -130,7 +133,7 @@ export function genMath(diff, seed) {
       h1 = 'הציבו את המספר הראשון במקום a ואת השני במקום b.'; h2 = `${a} ★ ${b} = ${op.w(a, b)}`; exp = `${op.w(a, b)} = ${ans}.`;
     } else {
       const a = ri(r, 1, 5), b = ri(r, 1, 4), c = ri(r, 1, 4); const inner = op.f(b, c); ans = op.f(a, inner);
-      if (Math.abs(ans) > 200) return genMath(diff, seed + 3);
+      if (Math.abs(ans) > 200) return genMath(diff, seed + 3, learned);
       q = `נגדיר פעולה חדשה (הסימן ★ הומצא לשאלה): <b class="ltr">${op.s}</b><br>חשבו: <b class="ltr">${a} ★ (${b} ★ ${c})</b>`;
       h1 = 'מתחילים תמיד מהסוגריים.'; h2 = `${b} ★ ${c} = ${op.w(b, c)} = ${inner}. עכשיו חשבו ${a} ★ ${inner}.`;
       exp = `בסוגריים: ${b} ★ ${c} = ${inner}. אחר כך ${a} ★ ${inner} = ${op.w(a, inner)} = ${ans}.`;
@@ -251,8 +254,8 @@ export function cellSVG(c, size = 80) {
   return `<svg viewBox="0 0 80 80" width="${size}" height="${size}"><g ${st}>${body}</g></svg>`;
 }
 
-export function generate(ch, diff, seed) {
+export function generate(ch, diff, seed, learned) {
   if (ch === 'series') return genSeries(diff, seed);
-  if (ch === 'math') return genMath(diff, seed);
+  if (ch === 'math') return genMath(diff, seed, learned);
   if (ch === 'shapes') return genShapes(diff, seed);
 }

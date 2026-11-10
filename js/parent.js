@@ -1,10 +1,10 @@
 // MindHero – מסך הורה (תומך בשני הורים)
-import * as DB from './store.js?v=12';
-import { CHAPTERS, CH_ORDER } from './bank.js?v=12';
-import { heroSVG, rankOf } from './hero.js?v=12';
-import { $, $$, esc, toast, today, bars, fmtTime, renderQuestion, isCorrect, markResult, answerText, bm } from './ui.js?v=12';
-import { ic, moodFace } from './icons.js?v=12';
-import { analysisHTML } from './analysis.js?v=12';
+import * as DB from './store.js?v=13';
+import { CHAPTERS, CH_ORDER } from './bank.js?v=13';
+import { heroSVG, rankOf } from './hero.js?v=13';
+import { $, $$, esc, toast, today, bars, fmtTime, renderQuestion, isCorrect, markResult, answerText, bm } from './ui.js?v=13';
+import { ic, moodFace } from './icons.js?v=13';
+import { analysisHTML } from './analysis.js?v=13';
 
 const ago = ts => { const m = Math.round((Date.now() - ts) / 60000); return m < 1 ? 'עכשיו' : m < 60 ? `לפני ${m} דק׳` : m < 1440 ? `לפני ${Math.round(m / 60)} שע׳` : `לפני ${Math.round(m / 1440)} ימים`; };
 const HARD = ['stressed', 'quit', 'frustrated'];

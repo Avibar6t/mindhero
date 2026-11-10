@@ -402,3 +402,8 @@ input:focus,textarea:focus,select:focus{outline:none;border-color:var(--mind);bo
 .ana small{color:var(--mut);line-height:1.5;display:block}
 .ana-tag{font:600 .75rem var(--fd);border-radius:999px;padding:1px 9px}
 .ana-tag.t3{background:#14532d;color:#86efac}.ana-tag.t2{background:#1e3a5f;color:#93c5fd}.ana-tag.t1{background:#4a2a0a;color:#fdba74}.ana-tag.t0{background:#4c1418;color:#fca5a5}
+.viz-wrap{display:flex;flex-direction:column;align-items:center;gap:10px;margin:14px 0;background:var(--deep);border:1px solid var(--line);border-radius:var(--r-l);padding:16px}
+.viz{max-width:100%;height:auto}
+.slider-row{display:flex;align-items:center;gap:12px;width:100%;max-width:320px}.slider-row input{flex:1;padding:0;accent-color:var(--mind)}.slider-row b{font:700 1.4rem var(--fd);color:var(--mind);min-width:64px;text-align:center}
+.qtext .viz{display:block;margin:10px auto}
+.ptabs .muted{font-size:.8rem}

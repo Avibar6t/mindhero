@@ -1,13 +1,14 @@
 // MindHero – האפליקציה הראשית
-import * as DB from './store.js?v=12';
-import { LS } from './store.js?v=12';
-import { CHAPTERS, CH_ORDER, VERBAL, ANALOGY, LOGIC, MATH, ACADEMY } from './bank.js?v=12';
-import { generate } from './gen.js?v=12';
-import { STYLES, SKINS, ITEMS, POWERS, SLOT_HE, heroSVG, itemName, strongestPowerColor, levelUpOffers, rankOf, xpForLevel } from './hero.js?v=12';
-import { $, $$, esc, toast, modal, beep, confetti, sound, prepareQ, isCorrect, answerText, renderQuestion, markResult, today, weekKey, fmtTime, isMobile, bars, LETTERS, bm } from './ui.js?v=12';
-import { ic, moodFace, lobbyScene } from './icons.js?v=12';
-import { startExam } from './exam.js?v=12';
-import { parentScreen } from './parent.js?v=12';
+import * as DB from './store.js?v=13';
+import { LS } from './store.js?v=13';
+import { CHAPTERS, CH_ORDER, VERBAL, ANALOGY, LOGIC, MATH, ACADEMY } from './bank.js?v=13';
+import { generate } from './gen.js?v=13';
+import { STYLES, SKINS, ITEMS, POWERS, SLOT_HE, heroSVG, itemName, strongestPowerColor, levelUpOffers, rankOf, xpForLevel } from './hero.js?v=13';
+import { $, $$, esc, toast, modal, beep, confetti, sound, prepareQ, isCorrect, answerText, renderQuestion, markResult, today, weekKey, fmtTime, isMobile, bars, LETTERS, bm } from './ui.js?v=13';
+import { ic, moodFace, lobbyScene } from './icons.js?v=13';
+import { TOPICS, topicById, grid100 } from './learn.js?v=13';
+import { startExam } from './exam.js?v=13';
+import { parentScreen } from './parent.js?v=13';
 
 const app = $('#app');
 export const S = { team: null, teamData: null, pid: null, p: null, active: false, lastInput: Date.now(), inQuestion: null, messages: [] };
@@ -17,7 +18,7 @@ const MENTOR = 'פרופסור מיינד';
 // ================== עזרי שחקן ==================
 function newPlayer({ name, style, skin, pinHash }) {
   const ch = {}; CH_ORDER.forEach(c => ch[c] = { lvl: 2, n: 0, ok: 0, time: 0 });
-  return { name, style, skin, pinHash, created: Date.now(), level: 1, xp: 0, coins: 50, items: [], equip: {}, powers: {}, ch, seen: {}, mistakes: [], days: {}, streak: 0, bestStreak: 0, lastGoalDay: null, freezeUsed: {}, academy: {}, diag: false, records: { bestBoss: 0, bestCombo: 0, sims: [], totalQ: 0, totalOk: 0, duelsWon: 0 }, daily: null, weekXp: {}, pendingLevels: 0 };
+  return { learned: {}, learnStep: {}, name, style, skin, pinHash, created: Date.now(), level: 1, xp: 0, coins: 50, items: [], equip: {}, powers: {}, ch, seen: {}, mistakes: [], days: {}, streak: 0, bestStreak: 0, lastGoalDay: null, freezeUsed: {}, academy: {}, diag: false, records: { bestBoss: 0, bestCombo: 0, sims: [], totalQ: 0, totalOk: 0, duelsWon: 0 }, daily: null, weekXp: {}, pendingLevels: 0 };
 }
 const P = () => S.p;
 const save = (now) => DB.savePlayer(S.team, S.pid, S.p, now);
@@ -73,13 +74,14 @@ export function pickOne(ch, diff, avoid = new Set()) {
   const genable = ['series', 'math', 'shapes'].includes(ch);
   const useBank = bank.length && (!genable || Math.random() < 0.4);
   if (useBank) {
-    const scored = bank.filter(q => !avoid.has(q.id)).map(q => {
+    const learned = p?.learned;
+    const scored = bank.filter(q => !avoid.has(q.id) && (!learned || !q.topic || learned[q.topic])).map(q => {
       const s = p?.seen?.[q.id];
       return [Math.abs(q.diff - diff) * 1.2 + (s ? s.n * 0.9 - (s.lastOk ? 0 : 0.8) : 0) + Math.random() * 0.8, q];
     }).sort((a, b) => a[0] - b[0]);
     if (scored.length) { avoid.add(scored[0][1].id); return prepareQ(scored[0][1]); }
   }
-  if (genable) { const q = generate(ch, diff, (Math.random() * 1e9) | 0); avoid.add(q.id); return prepareQ(q); }
+  if (genable) { const q = generate(ch, diff, (Math.random() * 1e9) | 0, p?.learned); avoid.add(q.id); return prepareQ(q); }
   return prepareQ(bank[Math.floor(Math.random() * bank.length)]);
 }
 export function buildQs(spec) { // spec: [{ch, n, diff?}]
@@ -108,6 +110,8 @@ function dailyPlan() {
   } else {
     const [w1, w2] = weakest();
     missions.push({ id: 'warm', kind: 'mixed', n: 6, icon: 'flame', title: 'חימום', sub: '6 שאלות מעורבות', min: 6 });
+    const nextTopic = TOPICS.find(t => !(p.learned || {})[t.id]);
+    if (nextTopic) missions.push({ id: 'learn', kind: 'learn', topic: nextTopic.id, icon: 'bulb', title: `נושא חדש: ${nextTopic.title}`, sub: 'לומדים מאפס – הסבר, דוגמאות ותרגול', min: 12 });
     missions.push({ id: 'f1', kind: 'focus', ch: w1, n: 10, icon: w1, title: `אימון ממוקד: ${CHAPTERS[w1].name}`, sub: 'הפרק שהכי כדאי לחזק עכשיו', min: 12 });
     missions.push({ id: 'acad', kind: 'acad', icon: 'academy', title: 'שיעור באקדמיה', sub: 'טקטיקת מבחן', min: 3 });
     missions.push({ id: 'f2', kind: 'focus', ch: w2, n: 10, icon: w2, title: `אימון ממוקד: ${CHAPTERS[w2].name}`, sub: 'עוד פרק לחיזוק', min: 12 });
@@ -399,6 +403,7 @@ function startMission(m) {
     return runQuiz({ title: 'מעבדת טעויות', qs, kind: 'lab', onDone: () => { done(); home(); } });
   }
   if (m.kind === 'acad') { const next = ACADEMY.find(a => !p.academy[a.id]) || ACADEMY[Math.floor(Math.random() * ACADEMY.length)]; return lesson(next, () => { done(); home(); }); }
+  if (m.kind === 'learn') return lessonPlayer(topicById(m.topic), () => { if (P().learned?.[m.topic]) done(); home(); });
   if (m.kind === 'mood') return moodReport(() => { done(); home(); });
 }
 
@@ -596,12 +601,18 @@ function practicePick() {
   $$('.ch-card').forEach(b => b.onclick = () => { const ch = b.dataset.ch; runQuiz({ title: ch === 'mix' ? 'מכל הפרקים' : CHAPTERS[ch].name, qs: ch === 'mix' ? mixed(8) : buildQs([{ ch, n: 8 }]), kind: 'practice', onDone: home }); });
 }
 // ---------- אקדמיה ----------
-function academy() {
-  const p = P();
-  setScreen(`<header class="topbar"><button class="icon-btn" id="bk" aria-label="חזרה">${ic('back')}</button><b>${ic('academy')} האקדמיה</b><span class="muted">${Object.keys(p.academy).length}/${ACADEMY.length}</span></header>
-  <main class="list-screen"><p class="lead">שיעורים קצרים על טקטיקות מבחן. כל שיעור נפתח אחרי הקודם.</p>${ACADEMY.map((a, i) => { const open = i === 0 || p.academy[ACADEMY[i - 1].id] || p.academy[a.id]; const done = p.academy[a.id]; return `<button class="ch-card ${open ? '' : 'locked'}" data-i="${i}" ${open ? '' : 'disabled'}><span class="tile num ${done ? 'done' : ''}">${done ? ic('check') : open ? i + 1 : ic('lock')}</span><span class="ch-t"><b>${a.title}</b></span></button>`; }).join('')}</main>`);
+function academy(tab = 'learn') {
+  const p = P(); p.learned = p.learned || {};
+  const learnList = TOPICS.map((t, i) => { const done = p.learned[t.id]; const prog = p.learnStep?.[t.id] || 0;
+    return `<button class="ch-card" data-t="${t.id}" style="--c:${t.color}"><span class="tile ${done ? 'done' : ''}">${ic(done ? 'check' : t.icon)}</span><span class="ch-t"><b>${t.title}</b><small>${done ? 'נלמד ✓ – אפשר לחזור ולתרגל' : prog ? `באמצע – שלב ${prog + 1} מתוך ${t.steps.length + 1}` : t.desc}</small></span></button>`; }).join('');
+  const tactList = ACADEMY.map((a, i) => { const open = i === 0 || p.academy[ACADEMY[i - 1].id] || p.academy[a.id]; const done = p.academy[a.id]; return `<button class="ch-card ${open ? '' : 'locked'}" data-i="${i}" ${open ? '' : 'disabled'}><span class="tile num ${done ? 'done' : ''}">${done ? ic('check') : open ? i + 1 : ic('lock')}</span><span class="ch-t"><b>${a.title}</b></span></button>`; }).join('');
+  setScreen(`<header class="topbar"><button class="icon-btn" id="bk" aria-label="חזרה">${ic('back')}</button><b>${ic('academy')} האקדמיה</b><span></span></header>
+  <main class="list-screen"><nav class="ptabs"><button class="${tab === 'learn' ? 'on' : ''}" data-tab="learn">${ic('bulb')}לומדים נושא חדש <span class="muted">${Object.keys(p.learned).length}/${TOPICS.length}</span></button><button class="${tab === 'tact' ? 'on' : ''}" data-tab="tact">${ic('target')}טקטיקות מבחן <span class="muted">${Object.keys(p.academy).length}/${ACADEMY.length}</span></button></nav>
+  ${tab === 'learn' ? `<p class="lead">נושאים מהמבחן שאולי עוד לא למדת בבית הספר. כל שיעור מתחיל מאפס: הסבר, המחשה, ניסיון עם עזרה, ובסוף מבחן שליטה קצר. עד שתלמד נושא – לא יופיעו עליו שאלות באימונים.</p>${learnList}` : `<p class="lead">שיעורים קצרים על איך לגשת למבחן עצמו. כל שיעור נפתח אחרי הקודם.</p>${tactList}`}</main>`);
   $('#bk').onclick = home;
-  $$('.ch-card[data-i]').forEach(b => b.onclick = () => lesson(ACADEMY[+b.dataset.i], academy));
+  $$('.ptabs button').forEach(b => b.onclick = () => academy(b.dataset.tab));
+  $$('.ch-card[data-t]').forEach(b => b.onclick = () => lessonPlayer(topicById(b.dataset.t), () => academy('learn')));
+  $$('.ch-card[data-i]').forEach(b => b.onclick = () => lesson(ACADEMY[+b.dataset.i], () => academy('tact')));
 }
 function lesson(a, after) {
   S.active = true;
@@ -619,6 +630,77 @@ function lesson(a, after) {
     } else { b.classList.add('wrong'); beep('bad'); toast('לא בדיוק. קרא שוב את ההסבר ונסה שוב.'); }
   });
 }
+
+// ---------- בית ספר לגיבורים: שיעורי תוכן ----------
+function lessonPlayer(t, after) {
+  const p = P(); p.learnStep = p.learnStep || {}; p.learned = p.learned || {};
+  const total = t.steps.length + 1;
+  const frame = (inner, i) => setScreen(`<header class="topbar"><button class="icon-btn" id="bk" aria-label="חזרה">${ic('back')}</button><b>${ic(t.icon)} ${t.title}</b><span class="muted small">${Math.min(i + 1, total)}/${total}</span></header>
+    <main class="lesson"><div class="dots">${Array.from({ length: total }, (_, k) => `<i class="${k < i ? 'ok' : k === i ? 'cur' : ''}"></i>`).join('')}</div>${inner}</main>`, { active: true }) || ($('#bk').onclick = after);
+  const step = i => {
+    p.learnStep[t.id] = i; save();
+    if (i >= t.steps.length) return masteryIntro();
+    const s = t.steps[i];
+    if (s.type === 'learn') {
+      frame(`<div class="mentor-say">${mentorFace()}<div class="bubble"><h3 style="margin-top:0">${s.title}</h3>${s.html}</div></div>${s.viz ? `<div class="viz-wrap">${s.viz()}</div>` : ''}<button class="btn primary big" id="nx">הבנתי, ממשיכים</button>`, i);
+      $('#nx').onclick = () => step(i + 1);
+    } else if (s.type === 'slider') {
+      frame(`<div class="mentor-say">${mentorFace()}<div class="bubble"><h3 style="margin-top:0">${s.title}</h3>${s.html}</div></div><div class="viz-wrap"><div id="g">${grid100(25)}</div><div class="slider-row"><input type="range" min="0" max="100" value="25" id="sl" dir="ltr"/><b id="sv">25%</b></div></div><button class="btn primary big" id="nx">הבנתי, ממשיכים</button>`, i);
+      $('#sl').oninput = e => { const v = +e.target.value; $('#g').innerHTML = grid100(v); $('#sv').textContent = v + '%'; };
+      $('#nx').onclick = () => step(i + 1);
+    } else {
+      const q = prepareQ({ ch: 'math', ...s.q() }); let tries = 0;
+      const draw = () => {
+        frame(`<div class="qcard" id="lq"></div><div id="lfb"></div>`, i);
+        renderQuestion(q, $('#lq'), { onAnswer: (r, final) => {
+          if (!final) return; const ok = isCorrect(q, r); tries++;
+          if (ok || tries >= 2) {
+            markResult(q, $('#lq'), r); beep(ok ? 'ok' : 'bad'); if (ok) { addXP(6); save(); }
+            $('#lfb').innerHTML = `<div class="feedback ${ok ? 'ok' : 'no'}"><div class="fb-head">${ic(ok ? 'check' : 'bulb')} ${ok ? 'נכון!' : 'בוא נראה איך פותרים'}</div>${ok ? '' : `<div class="fb-ans">התשובה: <b>${answerText(q)}</b></div>`}<div class="fb-exp">${bm(q.exp)}</div><button class="btn primary big" id="nx">ממשיכים</button></div>`;
+            $('#nx').onclick = () => step(i + 1);
+          } else {
+            beep('bad');
+            $('#lfb').innerHTML = `<div class="hint">${mentorFace()}<div><b>כמעט.</b> ${bm(q.hints[0])} נסה שוב.</div></div>`;
+            const keep = $('#lfb').innerHTML; draw(); $('#lfb').innerHTML = keep;
+          }
+        } });
+      };
+      draw();
+    }
+    $('#bk').onclick = after;
+  };
+  const masteryIntro = () => {
+    frame(`<div class="mentor-say">${mentorFace()}<div class="bubble"><h3 style="margin-top:0">מבחן שליטה: ${t.title}</h3>5 שאלות חדשות. כדי לסיים את השיעור צריך לפחות <b>4 נכונות</b>. אין לחץ – אפשר לנסות שוב כמה פעמים שצריך.</div></div><button class="btn primary big" id="go">מתחילים</button><button class="btn link" id="again">לחזור על השיעור מההתחלה</button>`, t.steps.length);
+    $('#go').onclick = mastery; $('#again').onclick = () => step(0); $('#bk').onclick = after;
+  };
+  const mastery = () => {
+    const seed = (Math.random() * 1e9) | 0;
+    const qs = Array.from({ length: 5 }, (_, k) => prepareQ({ ch: 'math', diff: 3, id: 'L' + t.id + k, ...t.master(seed + k * 7919) }));
+    let i = 0, ok = 0;
+    const show = () => {
+      frame(`<div class="qch" style="--c:${t.color}">${ic(t.icon)}מבחן שליטה · ${i + 1}/5</div><div class="qcard" id="mq"></div><div id="mfb"></div>`, t.steps.length);
+      $('#bk').onclick = after;
+      renderQuestion(qs[i], $('#mq'), { onAnswer: (r, final) => {
+        if (!final) return; const good = isCorrect(qs[i], r); if (good) ok++; markResult(qs[i], $('#mq'), r); beep(good ? 'ok' : 'bad');
+        $('#mfb').innerHTML = `<div class="feedback ${good ? 'ok' : 'no'}"><div class="fb-head">${ic(good ? 'check' : 'x')} ${good ? 'נכון' : 'התשובה: ' + answerText(qs[i])}</div>${good ? '' : `<div class="fb-exp">${bm(qs[i].exp)}</div>`}<button class="btn primary big" id="nx">${i < 4 ? 'לשאלה הבאה' : 'לתוצאה'}</button></div>`;
+        $('#nx').onclick = () => { if (i < 4) { i++; show(); } else result(); };
+      } });
+    };
+    const result = () => {
+      const pass = ok >= 4;
+      if (pass) { const first = !p.learned[t.id]; p.learned[t.id] = true; p.learnStep[t.id] = 0; if (first) { addXP(80); addCoins(40); } save(true); confetti(); beep('level'); }
+      frame(`<div class="center-screen" style="min-height:auto"><h2>${pass ? `שלטת ב${t.title}!` : `${ok} מתוך 5 – כמעט`}</h2>
+        <div class="mentor-say">${mentorFace()}<div class="bubble">${pass ? `מעולה! מעכשיו גם שאלות על <b>${t.title}</b> יופיעו באימונים ובסימולציות – ואתה כבר יודע איך לפתור אותן.${p.learned[t.id] ? ' <b>+80 XP</b>' : ''}` : 'צריך 4 נכונות כדי לסיים. כדאי לעבור שוב על ההסבר, ואז לנסות שוב – זה בדיוק איך לומדים.'}</div></div>
+        <div class="row-btns">${pass ? '<button class="btn primary" id="done">סיום</button>' : '<button class="btn primary" id="retry">ניסיון נוסף</button><button class="btn" id="redo">חזרה על השיעור</button>'}</div></div>`, total);
+      $('#bk').onclick = after;
+      if (pass) $('#done').onclick = () => P().pendingLevels ? levelUpFlow(after) : after();
+      else { $('#retry').onclick = mastery; $('#redo').onclick = () => step(0); }
+    };
+    show();
+  };
+  step(Math.min(p.learnStep[t.id] || 0, t.steps.length));
+}
+
 // ---------- דיווח מצב רוח ----------
 const MOODS = [
   { k: 'great', t: 'מעולה' }, { k: 'ok', t: 'בסדר' }, { k: 'tired', t: 'עייף' },
