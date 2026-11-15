@@ -1,14 +1,14 @@
 // MindHero – האפליקציה הראשית
-import * as DB from './store.js?v=19';
-import { LS } from './store.js?v=19';
-import { CHAPTERS, CH_ORDER, VERBAL, ANALOGY, LOGIC, MATH, ACADEMY } from './bank.js?v=19';
-import { generate } from './gen.js?v=19';
-import { STYLES, SKINS, ITEMS, POWERS, SLOT_HE, heroSVG, itemName, strongestPowerColor, levelUpOffers, rankOf, xpForLevel } from './hero.js?v=19';
-import { $, $$, esc, toast, modal, beep, confetti, sound, prepareQ, isCorrect, answerText, renderQuestion, markResult, today, weekKey, fmtTime, isMobile, bars, LETTERS, bm, explainHTML } from './ui.js?v=19';
-import { ic, moodFace, lobbyScene } from './icons.js?v=19';
-import { TOPICS, topicById, grid100 } from './learn.js?v=19';
-import { startExam } from './exam.js?v=19';
-import { parentScreen } from './parent.js?v=19';
+import * as DB from './store.js?v=20';
+import { LS } from './store.js?v=20';
+import { CHAPTERS, CH_ORDER, VERBAL, ANALOGY, LOGIC, MATH, ACADEMY } from './bank.js?v=20';
+import { generate } from './gen.js?v=20';
+import { STYLES, SKINS, ITEMS, POWERS, SLOT_HE, heroSVG, itemName, strongestPowerColor, levelUpOffers, rankOf, xpForLevel } from './hero.js?v=20';
+import { $, $$, esc, toast, modal, beep, confetti, sound, prepareQ, isCorrect, answerText, renderQuestion, markResult, today, weekKey, fmtTime, isMobile, bars, LETTERS, bm, explainHTML } from './ui.js?v=20';
+import { ic, moodFace, lobbyScene } from './icons.js?v=20';
+import { TOPICS, topicById, grid100 } from './learn.js?v=20';
+import { startExam } from './exam.js?v=20';
+import { parentScreen } from './parent.js?v=20';
 
 const app = $('#app');
 export const S = { team: null, teamData: null, pid: null, p: null, active: false, lastInput: Date.now(), inQuestion: null, messages: [] };
@@ -31,12 +31,20 @@ function addXP(n) {
   p.xp += n; dayRec().xp += n; if (S.act) S.act.xp += n; const wk = weekKey(); p.weekXp[wk] = (p.weekXp[wk] || 0) + n;
   while (p.xp >= xpForLevel(p.level)) { p.xp -= xpForLevel(p.level); p.level++; p.pendingLevels = (p.pendingLevels || 0) + 1; }
 }
+// ----- תמונת מצב יומית לגרף ההתקדמות -----
+export const readiness = ch => Math.round(CH_ORDER.reduce((s, c) => s + (Math.max(1, Math.min(5, ch?.[c]?.lvl || 1)) - 1) / 4, 0) / CH_ORDER.length * 100);
+function snapHist() {
+  const p = P(); if (!p?.diag) return; p.hist = p.hist || {};
+  const ch = {}; CH_ORDER.forEach(c => ch[c] = Math.round((p.ch[c]?.lvl || 1) * 100) / 100);
+  p.hist[today()] = { r: readiness(p.ch), ch };
+}
 // ----- יומן פעילות להורה -----
 function startAct(kind, title) {
   if (S.act) endAct();
   if (!S.p) return; S.act = { kind, title, t: Date.now(), sec: 0, q: 0, ok: 0, xp: 0 };
 }
 function endAct(extra) {
+  snapHist();
   const a = S.act; S.act = null; if (!a || !S.p) return;
   if (extra) Object.assign(a, extra);
   if (a.sec < 20 && !a.q && !a.done && !extra) return; // פעילות של שניות בודדות לא נרשמת
@@ -404,7 +412,7 @@ function startMission(m) {
       const per = {};
       CH_ORDER.forEach(ch => { const r = res.filter(x => x.q.ch === ch); const ok = r.filter(x => x.ok).length; per[ch] = ok; p.ch[ch].lvl = 1.5 + ok; });
       p.diagResult = { date: today(), per }; delete p.diagState;
-      p.diag = true; done(); p.daily = null; save(true);
+      p.diag = true; snapHist(); done(); p.daily = null; save(true);
       const sorted = CH_ORDER.slice().sort((a, b) => p.ch[b].lvl - p.ch[a].lvl);
       mentorPopup(`סיימת את משימת הגילוי.<br><br><b>החוזקות שלך:</b> <b>${CHAPTERS[sorted[0]].name}</b> ו<b>${CHAPTERS[sorted[1]].name}</b>.<br><b>כדאי לחזק:</b> <b>${CHAPTERS[sorted[5]].name}</b> ו<b>${CHAPTERS[sorted[4]].name}</b>.<br><br>מעכשיו לוח המשימות היומי ייבנה במיוחד בשבילך.`, [{ t: 'מעולה!', primary: true, fn: home }]);
     } });

@@ -1,10 +1,10 @@
 // MindHero – מסך הורה (תומך בשני הורים)
-import * as DB from './store.js?v=19';
-import { CHAPTERS, CH_ORDER } from './bank.js?v=19';
-import { heroSVG, rankOf } from './hero.js?v=19';
-import { $, $$, esc, toast, modal, today, bars, fmtTime, renderQuestion, isCorrect, markResult, answerText, bm, explainHTML } from './ui.js?v=19';
-import { ic, moodFace } from './icons.js?v=19';
-import { analysisHTML } from './analysis.js?v=19';
+import * as DB from './store.js?v=20';
+import { CHAPTERS, CH_ORDER } from './bank.js?v=20';
+import { heroSVG, rankOf } from './hero.js?v=20';
+import { $, $$, esc, toast, modal, today, bars, fmtTime, renderQuestion, isCorrect, markResult, answerText, bm, explainHTML } from './ui.js?v=20';
+import { ic, moodFace } from './icons.js?v=20';
+import { analysisHTML } from './analysis.js?v=20';
 
 const ago = ts => { const m = Math.round((Date.now() - ts) / 60000); return m < 1 ? 'עכשיו' : m < 60 ? `לפני ${m} דק׳` : m < 1440 ? `לפני ${Math.round(m / 60)} שע׳` : `לפני ${Math.round(m / 1440)} ימים`; };
 const HARD = ['stressed', 'quit', 'frustrated'];
@@ -35,6 +35,60 @@ function activityHTML(p, day) {
         ${ach(a).length ? `<span class="act-ach">${ach(a).map(x => `<i>${esc(x)}</i>`).join('')}</span>` : ''}</span></div>`).join('')}</div>`
       : `<p class="muted">לא נרשמה פעילות ${dayName(day) === 'היום' ? 'היום עד עכשיו' : 'ביום הזה'}.</p>`}
     <p class="muted small">נספר רק זמן פעיל (בלי מסך פתוח ללא פעילות). היומן נשמר לשבועיים.</p></div>`;
+}
+
+
+// ----- גרף התקדמות מיום ליום -----
+const readinessOf = ch => Math.round(CH_ORDER.reduce((s, c) => s + (Math.max(1, Math.min(5, ch?.[c] || 1)) - 1) / 4, 0) / CH_ORDER.length * 100);
+const pct = lvl => Math.round((Math.max(1, Math.min(5, lvl)) - 1) / 4 * 100);
+function progressSeries(p) {
+  const h = { ...(p.hist || {}) };
+  if (p.diagResult && !h[p.diagResult.date]) { const ch = {}; CH_ORDER.forEach(c => ch[c] = 1.5 + (p.diagResult.per[c] || 0)); h[p.diagResult.date] = { ch, r: readinessOf(ch) }; }
+  if (p.diag) { const ch = {}; CH_ORDER.forEach(c => ch[c] = p.ch?.[c]?.lvl || 1); h[today()] = { ch, r: readinessOf(ch) }; }
+  return Object.keys(h).sort().map(d => ({ d, r: h[d].r ?? readinessOf(h[d].ch), ch: h[d].ch }));
+}
+const dlabel = d => { const x = new Date(d); return `${x.getDate()}.${x.getMonth() + 1}`; };
+function lineSVG(pts, { color = '#3ee6d2', h = 180, w = 640, ticks = [0, 25, 50, 75, 100], id = '', mini = false } = {}) {
+  const padL = mini ? 6 : 34, padR = mini ? 30 : 44, padT = 14, padB = mini ? 8 : 26;
+  const X = i => padL + (pts.length < 2 ? (w - padL - padR) / 2 : i * (w - padL - padR) / (pts.length - 1));
+  const Y = v => padT + (1 - v / 100) * (h - padT - padB);
+  const path = pts.map((p, i) => `${i ? 'L' : 'M'}${X(i).toFixed(1)} ${Y(p.v).toFixed(1)}`).join(' ');
+  const area = `${path} L${X(pts.length - 1).toFixed(1)} ${Y(0)} L${X(0).toFixed(1)} ${Y(0)} Z`;
+  const last = pts[pts.length - 1];
+  const step = Math.max(1, Math.ceil(pts.length / 8));
+  return `<svg class="pchart" viewBox="0 0 ${w} ${h}" dir="ltr" data-chart="${id}" role="img" aria-label="גרף התקדמות">
+    ${mini ? '' : ticks.map(t => `<line x1="${padL}" x2="${w - padR}" y1="${Y(t)}" y2="${Y(t)}" stroke="#2c3b78" stroke-width="1" ${t ? 'stroke-dasharray="3 4"' : ''}/><text x="${padL - 8}" y="${Y(t) + 4}" font-size="11" fill="#9aa6d1" text-anchor="end">${t}</text>`).join('')}
+    ${mini ? `<line x1="${padL}" x2="${w - padR}" y1="${Y(0)}" y2="${Y(0)}" stroke="#2c3b78"/>` : ''}
+    <path d="${area}" fill="${color}" fill-opacity=".10"/>
+    <path d="${path}" fill="none" stroke="${color}" stroke-width="${mini ? 2.5 : 2.5}" stroke-linejoin="round" stroke-linecap="round"/>
+    ${pts.map((p, i) => `<circle cx="${X(i)}" cy="${Y(p.v)}" r="${mini ? 3.5 : 4.5}" fill="${color}" stroke="#141e44" stroke-width="2"/>`).join('')}
+    <text x="${X(pts.length - 1) + (mini ? 8 : 10)}" y="${mini ? Math.max(12, Y(last.v) - 6) : Y(last.v) + 4}" font-size="${mini ? 13 : 13}" font-weight="700" fill="#eef2ff">${last.v}</text>
+    ${mini ? '' : pts.map((p, i) => i % step === 0 || i === pts.length - 1 ? `<text x="${X(i)}" y="${h - 6}" font-size="11" fill="#9aa6d1" text-anchor="middle">${dlabel(p.d)}</text>` : '').join('')}
+    ${pts.map((p, i) => `<rect x="${X(i) - (w - padL - padR) / Math.max(1, pts.length - 1) / 2}" y="0" width="${(w - padL - padR) / Math.max(1, pts.length - 1)}" height="${h}" fill="transparent" data-i="${i}"><title>${dlabel(p.d)}: ${p.v}</title></rect>`).join('')}
+  </svg>`;
+}
+export function progressHTML(p) {
+  const S = progressSeries(p);
+  if (!p.diag || !S.length) return `<div class="p-card"><h4>${ic('chart')} התקדמות לאורך זמן</h4><p class="muted">הגרף יופיע אחרי שאוריה יסיים את משימת הגילוי – היא נקודת ההתחלה.</p></div>`;
+  const now = S[S.length - 1].r, first = S[0].r, prev = S.length > 1 ? S[S.length - 2].r : null;
+  const delta = v => v > 0 ? `<b class="up">▲ ${v}</b>` : v < 0 ? `<b class="down">▼ ${-v}</b>` : '<b class="flat">ללא שינוי</b>';
+  const minis = CH_ORDER.map(c => { const pts = S.map(x => ({ d: x.d, v: pct(x.ch[c]) })); const dv = pts[pts.length - 1].v - pts[0].v;
+    return `<div class="mini-chart" style="--c:${CHAPTERS[c].color}"><div class="mc-h">${ic(c)}<b>${CHAPTERS[c].name}</b><span>${delta(dv)}</span></div>${lineSVG(pts, { color: CHAPTERS[c].color, h: 76, w: window.innerWidth < 700 ? 180 : 240, mini: true })}</div>`; }).join('');
+  return `<div class="p-card"><h4>${ic('chart')} התקדמות לאורך זמן</h4>
+    <div class="ready-row"><div class="ready-num">${now}<small>/100</small></div><div><b>מדד מוכנות</b><p class="muted small" style="margin:2px 0">ממוצע הרמה בששת פרקי המבחן, בסולם 0–100. נקודת ההתחלה היא משימת הגילוי.</p>
+      <div class="ready-deltas"><span>מאז משימת הגילוי: ${delta(now - first)}</span>${prev != null ? `<span>מאז יום האימון הקודם: ${delta(now - prev)}</span>` : ''}</div></div></div>
+    <div class="chart-box" id="pc-main">${lineSVG(S.map(x => ({ d: x.d, v: x.r })), { id: 'main', w: window.innerWidth < 700 ? 380 : 640, h: window.innerWidth < 700 ? 200 : 180 })}<div class="chart-tip" hidden></div></div>
+    <h4 style="margin-top:16px">לפי פרקים (0–100)</h4><div class="mini-grid">${minis}</div>
+    <details class="review"><summary>הצגה כטבלה</summary><table class="ptable"><tr><th>תאריך</th><th>מוכנות</th>${CH_ORDER.map(c => `<th>${CHAPTERS[c].name}</th>`).join('')}</tr>${S.slice().reverse().map(x => `<tr><td>${dlabel(x.d)}</td><td><b>${x.r}</b></td>${CH_ORDER.map(c => `<td>${pct(x.ch[c])}</td>`).join('')}</tr>`).join('')}</table></details>
+    <p class="muted small">נקודה נוספת נרשמת בכל יום שבו אוריה מתאמן. רמה בפרק עולה עם תשובות נכונות בשאלות קשות, ויורדת מעט בטעויות – לכן ירידה קטנה אחרי שאלות קשות היא חלק רגיל מהלמידה.</p></div>`;
+}
+export function bindProgress(el, p) {
+  const box = $('#pc-main', el); if (!box) return; const S = progressSeries(p); const tip = $('.chart-tip', box);
+  $$('rect[data-i]', box).forEach(r => {
+    r.onmouseenter = r.onfocus = () => { const x = S[+r.dataset.i]; tip.hidden = false; tip.innerHTML = `<b>${dlabel(x.d)}</b> · מוכנות ${x.r}<br>${CH_ORDER.map(c => `<span style="--c:${CHAPTERS[c].color}"><i></i>${CHAPTERS[c].name} ${pct(x.ch[c])}</span>`).join('')}`;
+      const bb = r.getBoundingClientRect(), pb = box.getBoundingClientRect(); tip.style.left = Math.min(pb.width - 230, Math.max(0, bb.left - pb.left + bb.width / 2 - 115)) + 'px'; };
+    r.onmouseleave = () => tip.hidden = true;
+  });
 }
 
 export async function parentScreen(ctx) {
@@ -82,6 +136,7 @@ export async function parentScreen(ctx) {
     el.innerHTML = `${kidTabs()}
       <div class="p-head"><div class="mini-h big">${heroSVG(p)}</div><div><h2>${esc(p.name)}</h2><p>רמה ${p.level} · ${rankOf(p.level)} · רצף ${p.streak || 0} ימים</p><p class="muted">פעילות אחרונה: ${lastDay || 'עדיין אין'}</p></div></div>
       <div class="rec-grid"><div><b>${days[13].v}′</b><small>היום (יעד ${goal}′)</small></div><div><b>${wMin}′</b><small>7 ימים אחרונים</small></div><div><b>${wQ ? Math.round(wOk / wQ * 100) : 0}%</b><small>דיוק השבוע · ${wQ} שאלות</small></div><div><b>${p.records?.bestBoss || 0}%</b><small>שיא בקרב בוס</small></div></div>
+      ${progressHTML(p)}
       ${activityHTML(p, actDay)}
       ${analysisHTML(p, ic)}
       ${p.diagResult ? `<div class="p-card"><h4>${ic('radar')} תוצאות משימת הגילוי · ${p.diagResult.date}</h4><p class="muted small" style="margin:0 0 8px">3 שאלות מכל פרק, ברמות קושי עולות. נקודת הפתיחה שלפיה נבנה האימון.</p>${CH_ORDER.map(c => `<div class="mast-row" style="--c:${CHAPTERS[c].color}"><span>${ic(c)} ${CHAPTERS[c].name}</span><span class="mastery big"><i style="width:${(p.diagResult.per[c] || 0) / 3 * 100}%"></i></span><b>${p.diagResult.per[c] || 0}/3</b></div>`).join('')}</div>`
@@ -97,6 +152,7 @@ export async function parentScreen(ctx) {
         <textarea id="enc" placeholder="או כתבו הודעה משלכם"></textarea><button class="btn primary" id="encsend">${ic('send')} שליחה – תופיע לו במסך הבית</button></div>`;
     bindKid(el);
     $$('[data-day]', el).forEach(b => b.onclick = () => { actDay = b.dataset.day; render(); });
+    bindProgress(el, p);
     $$('[data-q]', el).forEach(b => b.onclick = () => $('#enc').value = b.dataset.q);
     $('#encsend').onclick = async () => { const t = $('#enc').value.trim(); if (!t) return toast('כתבו הודעה'); await DB.addMessage(code, { from: me.id, fromName: me.name, to: p.id, kind: 'encourage', text: t }); $('#enc').value = ''; toast('ההודעה נשלחה'); };
   }
