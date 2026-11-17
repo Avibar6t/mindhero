@@ -1,11 +1,11 @@
 // MindHero – מסך הורה (תומך בשני הורים)
-import * as DB from './store.js?v=26';
-import { CHAPTERS, CH_ORDER } from './bank.js?v=26';
-import { heroSVG, rankOf } from './hero.js?v=26';
-import { $, $$, esc, toast, modal, today, bars, fmtTime, renderQuestion, isCorrect, markResult, answerText, bm, explainHTML } from './ui.js?v=26';
-import { ic, moodFace } from './icons.js?v=26';
-import { battleScreen, PARENT_HERO } from './battle.js?v=26';
-import { analysisHTML } from './analysis.js?v=26';
+import * as DB from './store.js?v=27';
+import { CHAPTERS, CH_ORDER } from './bank.js?v=27';
+import { heroSVG, rankOf } from './hero.js?v=27';
+import { $, $$, esc, toast, modal, today, bars, fmtTime, renderQuestion, isCorrect, markResult, answerText, bm, explainHTML } from './ui.js?v=27';
+import { ic, moodFace } from './icons.js?v=27';
+import { battleScreen, PARENT_HERO } from './battle.js?v=27';
+import { analysisHTML } from './analysis.js?v=27';
 
 const ago = ts => { const m = Math.round((Date.now() - ts) / 60000); return m < 1 ? 'עכשיו' : m < 60 ? `לפני ${m} דק׳` : m < 1440 ? `לפני ${Math.round(m / 60)} שע׳` : `לפני ${Math.round(m / 1440)} ימים`; };
 const HARD = ['stressed', 'quit', 'frustrated'];
@@ -181,7 +181,7 @@ export async function parentScreen(ctx) {
         const st = !a ? `<button class="btn small primary" data-play="${d.id}">לשחק</button>${b ? `<small class="muted">${esc(on)} כבר סיים – התוצאה סודית</small>` : ''}` : !b ? `<span class="muted">מחכים ל${esc(on)}</span>` : `<button class="btn small gold" data-watch="${d.id}">${ic('duel')} ${d.viewed?.[me.id] ? 'צפייה חוזרת' : 'לצפייה בקרב'}</button>`;
         return `<div class="duel-row"><span>מול <b>${esc(on)}</b></span><span class="muted small">${a && b && d.viewed?.[me.id] ? `אני: ${a.ok}/8 · ${fmtTime(a.t)} | ${esc(on)}: ${b.ok}/8 · ${fmtTime(b.t)}` : ''}</span>${st}</div>`; }).join('') : '<p class="muted">עוד אין קרבות.</p>'}`;
     $$('.opp-b', el).forEach(b => b.onclick = async () => {
-      const qs = ctx.mixed(8);
+      const qs = (await ctx.mixed(8, b.dataset.k)).slice(0, 8);
       const d = { from: me.id, fromName: me.name, to: b.dataset.k, toName: b.dataset.n, qs };
       d.id = await DB.createDuel(code, d); d.results = {};
       playDuel(d);

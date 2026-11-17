@@ -1,16 +1,16 @@
 // MindHero – האפליקציה הראשית
-import * as DB from './store.js?v=26';
-import { LS } from './store.js?v=26';
-import { CHAPTERS, CH_ORDER, VERBAL, ANALOGY, LOGIC, MATH, ACADEMY } from './bank.js?v=26';
-import { generate } from './gen.js?v=26';
-import { STYLES, SKINS, ITEMS, POWERS, SLOT_HE, heroSVG, itemName, strongestPowerColor, levelUpOffers, rankOf, xpForLevel } from './hero.js?v=26';
-import { $, $$, esc, toast, modal, beep, confetti, sound, prepareQ, isCorrect, answerText, renderQuestion, markResult, today, weekKey, fmtTime, isMobile, bars, LETTERS, bm, explainHTML } from './ui.js?v=26';
-import { ic, moodFace, lobbyScene } from './icons.js?v=26';
-import { TOPICS, topicById, grid100 } from './learn.js?v=26';
-import { BGS, RAR_NAME, bgScene, heroScene, rollBg, GIFTS, rollGift, addGift, giftHit } from './fun.js?v=26';
-import { battleScreen, PARENT_HERO, REACT_TXT } from './battle.js?v=26';
-import { startExam } from './exam.js?v=26';
-import { parentScreen } from './parent.js?v=26';
+import * as DB from './store.js?v=27';
+import { LS } from './store.js?v=27';
+import { CHAPTERS, CH_ORDER, VERBAL, ANALOGY, LOGIC, MATH, ACADEMY } from './bank.js?v=27';
+import { generate } from './gen.js?v=27';
+import { STYLES, SKINS, ITEMS, POWERS, SLOT_HE, heroSVG, itemName, strongestPowerColor, levelUpOffers, rankOf, xpForLevel } from './hero.js?v=27';
+import { $, $$, esc, toast, modal, beep, confetti, sound, prepareQ, isCorrect, answerText, renderQuestion, markResult, today, weekKey, fmtTime, isMobile, bars, LETTERS, bm, explainHTML } from './ui.js?v=27';
+import { ic, moodFace, lobbyScene } from './icons.js?v=27';
+import { TOPICS, topicById, grid100 } from './learn.js?v=27';
+import { BGS, RAR_NAME, bgScene, heroScene, rollBg, GIFTS, rollGift, addGift, giftHit } from './fun.js?v=27';
+import { battleScreen, PARENT_HERO, REACT_TXT } from './battle.js?v=27';
+import { startExam } from './exam.js?v=27';
+import { parentScreen } from './parent.js?v=27';
 
 const app = $('#app');
 export const S = { team: null, teamData: null, pid: null, p: null, active: false, lastInput: Date.now(), inQuestion: null, messages: [] };
@@ -202,7 +202,7 @@ const EVE_BOSSES = ['שומר המבוך', 'הצל הסדרתי', 'מלך החי
 function eveningBoss() {
   const p = P(); const name = EVE_BOSSES[new Date().getDay()];
   mentorPopup(`<b>בוס הערב: ${name}</b> הופיע – אבל רק עד ${bossHour() + 2}:00!<br>10 שאלות קשות מהרגיל מכל הפרקים, 12 דקות על השעון. ניסיון אחד בכל ערב.<br><br>ניצחון (לפחות 50%) = <b>פריט נדיר לבחירה</b> + 100 מטבעות.`, [{ t: 'לקרב', primary: true, fn: () => {
-    const avoid = new Set(); const qs = Array.from({ length: 10 }, (_, i) => { const ch = CH_ORDER[i % 6]; return pickOne(ch, clampD(p.ch[ch].lvl + 1), avoid); }).sort(() => Math.random() - .5);
+    const avoid = new Set(); const qs = Array.from({ length: 10 }, (_, i) => { const ch = CH_ORDER[i % 6]; return pickSafe(ch, clampD(p.ch[ch].lvl + 1), avoid, { env: 'boss' }); }).filter(Boolean).sort(() => Math.random() - .5);
     p.eveBoss = today(); save(true);
     runQuiz({ title: `בוס הערב: ${name}`, qs, kind: 'boss', timed: Math.round(12 * 60 * (1 + pw('slow') * 0.1)), onDone: (res, extra) => {
       const win = (extra.score || 0) >= 50;
@@ -214,32 +214,62 @@ function eveningBoss() {
 
 // ================== בחירת שאלות ==================
 const clampD = x => Math.max(1, Math.min(5, Math.round(x)));
-export function pickOne(ch, diff, avoid = new Set()) {
-  const p = P(); const bank = BANK[ch] || [];
-  const genable = ['series', 'math', 'shapes'].includes(ch);
-  const useBank = bank.length && (!genable || Math.random() < 0.4);
-  if (useBank) {
-    const learned = p?.learned;
-    const scored = bank.filter(q => !avoid.has(q.id) && (!learned || !q.topic || learned[q.topic])).map(q => {
-      const s = p?.seen?.[q.id];
-      return [Math.abs(q.diff - diff) * 1.2 + (s ? s.n * 0.9 - (s.lastOk ? 0 : 0.8) : 0) + Math.random() * 0.8, q];
-    }).sort((a, b) => a[0] - b[0]);
-    if (scored.length) { avoid.add(scored[0][1].id); return prepareQ(scored[0][1]); }
-  }
-  if (genable) { const q = generate(ch, diff, (Math.random() * 1e9) | 0, p?.learned); avoid.add(q.id); return prepareQ(q); }
-  return prepareQ(bank[Math.floor(Math.random() * bank.length)]);
+// ----- חוק החזרות: כל שאלה נשאלת לכל היותר פעמיים, ואף פעם לא פעמיים באותה סביבה -----
+// סביבות: d=אבחון p=אימון b=בוס l=מעבדת טעויות u=דו-קרב e=סימולציה o=היסטוריה ישנה
+const ENV_CH = { diag: 'd', practice: 'p', boss: 'b', lab: 'l', duel: 'u', exam: 'e' };
+const envOf = kind => ENV_CH[kind] || 'p';
+const BANK_IDS = new Set(Object.values(BANK).flat().map(q => q.id));
+export function qkey(q) {
+  if (q.key) return q.key;
+  if (!q.gen) return q.id;
+  const s = q.sig || ((q.q || '') + '|' + (q.type === 'shape' ? JSON.stringify(q.cells) + JSON.stringify(q.opts?.[q.ans]) : (q.answer ?? JSON.stringify(q.opts?.[q.ans]))));
+  let h = 5381; for (let i = 0; i < s.length; i++) h = ((h * 33) ^ s.charCodeAt(i)) | 0;
+  return 'g' + (h >>> 0).toString(36) + s.length.toString(36);
 }
-export function buildQs(spec) { // spec: [{ch, n, diff?}]
+export function qlogOf(p = P()) {
+  if (!p) return {};
+  if (!p.qlog) { p.qlog = {}; Object.entries(p.seen || {}).forEach(([id, x]) => { if (BANK_IDS.has(id)) p.qlog[id] = 'o'.repeat(Math.min(2, x.n || 1)); }); }
+  return p.qlog;
+}
+const canUse = (k, env, logs) => logs.every(L => { const u = L?.[k] || ''; return u.length < 2 && !u.includes(env); });
+export function useQ(p, q, env) { p = p || P(); const L = qlogOf(p), k = qkey(q); const u = L[k] || ''; if (!u.includes(env)) L[k] = u + env; }
+// o: { env: 'practice'|'diag'|..., logs: [qlog...], prof: הפרופיל שהנושאים שלמד קובעים }
+export function pickOne(ch, diff, avoid = new Set(), o = {}) {
+  const env = envOf(o.env), prof = o.prof || P(), logs = o.logs || [qlogOf(P())], learned = prof?.learned;
+  const okQ = q => { const k = qkey(q); return !avoid.has(k) && canUse(k, env, logs); };
+  const take = q => { const k = qkey(q); avoid.add(k); return prepareQ({ ...q, key: k }); };
+  const bank = (BANK[ch] || []).filter(q => (!learned || !q.topic || learned[q.topic]) && okQ(q));
+  const bankShare = ['series', 'math', 'shapes'].includes(ch) ? 0.4 : 0.5;
+  const fromBank = () => take(bank.map(q => [Math.abs(q.diff - diff) * 1.2 + Math.random() * 0.8, q]).sort((a, b) => a[0] - b[0])[0][1]);
+  if (bank.length && Math.random() < bankShare) return fromBank();
+  for (const d of [diff, diff - 1, diff + 1, diff - 2, diff + 2].map(clampD)) for (let t = 0; t < 25; t++) {
+    const q = generate(ch, d, (Math.random() * 1e9) | 0, learned);
+    if (q && okQ(q)) return take(q);
+  }
+  return bank.length ? fromBank() : null;
+}
+// בוחר שאלה; אם בפרק אין יותר שאלות "חדשות" – עובר לפרק אחר (לעולם לא שובר את החוק)
+function pickSafe(ch, diff, avoid, o) {
+  const q = pickOne(ch, diff, avoid, o); if (q) return q;
+  for (const c of CH_ORDER) if (c !== ch) { const x = pickOne(c, diff, avoid, o); if (x) return x; }
+  return null;
+}
+export function buildQs(spec, o = {}) { // spec: [{ch, n, diff?}]
   const avoid = new Set(), out = [];
   for (const s of spec) for (let i = 0; i < s.n; i++) {
-    const base = s.diff ?? P()?.ch?.[s.ch]?.lvl ?? 2;
+    const base = s.diff ?? (o.prof || P())?.ch?.[s.ch]?.lvl ?? 2;
     const d = clampD(s.diffs ? s.diffs[i] : base + (Math.random() < 0.3 ? 1 : Math.random() < 0.3 ? -1 : 0));
-    out.push(pickOne(s.ch, d, avoid));
+    const q = pickSafe(s.ch, d, avoid, o); if (q) out.push(q);
   }
   return out;
 }
 const weakest = () => CH_ORDER.slice().sort((a, b) => (P().ch[a].lvl + (P().ch[a].n ? P().ch[a].ok / P().ch[a].n : 0.5)) - (P().ch[b].lvl + (P().ch[b].n ? P().ch[b].ok / P().ch[b].n : 0.5)));
-const mixed = n => { const out = []; const avoid = new Set(); for (let i = 0; i < n; i++) { const ch = CH_ORDER[i % 6]; out.push(pickOne(ch, clampD(P().ch[ch].lvl), avoid)); } return out.sort(() => Math.random() - .5); };
+export const mixed = (n, o = {}) => { const out = []; const avoid = new Set(); const prof = o.prof || P(); for (let i = 0; i < n; i++) { const ch = CH_ORDER[i % 6]; const q = pickSafe(ch, clampD(prof?.ch?.[ch]?.lvl ?? 3), avoid, o); if (q) out.push(q); } return out.sort(() => Math.random() - .5); };
+// שאלות לדו-קרב: חייבות להיות "חדשות" גם לי וגם ליריב
+async function duelQs(otherId) {
+  const pl = (await DB.listPlayers(S.team)).find(x => x.id === otherId);
+  return mixed(8, { env: 'duel', logs: [qlogOf(P()), ...(pl ? [qlogOf(pl)] : [])] }).slice(0, 8);
+}
 
 // ================== תוכנית יומית ==================
 function dailyPlan() {
@@ -552,7 +582,7 @@ async function loadMessages() {
   $$('.banner.msg', b).forEach(x => $('button', x).onclick = async () => { await DB.markRead(S.team, x.dataset.id); x.remove(); addXP(5); save(); beep('coin'); });
   $$('.banner.duel[data-d]', b).forEach(x => $('button', x).onclick = () => playDuel(duels.find(d => d.id === x.dataset.d)));
   $$('.banner.gift', b).forEach(x => $('button', x).onclick = () => { const r = gotG.find(y => y.d.id === x.dataset.g); x.remove(); giftReceived(r.d, r.o, r.n, r.g); });
-  $$('.banner.react[data-r]', b).forEach(x => $('button', x).onclick = () => { const r = reacts.find(y => y.d.id === x.dataset.r); P().seenReacts = { ...(P().seenReacts || {}), [r.d.id]: r.e }; save(true); x.remove(); if (r.e === '😤') { const qs = mixed(8).slice(0, 8); DB.createDuel(S.team, { from: S.pid, fromName: P().name, to: r.o, toName: r.n, qs }).then(id => playDuel({ id, qs, from: S.pid, fromName: P().name, to: r.o, toName: r.n, results: {} })); } });
+  $$('.banner.react[data-r]', b).forEach(x => $('button', x).onclick = () => { const r = reacts.find(y => y.d.id === x.dataset.r); P().seenReacts = { ...(P().seenReacts || {}), [r.d.id]: r.e }; save(true); x.remove(); if (r.e === '😤') duelQs(r.o).then(qs => DB.createDuel(S.team, { from: S.pid, fromName: P().name, to: r.o, toName: r.n, qs }).then(id => playDuel({ id, qs, from: S.pid, fromName: P().name, to: r.o, toName: r.n, results: {} }))); });
   $$('.banner.duel[data-w]', b).forEach(x => $('button', x).onclick = () => watchDuel(ready.find(d => d.id === x.dataset.w)));
 }
 // ---------- משימות ----------
@@ -560,7 +590,7 @@ function startMission(m) {
   const p = P();
   const done = () => { const plan = dailyPlan(); plan.done[m.id] = true; save(); };
   if (m.kind === 'diag') {
-    if (!p.diagState) { p.diagState = { qs: buildQs(CH_ORDER.map(ch => ({ ch, n: 3, diffs: [2, 3, 4] }))).sort(() => Math.random() - .5), res: [] }; save(true); }
+    if (!p.diagState) { p.diagState = { qs: buildQs(CH_ORDER.map(ch => ({ ch, n: 3, diffs: [2, 3, 4] })), { env: 'diag' }).sort(() => Math.random() - .5), res: [] }; save(true); }
     const ds = p.diagState;
     return runQuiz({ title: 'משימת גילוי', qs: ds.qs.map(q => JSON.parse(JSON.stringify(q))), prior: ds.res, kind: 'diag', onDone: (res) => {
       const per = {};
@@ -575,11 +605,13 @@ function startMission(m) {
   if (m.kind === 'focus') return runQuiz({ title: m.title, qs: buildQs([{ ch: m.ch, n: m.n }]), kind: 'practice', onDone: () => { done(); home(); } });
   if (m.kind === 'boss') return bossIntro(() => { done(); home(); });
   if (m.kind === 'lab') {
+    // רק טעויות שעוד מותר לשאול (פחות מפעמיים, ולא כבר במעבדה)
+    const L = qlogOf(p); p.mistakes = p.mistakes.filter(q => canUse(qkey(q), 'l', [L]));
     if (!p.mistakes.length) return runQuiz({ title: 'סבב מהירות', qs: mixed(8), kind: 'practice', onDone: () => { done(); home(); } });
-    const qs = p.mistakes.slice(0, 8).map(q => prepareQ(q));
+    const qs = p.mistakes.slice(0, 8).map(q => prepareQ({ ...q, key: qkey(q) }));
     return runQuiz({ title: 'מעבדת טעויות', qs, kind: 'lab', onDone: () => { done(); home(); } });
   }
-  if (m.kind === 'acad') { const next = ACADEMY.find(a => !p.academy[a.id]) || ACADEMY[Math.floor(Math.random() * ACADEMY.length)]; return lesson(next, () => { done(); home(); }); }
+  if (m.kind === 'acad') { const L = qlogOf(p); const next = ACADEMY.find(a => !p.academy[a.id]) || ACADEMY.find(a => !(L['acad:' + a.id] || '').length) || ACADEMY[Math.floor(Math.random() * ACADEMY.length)]; return lesson(next, () => { done(); home(); }); }
   if (m.kind === 'learn') return lessonPlayer(topicById(m.topic), () => { if (P().learned?.[m.topic]) done(); home(); });
   if (m.kind === 'mood') return moodReport(() => { done(); home(); });
 }
@@ -587,7 +619,7 @@ function startMission(m) {
 function bossIntro(after) {
   const secs = Math.round(15 * 60 * (1 + pw('slow') * 0.1));
   const boss = ['סְפִינְקְס הסדרות', 'הגולם הלוגי', 'דרקון הצורות', 'מכשף המילים', 'רובוט החשבון'][new Date().getDate() % 5];
-  mentorPopup(`<b>${boss}</b> חוסם את הדרך!<br>12 שאלות מכל הפרקים, ${Math.round(secs / 60)} דקות על השעון – בדיוק כמו במבחן:<br>• אין משוב עד הסוף.<br>• אפשר לדלג ולחזור.<br>• <b>לא משאירים שאלה ריקה</b> – אין עונש על ניחוש!`, [{ t: 'לקרב! ⚔️', primary: true, fn: () => runQuiz({ title: `קרב בוס: ${boss}`, qs: mixed(12), kind: 'boss', timed: secs, onDone: after }) }, { t: 'לא עכשיו' }]);
+  mentorPopup(`<b>${boss}</b> חוסם את הדרך!<br>12 שאלות מכל הפרקים, ${Math.round(secs / 60)} דקות על השעון – בדיוק כמו במבחן:<br>• אין משוב עד הסוף.<br>• אפשר לדלג ולחזור.<br>• <b>לא משאירים שאלה ריקה</b> – אין עונש על ניחוש!`, [{ t: 'לקרב! ⚔️', primary: true, fn: () => runQuiz({ title: `קרב בוס: ${boss}`, qs: mixed(12, { env: 'boss' }), kind: 'boss', timed: secs, onDone: after }) }, { t: 'לא עכשיו' }]);
 }
 
 // ================== מנוע השאלות ==================
@@ -656,7 +688,7 @@ function runQuiz(cfg) {
     const c = p.ch[q.ch]; c.n++; if (ok) c.ok++; c.time += t; if (S.act) { S.act.q++; if (ok) S.act.ok++; }
     const delta = 0.22 * (1 + ((ok ? q.diff - c.lvl : c.lvl - q.diff) || 0) * 0.3);
     if (cfg.kind !== 'diag') c.lvl = Math.max(1, Math.min(5, c.lvl + (ok ? delta : -delta)));
-    p.seen[q.id] = { n: (p.seen[q.id]?.n || 0) + 1, lastOk: ok };
+    p.seen[q.id] = { n: (p.seen[q.id]?.n || 0) + 1, lastOk: ok }; useQ(p, q, envOf(cfg.kind));
     p.records.hints = (p.records.hints || 0) + R.hintIdx; if (revealed) p.records.reveals = (p.records.reveals || 0) + 1;
     p.records.qTime = (p.records.qTime || 0) + Math.min(t, 300);
     p.records.totalQ++; if (ok) p.records.totalOk++;
@@ -800,12 +832,16 @@ function academy(tab = 'learn') {
 function lesson(a, after) {
   startAct('tactic', a.title);
   S.active = true;
+  const L = qlogOf(P()), qk = 'acad:' + a.id; const quizOk = canUse(qk, 'p', [L]);
   setScreen(`<header class="topbar"><button class="icon-btn" id="bk" aria-label="חזרה">${ic('back')}</button><b>${a.title}</b><span></span></header>
   <main class="lesson"><div class="mentor-say">${mentorFace()}<div class="bubble">${a.body}</div></div>
-  <div class="lesson-q"><h3>בדיקה קצרה</h3><p>${a.quiz.q}</p><div class="opts">${a.quiz.opts.map((o, i) => `<button class="opt" data-i="${i}"><span class="ol">${LETTERS[i]}</span><span class="ot">${o}</span></button>`).join('')}</div></div><div id="lfb"></div></main>`, { active: true });
+  ${quizOk ? `<div class="lesson-q"><h3>בדיקה קצרה</h3><p>${a.quiz.q}</p><div class="opts">${a.quiz.opts.map((o, i) => `<button class="opt" data-i="${i}"><span class="ol">${LETTERS[i]}</span><span class="ot">${o}</span></button>`).join('')}</div></div>` : `<p class="muted center">כבר פתרת את שאלת הבדיקה של השיעור הזה – היא לא תישאל שוב.</p><button class="btn primary big" id="ldone0">המשך</button>`}<div id="lfb"></div></main>`, { active: true });
+  if (!quizOk) { $('#ldone0').onclick = after; $('#bk').onclick = after; return; }
+  let tried = false;
   $('#bk').onclick = after;
   $$('.lesson-q .opt').forEach(b => b.onclick = () => {
     const i = +b.dataset.i; if ($('.lesson-q').classList.contains('locked')) return;
+    if (!tried) { tried = true; L[qk] = 'p'; save(); }
     if (i === a.quiz.ans) {
       $('.lesson-q').classList.add('locked'); b.classList.add('right'); beep('ok');
       const first = !P().academy[a.id]; P().academy[a.id] = true; if (first) { addXP(30); addCoins(20); } save(); if (S.act) S.act.done = true;
@@ -981,12 +1017,13 @@ function simPick() {
   $('#bk').onclick = home;
   $$('.ch-card[data-m]').forEach(b => b.onclick = () => {
     const mini = b.dataset.m === 'mini'; const n = mini ? 4 : 12;
-    const qs = CH_ORDER.map(ch => buildQs([{ ch, n, diffs: Array.from({ length: n }, (_, i) => 1 + Math.floor(i * 4.99 / (n - 1 || 1))) }]));
+    const ex = new Set(); const qs = CH_ORDER.map(ch => buildQs([{ ch, n, diffs: Array.from({ length: n }, (_, i) => 1 + Math.floor(i * 4.99 / (n - 1 || 1))) }], { env: 'exam' }).filter(q => !ex.has(q.key) && ex.add(q.key)));
+    const markExam = () => { qs.flat().forEach(q => useQ(P(), q, 'e')); save(true); };
     const mins = (mini ? 30 : 90) + ($('#extra').checked ? (mini ? 5 : 15) : 0);
     S.active = true;
     startAct('sim', mini ? 'מיני-סימולציה' : 'סימולציה מלאה');
-    startExam({ app, qsByCh: qs, minutes: mins, mini, onExit: home, onFinish: (r) => {
-      const p = P(); p.records.sims.push({ date: today(), mini, score: r.score, perCh: r.perCh, empty: r.empty });
+    startExam({ app, qsByCh: qs, minutes: mins, mini, onExit: () => { markExam(); home(); }, onFinish: (r) => {
+      markExam(); const p = P(); p.records.sims.push({ date: today(), mini, score: r.score, perCh: r.perCh, empty: r.empty });
       CH_ORDER.forEach((ch, i) => { const c = p.ch[ch]; c.n += r.perCh[i].n; c.ok += r.perCh[i].ok; c.lvl = Math.max(1, Math.min(5, c.lvl + (r.perCh[i].ok / r.perCh[i].n - 0.6))); });
       r.wrong.forEach(q => { if (!p.mistakes.some(m => m.id === q.id)) { p.mistakes.unshift(q); } }); p.mistakes = p.mistakes.slice(0, 40);
       const xp = Math.round(r.ok * 6 + (mini ? 40 : 150)); addXP(xp); addCoins(mini ? 40 : 150); endAct({ done: true, q: r.n, ok: r.ok, score: r.score, empty: r.empty }); save(true);
@@ -1008,7 +1045,7 @@ async function duelScreen() {
     <div id="chlist"></div></div>
   <h4>הקרבות שלך</h4>${duels.length ? duels.map(d => duelRow(d)).join('') : '<p class="muted">עוד אין קרבות. בחר יריב כדי להתחיל.</p>'}</main>`);
   $('#opench').onclick = async () => {
-    const qs = mixed(8).slice(0, 8);
+    const qs = mixed(8, { env: 'duel' }).slice(0, 8);
     const id = await DB.createChallenge({ fromName: P().name, style: P().style, qs });
     (P().challenges = P().challenges || []).unshift({ id, ts: Date.now() }); P().challenges = P().challenges.slice(0, 10); save(true);
     runQuiz({ title: 'האתגר שלך – קודם אתה', qs: qs.map(q => JSON.parse(JSON.stringify(q))), kind: 'duel', onDone: async res => {
@@ -1019,7 +1056,7 @@ async function duelScreen() {
   renderChallenges();
   $('#bk').onclick = home;
   $$('.opp-b').forEach(b => b.onclick = async () => {
-    const qs = mixed(8).slice(0, 8);
+    const qs = await duelQs(b.dataset.to);
     const id = await DB.createDuel(S.team, { from: S.pid, fromName: P().name, to: b.dataset.to, toName: b.dataset.n, qs });
     playDuel({ id, qs, from: S.pid, fromName: P().name, to: b.dataset.to, toName: b.dataset.n, results: {} });
   });
@@ -1079,7 +1116,7 @@ async function watchDuel(d) {
     gifts: P().gifts || {}, onGift: g => sendGift(d, g),
     onReact: e => { d.reacts = { ...(d.reacts || {}), [S.pid]: e }; return DB.reactDuel(S.team, d.id, S.pid, e); },
     onDone: () => { if (first && win) toast('ניצחון בדו-קרב: +40 XP', 'gold'); duelScreen(); },
-    onRematch: async () => { const qs = mixed(8).slice(0, 8); const id = await DB.createDuel(S.team, { from: S.pid, fromName: P().name, to: other, toName: oname, qs }); playDuel({ id, qs, from: S.pid, fromName: P().name, to: other, toName: oname, results: {} }); },
+    onRematch: async () => { const qs = await duelQs(other); const id = await DB.createDuel(S.team, { from: S.pid, fromName: P().name, to: other, toName: oname, qs }); playDuel({ id, qs, from: S.pid, fromName: P().name, to: other, toName: oname, results: {} }); },
   });
 }
 function playDuel(d) {
@@ -1174,10 +1211,10 @@ function parentEntry(code) {
     const h = await DB.sha(pin); const me = DB.parentsOf(team).find(x => x.pinHash === h);
     if (!me) { toast('קוד ההורה לא נכון'); return parentEntry(code); }
     S.team = code; S.teamData = team;
-    parentScreen({ app, code, team, me, setScreen, back: () => S.p ? home() : startScreen(), mixed: n => mixedFor(n), pickOne, onDelete: pid => { if (S.pid === pid) { S.p = null; S.pid = null; LS.set('mh_session', null); } } });
+    parentScreen({ app, code, team, me, setScreen, back: () => S.p ? home() : startScreen(), mixed: (n, kid) => mixedFor(n, kid, code), pickOne, onDelete: pid => { if (S.pid === pid) { S.p = null; S.pid = null; LS.set('mh_session', null); } } });
   }, { sub: 'הקלידו את קוד ההורה שלכם', back: () => S.p ? home() : startScreen() });
 }
-function mixedFor(n) { const out = [], avoid = new Set(); for (let i = 0; i < n; i++) out.push(pickOne(CH_ORDER[i % 6], 3, avoid)); return out.sort(() => Math.random() - .5); }
+async function mixedFor(n, kidId, code) { const kp = kidId ? (await DB.listPlayers(code)).find(x => x.id === kidId) : null; return mixed(n, { env: 'duel', prof: kp || { learned: null, ch: {} }, logs: kp ? [qlogOf(kp)] : [] }); }
 
 // ---------- אתחול ----------
 $('#comms-btn').onclick = () => S.p && comms();

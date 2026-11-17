@@ -163,15 +163,15 @@ export function genMath(diff, seed, learned) {
       tip = 'הטעות הנפוצה: להציב את המספרים בסדר הפוך. a הוא תמיד המספר שמשמאל לסימן ★, ו-b זה שמימין.';
     }
   } else if (kind === 'percent') {
-    const p = pick(r, [40, 60, 80, 120, 200, 160]), d = pick(r, [10, 20, 25, 50]);
+    const d = pick(r, [10, 20, 25, 50, 30, 40, 75]); const p = (d === 25 || d === 75 ? 20 : 10) * ri(r, 3, d === 25 || d === 75 ? 20 : 40); const item = pick(r, ['משחק מחשב', 'זוג נעליים', 'כדורגל', 'ספר', 'תיק', 'שעון', 'קסדה', 'אוזניות']);
     ans = p - p * d / 100;
-    q = `משחק מחשב עולה ${p} ₪ ויש עליו הנחה של ${d}%. כמה יעלה המשחק אחרי ההנחה (בשקלים)?`;
+    q = `${item} עולה ${p} ₪ ויש הנחה של ${d}%. כמה יעלה אחרי ההנחה (בשקלים)?`;
     h1 = `כמה זה ${d}% מ-${p}? (10% = חלקי 10)`; h2 = `${d}% מ-${p} הם ${p * d / 100} ₪.`; exp = `ההנחה: ${p * d / 100} ₪. ${p} − ${p * d / 100} = ${ans}.`;
     topic = 'percent'; rule = 'הנחה של X% אומרת שמורידים X אחוזים מהמחיר.';
     steps = [`מוצאים 10% מהמחיר: <span class="ltrm">${p} ÷ 10 = ${p / 10}</span>.`, `מזה מחשבים את ההנחה: ${d}% מ-${p} = <b>${p * d / 100} ₪</b>.`, `מורידים מהמחיר: <span class="ltrm">${p} − ${p * d / 100} = ${ans}</span>.`];
     tip = '10% זה תמיד "לחלק ב-10". ממנו בונים כל אחוז אחר: 20% = פעמיים, 5% = חצי.';
   } else if (kind === 'percentBack') {
-    const orig = pick(r, [40, 60, 80, 120, 200, 160]), d = pick(r, [20, 25, 50]); const now = orig * (100 - d) / 100; ans = orig;
+    const d = pick(r, [20, 25, 50]); const orig = (d === 25 ? 20 : 10) * ri(r, 3, d === 25 ? 20 : 40); const now = orig * (100 - d) / 100; ans = orig;
     q = `אחרי הנחה של ${d}%, אוזניות עולות ${now} ₪. מה היה המחיר <b>לפני</b> ההנחה?`;
     h1 = `אחרי הנחה של ${d}% נשארים ${100 - d}% מהמחיר המקורי.`; h2 = `${now} ₪ = ${100 - d}% מהמחיר. כמה זה 1%? כמה 100%?`;
     exp = `${now} הם ${100 - d}% מהמחיר המקורי, ולכן המחיר המקורי ${ans}.`;
@@ -204,7 +204,7 @@ export function genMath(diff, seed, learned) {
     steps = [`פועל אחד לבד היה צריך פי ${w} יותר זמן: <span class="ltrm">${w} × ${t} = ${total}</span> שעות.`, `${w2} פועלים מחלקים את העבודה ביניהם: <span class="ltrm">${total} ÷ ${w2} = ${ans}</span> שעות.`];
     tip = 'בדיקת שכל: אם יש יותר פועלים מבהתחלה – התשובה חייבת להיות קטנה יותר מהזמן המקורי.';
   } else {
-    const v = pick(r, [40, 50, 60, 80, 90]), h = ri(r, 2, 5); ans = v * h;
+    const v = 5 * ri(r, 6, 24), h = ri(r, 2, 7); ans = v * h;
     q = `מכונית נוסעת במהירות קבועה של ${v} קמ"ש. כמה קילומטרים תעבור ב-${h} שעות?`;
     h1 = 'מהירות של X קמ"ש אומרת: בכל שעה עוברים X קילומטרים.'; h2 = `${v} ק"מ בכל שעה, ${h} שעות.`; exp = `${v} ק"מ בכל שעה, במשך ${h} שעות: ${ans} ק"מ.`;
     topic = 'speed'; rule = '<b>דרך = מהירות × זמן</b>. מהירות של X קמ"ש = בכל שעה עוברים X קילומטרים.';
@@ -299,7 +299,12 @@ export function cellSVG(c, size = 80) {
   return `<svg viewBox="0 0 80 80" width="${size}" height="${size}"><g ${st}>${body}</g></svg>`;
 }
 
+import { genVerbal, genAnalogy, genLogic } from './gen2.js?v=27';
+export const GEN_CH = ['verbal', 'series', 'analogy', 'logic', 'math', 'shapes'];
 export function generate(ch, diff, seed, learned) {
+  if (ch === 'verbal') return genVerbal(diff, seed);
+  if (ch === 'analogy') return genAnalogy(diff, seed);
+  if (ch === 'logic') return genLogic(diff, seed);
   if (ch === 'series') return genSeries(diff, seed);
   if (ch === 'math') return genMath(diff, seed, learned);
   if (ch === 'shapes') return genShapes(diff, seed);
