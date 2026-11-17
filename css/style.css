@@ -543,3 +543,47 @@ input:focus,textarea:focus,select:focus{outline:none;border-color:var(--mind);bo
 .rbig{font-size:1.7rem;line-height:1}.rx{font-size:1.15rem;margin-inline-start:6px}
 .banner.react{border-right-color:var(--mind)}
 .ar-card .row-btns{flex-wrap:wrap;justify-content:center}
+/* רקעים, מתנות ויום חופש */
+.loot-bg{display:flex;gap:12px;align-items:center;background:var(--s3);border:1px solid var(--line2);border-radius:var(--r-m);padding:8px;margin:10px 0;text-align:right}
+.loot-bg.r2{border-color:#60a5fa}.loot-bg.r3{border-color:#c084fc;box-shadow:0 0 18px #c084fc55}
+.loot-bg>div:last-child{display:flex;flex-direction:column;gap:4px;align-items:flex-start}
+.lb-scene{width:120px;height:76px;border-radius:10px;overflow:hidden;flex:none;position:relative}.lb-scene .scene{width:100%;height:100%}
+.gift-l{font-size:.9rem}
+.off-card{display:flex;align-items:center;gap:12px;padding:12px 14px;border-radius:var(--r-l);background:linear-gradient(90deg,#0e3a4a,var(--deep));border:1px solid #22d3ee66;margin-bottom:12px}
+.off-card .tile{font-size:1.6rem;background:none}
+.off-card .ch-t{flex:1;display:flex;flex-direction:column}
+.gift-b{position:relative}.gift-b i{position:absolute;bottom:-4px;left:-4px;font:700 .7rem var(--fd);background:var(--amber);color:#1c1917;border-radius:999px;padding:0 5px;font-style:normal}
+.gift-b:disabled{opacity:.35;cursor:default;transform:none}
+.gift-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(96px,1fr));gap:8px;margin:10px 0}
+.gift-pick{display:flex;flex-direction:column;align-items:center;gap:2px;padding:10px 4px;border-radius:var(--r-m);background:var(--s3);border:1px solid var(--line);color:inherit;cursor:pointer;font:inherit}
+.gift-pick span{font-size:2rem}.gift-pick small{color:var(--mut)}.gift-pick:disabled{opacity:.35;cursor:default}
+.gift-pick:not(:disabled):hover{border-color:var(--amber)}
+.gift-recv{text-align:center}.gift-recv p{font-size:1.15rem}
+.gr-stage{position:relative;height:260px;border-radius:var(--r-l);overflow:hidden}.gr-stage .scene{position:absolute;inset:0;width:100%;height:100%}
+.gr-stage .gr-hero{position:absolute;left:50%;bottom:8px;width:170px;transform:translateX(-50%)}.gr-hero svg{width:100%;height:auto}
+.gift-target{position:relative}
+.gift-fly{position:absolute;left:50%;top:-40%;font-size:3.2rem;animation:gfly .65s ease-in forwards;z-index:4;pointer-events:none}
+@keyframes gfly{0%{transform:translate(160%,-40%) rotate(0) scale(.6);opacity:0}20%{opacity:1}100%{transform:translate(-50%,120%) rotate(-540deg) scale(1.1)}}
+.gift-fx{position:absolute;inset:0;pointer-events:none;z-index:3}
+.gift-fx.splat svg{position:absolute;left:18%;top:6%;width:64%;animation:splat .35s ease-out}
+@keyframes splat{0%{transform:scale(.2)}70%{transform:scale(1.15)}}
+.gift-fx .gem{position:absolute;left:50%;top:30%;font-size:2.6rem;transform:translateX(-50%)}
+.gift-fx.stink .st{position:absolute;top:10%;font-size:1.8rem;color:#84cc16;font-weight:700;animation:stink 1.4s ease-in-out infinite}
+.gift-fx.stink .st:nth-child(1){left:20%}.gift-fx.stink .st:nth-child(2){left:45%;animation-delay:.3s}.gift-fx.stink .st:nth-child(3){left:70%;animation-delay:.6s}
+.gift-fx.stink .gem{top:auto;bottom:10%;left:70%;font-size:2rem}
+@keyframes stink{0%{transform:translateY(10px);opacity:0}50%{opacity:1}100%{transform:translateY(-20px);opacity:0}}
+.gift-fx.slap .gem{animation:slap .5s ease-in-out 3}
+@keyframes slap{0%,100%{transform:translateX(-120%) rotate(-30deg)}50%{transform:translateX(0) rotate(20deg)}}
+.gift-fx.bounce .gem{top:auto;bottom:5%;animation:gbounce .5s ease-in-out infinite alternate}
+@keyframes gbounce{from{transform:translate(-50%,0)}to{transform:translate(-50%,-40px)}}
+.gift-fx.slip .gem{top:auto;bottom:0;font-size:2rem}
+.gift-fx.wrap i{position:absolute;left:12%;right:12%;height:9%;background:repeating-linear-gradient(90deg,#fafafa 0 14px,#e5e5e5 14px 16px);border-radius:3px;box-shadow:0 2px 4px #0004;animation:wrapin .3s ease-out backwards}
+.gift-fx.wrap i:nth-child(1){top:22%;transform:rotate(-6deg)}.gift-fx.wrap i:nth-child(2){top:42%;transform:rotate(5deg);animation-delay:.15s}.gift-fx.wrap i:nth-child(3){top:60%;transform:rotate(-4deg);animation-delay:.3s}.gift-fx.wrap i:nth-child(4){top:78%;transform:rotate(6deg);animation-delay:.45s}
+@keyframes wrapin{from{clip-path:inset(0 100% 0 0)}to{clip-path:inset(0 0 0 0)}}
+.gfx-slip>svg,.gfx-slip>.flip{animation:slip .8s ease-in forwards;transform-origin:50% 100%}
+@keyframes slip{30%{transform:rotate(-15deg)}100%{transform:rotate(80deg) translateY(10%)}}
+.gfx-slap>svg,.gfx-splat>svg,.gfx-bounce>svg{animation:hurt .5s}
+.res-side .mini-h{position:relative}
+.chest-loot{flex-wrap:wrap;justify-content:center}
+.chest-loot .gift-l{font-size:.85rem;padding:4px 10px;white-space:nowrap}
+@media (max-width:600px){.off-card{flex-wrap:wrap}.off-card .ch-t{flex:1 1 70%}.off-card .btn{flex:1 1 100%}}

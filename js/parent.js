@@ -1,11 +1,11 @@
 // MindHero – מסך הורה (תומך בשני הורים)
-import * as DB from './store.js?v=25';
-import { CHAPTERS, CH_ORDER } from './bank.js?v=25';
-import { heroSVG, rankOf } from './hero.js?v=25';
-import { $, $$, esc, toast, modal, today, bars, fmtTime, renderQuestion, isCorrect, markResult, answerText, bm, explainHTML } from './ui.js?v=25';
-import { ic, moodFace } from './icons.js?v=25';
-import { battleScreen, PARENT_HERO } from './battle.js?v=25';
-import { analysisHTML } from './analysis.js?v=25';
+import * as DB from './store.js?v=26';
+import { CHAPTERS, CH_ORDER } from './bank.js?v=26';
+import { heroSVG, rankOf } from './hero.js?v=26';
+import { $, $$, esc, toast, modal, today, bars, fmtTime, renderQuestion, isCorrect, markResult, answerText, bm, explainHTML } from './ui.js?v=26';
+import { ic, moodFace } from './icons.js?v=26';
+import { battleScreen, PARENT_HERO } from './battle.js?v=26';
+import { analysisHTML } from './analysis.js?v=26';
 
 const ago = ts => { const m = Math.round((Date.now() - ts) / 60000); return m < 1 ? 'עכשיו' : m < 60 ? `לפני ${m} דק׳` : m < 1440 ? `לפני ${Math.round(m / 60)} שע׳` : `לפני ${Math.round(m / 1440)} ימים`; };
 const HARD = ['stressed', 'quit', 'frustrated'];
@@ -139,6 +139,7 @@ export async function parentScreen(ctx) {
     el.innerHTML = `${kidTabs()}
       <div class="p-head"><div class="mini-h big">${heroSVG(p)}</div><div><h2>${esc(p.name)}</h2><p>רמה ${p.level} · ${rankOf(p.level)} · רצף ${p.streak || 0} ימים</p><p class="muted">פעילות אחרונה: ${lastDay || 'עדיין אין'}</p></div></div>
       <div class="rec-grid"><div><b>${days[13].v}′</b><small>היום (יעד ${goal}′)</small></div><div><b>${wMin}′</b><small>7 ימים אחרונים</small></div><div><b>${wQ ? Math.round(wOk / wQ * 100) : 0}%</b><small>דיוק השבוע · ${wQ} שאלות</small></div><div><b>${p.records?.bestBoss || 0}%</b><small>שיא בקרב בוס</small></div></div>
+      <p class="muted small">🔥 רצף: <b>${p.streak || 0}</b> ימים · 🏖️ כרטיסי יום חופש שמורים: <b>${p.dayOffs || 0}</b> · ימי חופש שנוצלו: <b>${Object.values(p.days || {}).filter(x => x.off).length}</b>${p.days?.[Object.keys(p.days || {}).sort().pop()]?.off ? ' · היום הוא יום חופש' : ''}</p>
       ${progressHTML(p)}
       ${activityHTML(p, actDay)}
       ${analysisHTML(p, ic)}
@@ -193,7 +194,7 @@ export async function parentScreen(ctx) {
     const other = d.from === me.id ? d.to : d.from, on = d.from === me.id ? d.toName : d.fromName;
     const kidP = players.find(x => x.id === other) || { style: 'comic', equip: {} };
     await DB.markDuelViewed(code, d.id, me.id);
-    battleScreen(ctx.app, { name: me.name, hero: PARENT_HERO, res: d.results[me.id] }, { name: on, hero: kidP, res: d.results[other] }, { myReact: d.reacts?.[me.id], theirReact: d.reacts?.[other], onReact: e => DB.reactDuel(code, d.id, me.id, e), onDone: async () => { await load(); tab = 'duel'; render(); } });
+    battleScreen(ctx.app, { name: me.name, hero: PARENT_HERO, res: d.results[me.id] }, { name: on, hero: kidP, res: d.results[other] }, { myReact: d.reacts?.[me.id], theirReact: d.reacts?.[other], theirGift: d.gifts?.[other]?.id, gifts: null, onGift: g => DB.giftDuel(code, d.id, me.id, g), onReact: e => DB.reactDuel(code, d.id, me.id, e), onDone: async () => { await load(); tab = 'duel'; render(); } });
   }
   function playDuel(d) {
     const qs = d.qs; let i = 0, ok = 0; const t0 = Date.now(); const seq = [];
@@ -218,7 +219,7 @@ export async function parentScreen(ctx) {
       <div class="p-card"><h4>${ic('users')} גיבורים בצוות</h4>${players.length ? players.map(x => `<div class="duel-row"><span class="mini-h">${heroSVG(x)}</span><span style="flex:1"><b>${esc(x.name)}</b> <small class="muted">רמה ${x.level}</small></span><button class="btn small" data-del="${x.id}">מחיקה</button></div>`).join('') : '<p class="muted">אין גיבורים.</p>'}<p class="muted small">מחיקה היא סופית: הגיבור, הציוד וכל ההתקדמות שלו יימחקו.</p></div>
       <div class="p-card"><h4>${ic('clock')} תאריך המבחן</h4><input type="date" id="exd" value="${team.examDate || ''}"/><p class="muted small">כשיפורסם התאריך – עדכנו כאן, ותופיע לילד ספירה לאחור.</p></div>
       <div class="p-card"><h4>${ic('target')} יעד אימון יומי</h4><select id="goal">${[30, 45, 60, 75, 90].map(m => `<option value="${m}" ${(team.goalMin || 60) === m ? 'selected' : ''}>${m} דקות</option>`).join('')}</select><p class="muted small">רצף הימים נספר בימים שבהם היעד הושלם. נספר רק זמן פעיל – לא מסך פתוח בלי פעילות.</p></div>
-      <div class="p-card"><h4>${ic('star')} יעד שבועי</h4><select id="wdays">${[3, 4, 5, 6, 7].map(n => `<option value="${n}" ${(team.weekDays || 5) === n ? 'selected' : ''}>${n} ימים בשבוע</option>`).join('')}</select><p class="muted small">בכמה ימים בשבוע צריך להשלים את היעד היומי כדי לקבל את תיבת השבוע (200 מטבעות ופריט נדיר). יום שהוחמץ לא מאפס את ההתקדמות השבועית.</p></div>
+      <div class="p-card"><h4>${ic('star')} יעד שבועי ויום חופש</h4><p class="muted small">היעד השבועי: 7 ימי אימון בשבוע (200 מטבעות, פריט נדיר ורקע חדש). כל 7 ימים ברצף מזכים בכרטיס <b>יום חופש</b>: הילד בוחר מתי לנצל אותו, הרצף נשמר והוא מקבל תיבת פרסים.</p></div>
       <div class="p-card"><h4>${ic('boss')} שעת בוס הערב</h4><select id="bhour">${[15, 16, 17, 18, 19, 20].map(h => `<option value="${h}" ${(team.bossHour ?? 18) === h ? 'selected' : ''}>${h}:00 עד ${h + 2}:00</option>`).join('')}</select><p class="muted small">חלון של שעתיים בכל יום שבו מופיע בוס מיוחד. ניסיון אחד בערב; ניצחון מעניק פריט נדיר.</p></div>
       <button class="btn primary big" id="psave">שמירת הגדרות</button>
       <div class="p-card"><h4>${ic('lock')} החלפת קוד ההורה שלי</h4><div class="parent-row"><input id="npin" inputmode="numeric" maxlength="4" placeholder="קוד חדש – 4 ספרות" dir="ltr"/><button class="btn small" id="npinb">עדכון</button></div></div>`;
@@ -232,7 +233,7 @@ export async function parentScreen(ctx) {
     $('#cp').onclick = () => { navigator.clipboard?.writeText(link); toast('הקישור הועתק'); };
     $('#psave').onclick = async () => {
       const list = parents().map(x => ({ ...x, name: ($(`.pname[data-pid="${x.id}"]`)?.value.trim()) || x.name }));
-      const patch = { examDate: $('#exd').value || null, goalMin: +$('#goal').value, weekDays: +$('#wdays').value, bossHour: +$('#bhour').value, parents: list };
+      const patch = { examDate: $('#exd').value || null, goalMin: +$('#goal').value, bossHour: +$('#bhour').value, parents: list };
       await DB.updateTeam(code, patch); Object.assign(team, patch); me = list.find(x => x.id === me.id) || me; toast('ההגדרות נשמרו'); render();
     };
     const add = $('#np-add'); if (add) add.onclick = async () => {

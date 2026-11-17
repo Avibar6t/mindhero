@@ -1,15 +1,16 @@
 // MindHero – האפליקציה הראשית
-import * as DB from './store.js?v=25';
-import { LS } from './store.js?v=25';
-import { CHAPTERS, CH_ORDER, VERBAL, ANALOGY, LOGIC, MATH, ACADEMY } from './bank.js?v=25';
-import { generate } from './gen.js?v=25';
-import { STYLES, SKINS, ITEMS, POWERS, SLOT_HE, heroSVG, itemName, strongestPowerColor, levelUpOffers, rankOf, xpForLevel } from './hero.js?v=25';
-import { $, $$, esc, toast, modal, beep, confetti, sound, prepareQ, isCorrect, answerText, renderQuestion, markResult, today, weekKey, fmtTime, isMobile, bars, LETTERS, bm, explainHTML } from './ui.js?v=25';
-import { ic, moodFace, lobbyScene } from './icons.js?v=25';
-import { TOPICS, topicById, grid100 } from './learn.js?v=25';
-import { battleScreen, PARENT_HERO, REACT_TXT } from './battle.js?v=25';
-import { startExam } from './exam.js?v=25';
-import { parentScreen } from './parent.js?v=25';
+import * as DB from './store.js?v=26';
+import { LS } from './store.js?v=26';
+import { CHAPTERS, CH_ORDER, VERBAL, ANALOGY, LOGIC, MATH, ACADEMY } from './bank.js?v=26';
+import { generate } from './gen.js?v=26';
+import { STYLES, SKINS, ITEMS, POWERS, SLOT_HE, heroSVG, itemName, strongestPowerColor, levelUpOffers, rankOf, xpForLevel } from './hero.js?v=26';
+import { $, $$, esc, toast, modal, beep, confetti, sound, prepareQ, isCorrect, answerText, renderQuestion, markResult, today, weekKey, fmtTime, isMobile, bars, LETTERS, bm, explainHTML } from './ui.js?v=26';
+import { ic, moodFace, lobbyScene } from './icons.js?v=26';
+import { TOPICS, topicById, grid100 } from './learn.js?v=26';
+import { BGS, RAR_NAME, bgScene, heroScene, rollBg, GIFTS, rollGift, addGift, giftHit } from './fun.js?v=26';
+import { battleScreen, PARENT_HERO, REACT_TXT } from './battle.js?v=26';
+import { startExam } from './exam.js?v=26';
+import { parentScreen } from './parent.js?v=26';
 
 const app = $('#app');
 export const S = { team: null, teamData: null, pid: null, p: null, active: false, lastInput: Date.now(), inQuestion: null, messages: [] };
@@ -19,7 +20,7 @@ const MENTOR = 'פרופסור מיינד';
 // ================== עזרי שחקן ==================
 function newPlayer({ name, style, skin, pinHash }) {
   const ch = {}; CH_ORDER.forEach(c => ch[c] = { lvl: 2, n: 0, ok: 0, time: 0 });
-  return { seenNews: 'n-2026-11-17', learned: {}, learnStep: {}, name, style, skin, pinHash, created: Date.now(), level: 1, xp: 0, coins: 50, items: [], equip: {}, powers: {}, ch, seen: {}, mistakes: [], days: {}, streak: 0, bestStreak: 0, lastGoalDay: null, freezeUsed: {}, academy: {}, diag: false, records: { bestBoss: 0, bestCombo: 0, sims: [], totalQ: 0, totalOk: 0, duelsWon: 0 }, daily: null, weekXp: {}, pendingLevels: 0 };
+  return { seenNews: 'n-2026-11-17b', bgs: [], bg: '', gifts: { pie: 2, banana: 1, chicken: 1 }, dayOffs: 0, learned: {}, learnStep: {}, name, style, skin, pinHash, created: Date.now(), level: 1, xp: 0, coins: 50, items: [], equip: {}, powers: {}, ch, seen: {}, mistakes: [], days: {}, streak: 0, bestStreak: 0, lastGoalDay: null, freezeUsed: {}, academy: {}, diag: false, records: { bestBoss: 0, bestCombo: 0, sims: [], totalQ: 0, totalOk: 0, duelsWon: 0 }, daily: null, weekXp: {}, pendingLevels: 0 };
 }
 const P = () => S.p;
 const save = (now) => DB.savePlayer(S.team, S.pid, S.p, now);
@@ -82,22 +83,41 @@ setInterval(() => {
 ['pointerdown', 'pointermove', 'keydown', 'touchstart', 'wheel'].forEach(ev => window.addEventListener(ev, () => S.lastInput = Date.now(), { passive: true }));
 document.addEventListener('visibilitychange', () => { if (document.hidden) DB.flushSave(); });
 
-function reachGoal() {
-  const p = P(), d = dayRec(); d.goal = true;
+function bumpStreak() {
+  const p = P();
   const gap = p.lastGoalDay ? daysBetween(p.lastGoalDay, today()) : 99;
   if (gap === 1) p.streak++;
   else if (gap === 2 && freezeLeft() > 0) { p.streak++; p.freezeUsed[weekKey()] = (p.freezeUsed[weekKey()] || 0) + 1; toast('❄️ קפאון זמן שמר על הרצף שלך!'); }
   else if (gap !== 0) p.streak = 1;
   p.lastGoalDay = today(); p.bestStreak = Math.max(p.bestStreak, p.streak);
-  addCoins(80); addXP(50); beep('level'); confetti();
-  queueChest({ kind: 'day', title: 'תיבת האוצר היומית', coins: 80, xp: 50, note: `השלמת ${goalMin()} דקות אימון היום · רצף: ${p.streak} ימים` });
-  toast(`השלמת את היעד היומי! תיבת אוצר מחכה לך במסך הבית.`, 'gold');
-  // יעד שבועי
-  const wk = weekKey(); p.weekDone = p.weekDone || {};
+}
+function checkWeek() {
+  const p = P(), wk = weekKey(); p.weekDone = p.weekDone || {};
   if (!p.weekDone[wk] && weekDays() >= weekTarget()) {
     p.weekDone[wk] = true; addCoins(200); addXP(100);
     queueChest({ kind: 'week', title: 'תיבת השבוע', coins: 200, xp: 100, note: `השלמת את היעד השבועי: ${weekTarget()} ימי אימון!`, pick: true });
   }
+}
+// יום חופש: מנצלים כרטיס, היום נחשב כיום יעד והרצף נשמר – ומקבלים תיבת פרסים
+function takeDayOff() {
+  const p = P(), d = dayRec(); if (d.goal || !(p.dayOffs > 0)) return;
+  p.dayOffs--; d.goal = true; d.off = true; bumpStreak();
+  addCoins(150);
+  queueChest({ kind: 'off', title: 'תיבת יום החופש', coins: 150, xp: 0, note: 'יום חופש מגיע לך ביושר! הרצף שלך שמור, והנה פרסים.' });
+  checkWeek(); save(true); confetti(); beep('level');
+  openChests(() => mentorPopup(`תהנה מיום החופש, ${esc(p.name)}! 🏖️<br>הרצף שלך (${p.streak} ימים) שמור. מחר חוזרים למעבדה בכוחות מחודשים.`, [{ t: 'תודה!', primary: true, fn: home }]));
+}
+function reachGoal() {
+  const p = P(), d = dayRec(); d.goal = true;
+  bumpStreak();
+  addCoins(80); addXP(50); beep('level'); confetti();
+  queueChest({ kind: 'day', title: 'תיבת האוצר היומית', coins: 80, xp: 50, note: `השלמת ${goalMin()} דקות אימון היום · רצף: ${p.streak} ימים` });
+  toast(`השלמת את היעד היומי! תיבת אוצר מחכה לך במסך הבית.`, 'gold');
+  if (p.streak > 0 && p.streak % 7 === 0) {
+    p.dayOffs = (p.dayOffs || 0) + 1;
+    queueChest({ kind: 'off7', title: `${p.streak} ימים ברצף! זכית ביום חופש`, coins: 100, xp: 50, note: 'קיבלת כרטיס יום חופש 🏖️ – תבחר מתי להשתמש בו. ביום החופש הרצף נשמר ותקבל תיבת פרסים.' });
+  }
+  checkWeek();
   save(true);
 }
 // ----- תחנות תגמול, יעד שבועי, תיבות -----
@@ -109,7 +129,7 @@ function checkpointChest(k, m) {
   queueChest({ kind: 'cp', title: `תחנה ${k + 1}: ${m} דקות`, coins, xp, note: k === 0 ? 'התחלה מצוינת! עוד תחנה בדרך.' : 'עוד תחנה אחת לתיבה היומית.' });
   toast(`${m} דקות אימון! נפתחה תיבה – +${coins} מטבעות`, 'gold'); save();
 }
-const weekTarget = () => S.teamData?.weekDays || 5;
+const weekTarget = () => 7;
 function weekDays() { const p = P(); const start = new Date(weekKey()); let n = 0; for (let i = 0; i < 7; i++) { const x = new Date(start); x.setDate(x.getDate() + i); if (p.days[today(x)]?.goal) n++; } return n; }
 function weekStreak() {
   const p = P(); const wd = p.weekDone || {}; let n = 0; const d = new Date(weekKey());
@@ -129,9 +149,24 @@ function openChests(after) {
   const m = modal(`<div class="chest-modal"><div class="chest-stage">${chestSVG(false)}</div><h3 class="center" style="justify-content:center">${esc(c.title)}</h3><p class="muted center">${esc(c.note || '')}</p><button class="btn gold big" id="chopen">פתיחת התיבה</button></div>`, { closable: false });
   $('#chopen', m.el).onclick = () => {
     $('.chest-stage', m.el).innerHTML = chestSVG(true); beep('level'); confetti();
-    $('#chopen', m.el).outerHTML = `<div class="chest-loot"><span class="stat">${ic('coin')}+${c.coins}</span><span class="stat">${ic('xp')}+${c.xp} XP</span></div><button class="btn primary big" id="chok">${c.pick ? 'לבחירת פריט נדיר' : 'מעולה'}</button>`;
+    const lt = chestLoot(c);
+    $('#chopen', m.el).outerHTML = `<div class="chest-loot"><span class="stat">${ic('coin')}+${c.coins}</span>${c.xp ? `<span class="stat">${ic('xp')}+${c.xp} XP</span>` : ''}${lt.gifts.map(g => `<span class="stat gift-l" title="${GIFTS[g].name}">${GIFTS[g].e} ${GIFTS[g].name}</span>`).join('')}</div>
+      ${lt.bg ? `<div class="loot-bg r${BGS[lt.bg].r}"><div class="lb-scene">${bgScene(lt.bg)}</div><div><small>רקע ${RAR_NAME[BGS[lt.bg].r]} חדש!</small><b>${BGS[lt.bg].name}</b><button class="btn small gold" id="usebg">לשים עכשיו</button></div></div>` : ''}
+      ${lt.gifts.length ? `<p class="muted small center">מתנות מצחיקות אפשר לשלוח ליריבים אחרי דו-קרב 😜</p>` : ''}<button class="btn primary big" id="chok">${c.pick ? 'לבחירת פריט נדיר' : 'מעולה'}</button>`;
+    const ub = $('#usebg', m.el); if (ub) ub.onclick = () => { p.bg = lt.bg; save(true); ub.outerHTML = `<span class="muted small">${ic('check')} הרקע הוחלף</span>`; beep('coin'); };
     $('#chok', m.el).onclick = () => { m.close(); if (c.pick) rarePick('פריט נדיר מתיבת השבוע', () => openChests(after)); else openChests(after); };
   };
+}
+// שלל נוסף בתיבה: מתנות מצחיקות ולפעמים רקע חדש
+function chestLoot(c) {
+  const p = P(); const k = c.kind;
+  const nG = { cp: 1, day: 2, week: 3, off: 3, off7: 2 }[k] || 1;
+  const bgChance = { cp: .25, day: .4, week: 1, off: 1, off7: 1 }[k] || 0;
+  const maxR = { cp: 1, day: 2 }[k] || 3;
+  const gifts = Array.from({ length: nG }, rollGift); gifts.forEach(g => addGift(p, g));
+  let bg = Math.random() < bgChance ? rollBg(p, maxR) : null;
+  if (bg) { p.bgs = [...(p.bgs || []), bg]; }
+  save(true); return { gifts, bg };
 }
 // בחירת פריט נדיר (תיבת השבוע / בוס הערב)
 function rarePick(title, after) {
@@ -145,13 +180,12 @@ function rarePick(title, after) {
   $$('.offer', m.el).forEach(b => b.onclick = () => { const id = b.dataset.id; p.items.push(id); p.equip[ITEMS[id].slot] = id; save(true); beep('coin'); m.close(); after(); });
 }
 // ----- הודעת "מה חדש" מפרופסור מיינד -----
-const NEWS = { id: 'n-2026-11-17', title: 'עדכון חם מהמעבדה!', html: () => `${esc(P().name)}, הבסיס קיבל שדרוג ענק. הנה מה שמחכה לך:<br><br>
-  <b>🎁 שלוש תיבות אוצר בכל יום</b> – אחרי 20, 40 ו-60 דקות אימון. כבר לא צריך לחכות לסוף בשביל פרס.<br><br>
-  <b>⭐ יעד שבועי</b> – השלם את היעד היומי ב-${weekTarget()} ימים בשבוע, ותקבל את <b>תיבת השבוע</b>: 200 מטבעות ופריט נדיר לבחירה. פספסת יום? לא נורא, השבוע לא מתאפס.<br><br>
-  <b>👾 בוס הערב</b> – כל ערב בין ${bossHour()}:00 ל-${bossHour() + 2}:00 מגיע בוס חדש. ניסיון אחד בלבד. מי שמנצח – זוכה בפריט נדיר.<br><br>
-  <b>🔍 שיעור סדרות</b> – ראיתי שסדרות היו מסובכות. בניתי לך שיעור עם 4 כלים סודיים שפורצים כל סדרה. הוא מחכה במסלול היומי.<br><br>
-  <b>💡 הסברים חכמים יותר</b> – כשטועים, אני מסבירה עכשיו צעד אחרי צעד: הכלל, הפתרון, וטיפ לפעם הבאה.<br><br>
-  <b>📱 MindHero כאפליקציה</b> – אפשר להתקין אותי למסך הבית בטלפון, עם אייקון משלי.<br><br>יאללה, הגיבור שלך מחכה. 💪` };
+const NEWS = { id: 'n-2026-11-17b', title: 'עוד הפתעות מהמעבדה!', html: () => `${esc(P().name)}, חזרתי עם עוד שדרוגים:<br><br>
+  <b>🏟️ זירת קרב</b> – בדו-קרב התוצאות סודיות עד ששניכם מסיימים. אחר כך הגיבורים נפגשים בזירה ונלחמים עם הציוד והכוחות שלכם.<br><br>
+  <b>🖼️ רקעים לגיבור</b> – בתיבות האוצר מסתתרים רקעים חדשים: הר געש, חלל, אוקיינוס, אולם שחמט ועוד. מחליפים אותם במסך הציוד.<br><br>
+  <b>🥧 מתנות מצחיקות</b> – עוגת קצפת, גרב מסריחה, דג רטוב… שולחים ליריב אחרי דו-קרב. קיבלת כמה מתנות להתחלה!<br><br>
+  <b>⭐ יעד שבועי: 7 ימים</b> – מי שמתאמן כל השבוע מקבל את תיבת השבוע עם פריט נדיר ורקע.<br><br>
+  <b>🏖️ יום חופש</b> – כל 7 ימים ברצף מזכים בכרטיס יום חופש. אתה בוחר מתי לנצל אותו: הרצף נשמר ומקבלים תיבת פרסים.<br><br>יאללה, לאימון! 💪` };
 function showNews(after) {
   const p = P(); if (p.seenNews === NEWS.id || !p.diag) return after && after();
   p.seenNews = NEWS.id; save(true);
@@ -431,7 +465,8 @@ function mentorPopup(html, buttons = [{ t: 'יאללה!', primary: true }]) {
 
 // ---------- בית ----------
 async function home() {
-  const p = P(); const plan = dailyPlan(); const d = dayRec();
+  const p = P(); if (!p.gifts) { p.gifts = { pie: 2, banana: 1, chicken: 1 }; p.bgs = p.bgs || []; save(true); }
+  const plan = dailyPlan(); const d = dayRec();
   const min = Math.floor(d.sec / 60), goal = goalMin(), pct = Math.min(1, d.sec / (goal * 60));
   const exam = S.teamData?.examDate ? daysBetween(today(), S.teamData.examDate) : null;
   const xpNeed = xpForLevel(p.level);
@@ -442,7 +477,7 @@ async function home() {
     <div class="tb-stats"><span class="stat" title="מטבעות">${ic('coin')}${p.coins}</span><span class="stat streak ${st ? '' : 'off'}" title="ימים ברצף שבהם הושלם היעד">${ic('flame')}${st}</span><button class="icon-btn" id="snd" aria-label="צלילים">${ic(sound.on ? 'sound' : 'mute')}</button></div></header>
   <main class="home">
     <section class="lobby">
-      <div class="stage">${lobbyScene(p.style)}<div class="platform"></div>${heroSVG(p, { aura: strongestPowerColor(p) })}</div>
+      <div class="stage">${heroScene(p)}<div class="platform"></div>${heroSVG(p, { aura: strongestPowerColor(p) })}</div>
       <div class="lobby-info">
         <div class="xpbar"><div style="width:${(p.xp / xpNeed) * 100}%"></div></div>
         <div class="xp-row"><span>עוד ${xpNeed - p.xp} XP לרמה ${p.level + 1}</span><b>${p.xp}/${xpNeed}</b></div>
@@ -458,9 +493,10 @@ async function home() {
           <p class="muted" style="margin:4px 0 0">${d.goal ? 'כל דקה נוספת מוסיפה XP ומטבעות.' : (() => { const nx = checkpoints().find((m, k) => k < 2 ? !d.cp?.[k] : true); return `התיבה הבאה ב-${nx} דקות (עוד ${Math.max(0, nx - min)}). שלוש תיבות ביום: ${checkpoints().join(', ')} דק׳.`; })()}</p></div>
       </section>
       ${p.diag ? (() => { const ws = new Date(weekKey()); const dn = weekDays(), tg = weekTarget(), wst = weekStreak(); const names = ['א', 'ב', 'ג', 'ד', 'ה', 'ו', 'ש'];
-        return `<section class="week-card"><div class="wk-top"><b>${ic('star')} יעד שבועי: ${dn}/${tg} ימים</b><span class="muted small">${p.weekDone?.[weekKey()] ? 'הושלם השבוע!' : `תיבת השבוע: 200 מטבעות + פריט נדיר`}</span></div>
+        return `<section class="week-card"><div class="wk-top"><b>${ic('star')} יעד שבועי: ${dn}/${tg} ימים</b><span class="muted small">${p.weekDone?.[weekKey()] ? 'הושלם השבוע!' : `תיבת השבוע: 200 מטבעות, פריט נדיר ורקע חדש`}</span></div>
           <div class="wk-days">${names.map((n, i) => { const x = new Date(ws); x.setDate(x.getDate() + i); const k = today(x); const got = p.days[k]?.goal; const isT = k === today(); return `<span class="wk-d ${got ? 'got' : ''} ${isT ? 'today' : ''}">${got ? ic('check') : n}</span>`; }).join('')}</div>
-          <small class="muted">${wst ? `${wst} ${wst === 1 ? 'שבוע' : 'שבועות'} ברצף שבהם היעד הושלם. ` : ''}יום שהוחמץ לא שובר את היעד – מספיקים ${tg} ימים מתוך 7.</small></section>`; })() : ''}
+          <small class="muted">${wst ? `${wst} ${wst === 1 ? 'שבוע' : 'שבועות'} ברצף שבהם היעד הושלם. ` : ''}🏖️ 7 ימים ברצף = יום חופש עם פרסים · עוד ${7 - ((p.streak || 0) % 7)} ${7 - ((p.streak || 0) % 7) === 1 ? 'יום' : 'ימים'}</small></section>`; })() : ''}
+      ${p.dayOffs > 0 && !d.goal ? `<div class="off-card"><span class="tile">🏖️</span><span class="ch-t"><b>יש לך ${p.dayOffs === 1 ? 'כרטיס יום חופש' : p.dayOffs + ' כרטיסי יום חופש'}</b><small>לוקחים היום חופש: הרצף נשמר, היום נחשב ליעד השבועי, ומקבלים תיבת פרסים עם רקע ומתנות.</small></span><button class="btn small gold" id="dayoff">לקחת חופש היום</button></div>` : p.dayOffs > 0 ? `<div class="off-card"><span class="tile">🏖️</span><span class="ch-t"><b>שמור לך ${p.dayOffs === 1 ? 'כרטיס יום חופש' : p.dayOffs + ' כרטיסי יום חופש'}</b><small>אפשר להשתמש בו בכל יום שעוד לא התאמנת בו.</small></span></div>` : ''}
       ${p.diag ? (() => { const st = eveningState(); const name = EVE_BOSSES[new Date().getDay()];
         return st === 'open' ? `<button class="eve-card open" id="eveboss"><span class="tile">${ic('boss')}</span><span class="ch-t"><b>בוס הערב: ${name}</b><small>זמין עכשיו עד ${bossHour() + 2}:00 · מי שמנצח מקבל פריט נדיר</small></span><span class="go">לקרב</span></button>`
           : st === 'before' ? `<div class="eve-card"><span class="tile">${ic('boss')}</span><span class="ch-t"><b>בוס הערב יופיע ב-${bossHour()}:00</b><small>${name} · פריט נדיר למנצח · ניסיון אחד בערב</small></span></div>`
@@ -489,6 +525,7 @@ async function home() {
   $('#switch').onclick = () => { DB.flushSave(); LS.set('mh_session', null); S.p = null; joinTeam(S.team); };
   $('#parentbtn').onclick = () => parentEntry(S.team);
   const eb = $('#eveboss'); if (eb) eb.onclick = eveningBoss;
+  const dof = $('#dayoff'); if (dof) dof.onclick = () => mentorPopup(`לקחת היום יום חופש? 🏖️<br>היום ייחשב כיום יעד, הרצף שלך יישמר, ותקבל תיבת פרסים. נשארים לך ${P().dayOffs - 1} כרטיסים אחרי זה.`, [{ t: 'כן, יום חופש!', primary: true, fn: takeDayOff }, { t: 'לא עכשיו' }]);
   const ib = $('#inst'); if (ib) ib.onclick = async () => { if (S.installEvt) { S.installEvt.prompt(); await S.installEvt.userChoice; S.installEvt = null; home(); } else toast('בתפריט הדפדפן (⋮) בחרו "הוספה למסך הבית" או "התקנת אפליקציה"'); };
   const nb = $('#noinst'); if (nb) nb.onclick = () => { LS.set('mh_noinstall', true); $('.install-card')?.remove(); };
   if (p.pendingLevels > 0) return levelUpFlow(home);
@@ -503,15 +540,19 @@ async function loadMessages() {
   const duels = allD.filter(d => d.to === S.pid && !d.results?.[S.pid]);
   const seenR = P().seenReacts || {};
   const reacts = allD.filter(d => (d.from === S.pid || d.to === S.pid) && d.viewed?.[S.pid]).map(d => { const o = d.from === S.pid ? d.to : d.from; return d.reacts?.[o] && seenR[d.id] !== d.reacts[o] ? { d, o, e: d.reacts[o], n: d.from === S.pid ? d.toName : d.fromName } : null; }).filter(Boolean);
+  const seenG = P().seenGifts || {};
+  const gotG = allD.filter(d => (d.from === S.pid || d.to === S.pid) && d.viewed?.[S.pid]).map(d => { const o = d.from === S.pid ? d.to : d.from; const g = d.gifts?.[o]; return g && GIFTS[g.id] && seenG[d.id + o] !== g.ts ? { d, o, g, n: d.from === S.pid ? d.toName : d.fromName } : null; }).filter(Boolean);
   const ready = allD.filter(d => (d.from === S.pid || d.to === S.pid) && d.results?.[d.from] && d.results?.[d.to] && !d.viewed?.[S.pid]);
   const b = $('#msg-banner'); if (!b) return;
   b.innerHTML = mine.map(m => `<div class="banner msg" data-id="${m.id}">${ic('mail')}<span><b>${esc(m.fromName || 'הורה')}:</b> ${esc(m.text)}</span><button class="btn small">קראתי</button></div>`).join('')
     + duels.map(d => `<div class="banner duel" data-d="${d.id}">${ic('duel')}<span><b>${esc(d.fromName)}</b> מאתגר אותך לדו-קרב</span><button class="btn small primary">לקרב</button></div>`).join('')
     + reacts.map(r => `<div class="banner react" data-r="${r.d.id}"><span class="rbig">${r.e}</span><span><b>${esc(r.n)}</b> הגיב לקרב שלכם: ${REACT_TXT[r.e] || ''}</span><button class="btn small">${r.e === '😤' ? 'לקרב חוזר' : 'סגירה'}</button></div>`).join('')
+    + gotG.map(r => `<div class="banner react gift" data-g="${r.d.id}"><span class="rbig">🎁</span><span><b>${esc(r.n)}</b> שלח לך מתנה מצחיקה!</span><button class="btn small gold">לפתוח</button></div>`).join('')
     + ready.map(d => `<div class="banner duel ready" data-w="${d.id}">${ic('trophy')}<span>תוצאות הקרב מול <b>${esc(d.from === S.pid ? d.toName : d.fromName)}</b> מוכנות!</span><button class="btn small gold">לזירה</button></div>`).join('');
   $$('.banner.msg', b).forEach(x => $('button', x).onclick = async () => { await DB.markRead(S.team, x.dataset.id); x.remove(); addXP(5); save(); beep('coin'); });
   $$('.banner.duel[data-d]', b).forEach(x => $('button', x).onclick = () => playDuel(duels.find(d => d.id === x.dataset.d)));
-  $$('.banner.react', b).forEach(x => $('button', x).onclick = () => { const r = reacts.find(y => y.d.id === x.dataset.r); P().seenReacts = { ...(P().seenReacts || {}), [r.d.id]: r.e }; save(true); x.remove(); if (r.e === '😤') { const qs = mixed(8).slice(0, 8); DB.createDuel(S.team, { from: S.pid, fromName: P().name, to: r.o, toName: r.n, qs }).then(id => playDuel({ id, qs, from: S.pid, fromName: P().name, to: r.o, toName: r.n, results: {} })); } });
+  $$('.banner.gift', b).forEach(x => $('button', x).onclick = () => { const r = gotG.find(y => y.d.id === x.dataset.g); x.remove(); giftReceived(r.d, r.o, r.n, r.g); });
+  $$('.banner.react[data-r]', b).forEach(x => $('button', x).onclick = () => { const r = reacts.find(y => y.d.id === x.dataset.r); P().seenReacts = { ...(P().seenReacts || {}), [r.d.id]: r.e }; save(true); x.remove(); if (r.e === '😤') { const qs = mixed(8).slice(0, 8); DB.createDuel(S.team, { from: S.pid, fromName: P().name, to: r.o, toName: r.n, qs }).then(id => playDuel({ id, qs, from: S.pid, fromName: P().name, to: r.o, toName: r.n, results: {} })); } });
   $$('.banner.duel[data-w]', b).forEach(x => $('button', x).onclick = () => watchDuel(ready.find(d => d.id === x.dataset.w)));
 }
 // ---------- משימות ----------
@@ -713,12 +754,15 @@ function wardrobe() {
   const tierMax = p.level < 4 ? 1 : p.level < 8 ? 2 : p.level < 13 ? 3 : 4;
   const price = id => ITEMS[id].tier * 150;
   setScreen(`<header class="topbar"><button class="icon-btn" id="bk" aria-label="חזרה">${ic('back')}</button><b>${ic('armor')} ציוד</b><span class="stat">${ic('coin')}${p.coins}</span></header>
-  <main class="wardrobe"><div class="w-hero">${lobbyScene(p.style)}${heroSVG(p, { aura: strongestPowerColor(p) })}</div><div class="w-slots">
+  <main class="wardrobe"><div class="w-hero">${heroScene(p)}${heroSVG(p, { aura: strongestPowerColor(p) })}</div><div class="w-slots">
   ${slots.map(s => { const own = p.items.filter(id => ITEMS[id].slot === s); const shop = Object.keys(ITEMS).filter(id => ITEMS[id].slot === s && !p.items.includes(id));
     return `<div class="w-slot"><h4>${SLOT_HE[s]}</h4><div class="w-items"><button class="w-item ${!p.equip[s] ? 'on' : ''}" data-s="${s}" data-id="">ללא</button>${own.map(id => `<button class="w-item ${p.equip[s] === id ? 'on' : ''}" data-s="${s}" data-id="${id}">${p.equip[s] === id ? ic('check') : ''}${itemName(id, p.style)}</button>`).join('')}
     ${shop.map(id => ITEMS[id].tier <= tierMax ? `<button class="w-item buy" data-buy="${id}">${itemName(id, p.style)} · ${ic('coin')}${price(id)}</button>` : `<span class="w-item locked">${ic('lock')}${itemName(id, p.style)} · רמה ${[0, 1, 4, 8, 13][ITEMS[id].tier]}</span>`).join('')}</div></div>`; }).join('')}
+  <div class="w-slot"><h4>רקע</h4><div class="w-items"><button class="w-item ${!p.bg ? 'on' : ''}" data-bg="">רקע הבית</button>${Object.entries(BGS).map(([k, b]) => (p.bgs || []).includes(k) ? `<button class="w-item ${p.bg === k ? 'on' : ''}" data-bg="${k}">${p.bg === k ? ic('check') : ''}${b.name}</button>` : `<span class="w-item locked">${ic('lock')}${b.name} · ${RAR_NAME[b.r]}</span>`).join('')}</div><small class="muted">רקעים חדשים נמצאים בתיבות האוצר.</small></div>
+  <div class="w-slot"><h4>מתנות מצחיקות</h4><div class="w-items">${Object.entries(GIFTS).map(([k, g]) => `<span class="w-item ${(p.gifts?.[k] || 0) ? '' : 'locked'}">${g.e} ${g.name} × ${p.gifts?.[k] || 0}</span>`).join('')}</div><small class="muted">שולחים ליריב אחרי דו-קרב. עוד מתנות מחכות בתיבות האוצר.</small></div>
   </div></main>`);
   $('#bk').onclick = home;
+  $$('.w-item[data-bg]').forEach(b => b.onclick = () => { p.bg = b.dataset.bg; save(); wardrobe(); });
   $$('.w-item[data-s]').forEach(b => b.onclick = () => { const s = b.dataset.s; if (b.dataset.id) p.equip[s] = b.dataset.id; else delete p.equip[s]; save(); wardrobe(); });
   $$('.w-item[data-buy]').forEach(b => b.onclick = () => { const id = b.dataset.buy; if (p.coins < price(id)) return toast(`חסרים ${price(id) - p.coins} מטבעות. כל משימה מוסיפה מטבעות.`); p.coins -= price(id); p.items.push(id); p.equip[ITEMS[id].slot] = id; save(true); beep('coin'); confetti(); wardrobe(); });
 }
@@ -980,6 +1024,7 @@ async function duelScreen() {
     playDuel({ id, qs, from: S.pid, fromName: P().name, to: b.dataset.to, toName: b.dataset.n, results: {} });
   });
   $$('.duel-row [data-play]').forEach(b => b.onclick = () => playDuel(duels.find(d => d.id === b.dataset.play)));
+  $$('.duel-row [data-gift]').forEach(b => b.onclick = () => { const d = duels.find(x => x.id === b.dataset.gift); giftPicker(d, d.from === S.pid ? d.toName : d.fromName); });
   $$('.duel-row [data-watch]').forEach(b => b.onclick = () => watchDuel(duels.find(d => d.id === b.dataset.watch)));
 }
 function duelRow(d) {
@@ -989,8 +1034,28 @@ function duelRow(d) {
   else if (!them) status = `<span class="muted">מחכים ל${esc(oname)} – התוצאות ייחשפו כששניכם תסיימו</span>`;
   else if (!d.viewed?.[S.pid]) status = `<button class="btn small gold" data-watch="${d.id}">${ic('duel')} לצפייה בקרב</button>`;
   else { const win = me.ok > them.ok || (me.ok === them.ok && me.t < them.t); const tie = me.ok === them.ok && me.t === them.t; info = `אתה: ${me.ok}/8 · ${fmtTime(me.t)} | ${esc(oname)}: ${them.ok}/8 · ${fmtTime(them.t)}`; status = `<b class="${win ? 'win' : 'lose'}">${tie ? 'תיקו' : win ? 'ניצחת' : 'הפעם הוא ניצח'}</b><button class="btn small" data-watch="${d.id}">צפייה חוזרת</button>`; }
+  if (me && them && d.viewed?.[S.pid]) status += `<button class="btn small" data-gift="${d.id}" title="שליחת מתנה מצחיקה">🎁</button>`;
   const rx = d.reacts?.[other] && d.viewed?.[S.pid] ? `<span class="rx" title="${esc(REACT_TXT[d.reacts[other]] || '')}">${d.reacts[other]}</span>` : '';
   return `<div class="duel-row"><span>מול <b>${esc(oname)}</b>${rx}</span><span class="muted small">${info}</span>${status}</div>`;
+}
+function sendGift(d, g) {
+  const p = P(); if (!(p.gifts?.[g] > 0)) return; p.gifts[g]--; save(true);
+  return DB.giftDuel(S.team, d.id, S.pid, g);
+}
+function giftPicker(d, oname) {
+  const p = P();
+  const m = modal(`<h3>${ic('gift')} מתנה מצחיקה ל${esc(oname)}</h3><p class="muted">בחר מה לשלוח. הוא יקבל את זה ישר לגיבור 😜</p>
+    <div class="gift-grid">${Object.entries(GIFTS).map(([k, g]) => `<button class="gift-pick" data-g="${k}" ${(p.gifts?.[k] || 0) ? '' : 'disabled'}><span>${g.e}</span><b>${g.name}</b><small>× ${p.gifts?.[k] || 0}</small></button>`).join('')}</div>
+    ${Object.values(p.gifts || {}).some(n => n > 0) ? '' : '<p class="muted small">אין לך מתנות כרגע. אפשר למצוא אותן בתיבות האוצר.</p>'}`);
+  $$('.gift-pick', m.el).forEach(b => b.onclick = async () => { await sendGift(d, b.dataset.g); m.close(); beep('coin'); toast(`${GIFTS[b.dataset.g].e} ${GIFTS[b.dataset.g].name} נשלחה ל${oname}!`); });
+}
+function giftReceived(d, from, name, g) {
+  const p = P(); p.seenGifts = { ...(p.seenGifts || {}), [d.id + from]: g.ts }; save(true);
+  const m = modal(`<div class="gift-recv"><div class="gr-stage">${heroScene(p)}<div class="gr-hero">${heroSVG(p)}</div></div><p>${GIFTS[g.id].line(esc(name))}</p>
+    <div class="row-btns"><button class="btn gold" id="gback">${ic('gift')} להחזיר לו!</button><button class="btn primary" id="gok">חחח 😂</button></div></div>`, { cls: 'wide' });
+  setTimeout(() => giftHit($('.gr-hero', m.el), g.id), 300);
+  $('#gok', m.el).onclick = () => m.close();
+  $('#gback', m.el).onclick = () => { m.close(); giftPicker(d, name); };
 }
 function rivalry(duels, oid) {
   let w = 0, l = 0; duels.filter(d => (d.from === oid || d.to === oid) && d.results?.[S.pid] && d.results?.[oid] && d.viewed?.[S.pid]).forEach(d => { const a = d.results[S.pid], b = d.results[oid]; if (a.ok > b.ok || (a.ok === b.ok && a.t < b.t)) w++; else if (!(a.ok === b.ok && a.t === b.t)) l++; });
@@ -1004,12 +1069,14 @@ async function watchDuel(d) {
   const oHero = op || (parent ? PARENT_HERO : { style: 'comic', equip: {} });
   const me = d.results[S.pid], them = d.results[other];
   const first = !d.viewed?.[S.pid];
+  if (d.gifts?.[other]) { P().seenGifts = { ...(P().seenGifts || {}), [d.id + other]: d.gifts[other].ts }; }
   await DB.markDuelViewed(S.team, d.id, S.pid); d.viewed = { ...(d.viewed || {}), [S.pid]: true };
   const win = me.ok > them.ok || (me.ok === them.ok && me.t < them.t);
   if (first && win) { addXP(40); P().records.duelsWon++; save(true); }
   S.active = false;
   battleScreen(app, { name: P().name, hero: P(), res: me }, { name: oname, hero: oHero, res: them }, {
-    myReact: d.reacts?.[S.pid], theirReact: d.reacts?.[other],
+    myReact: d.reacts?.[S.pid], theirReact: d.reacts?.[other], theirGift: d.gifts?.[other]?.id,
+    gifts: P().gifts || {}, onGift: g => sendGift(d, g),
     onReact: e => { d.reacts = { ...(d.reacts || {}), [S.pid]: e }; return DB.reactDuel(S.team, d.id, S.pid, e); },
     onDone: () => { if (first && win) toast('ניצחון בדו-קרב: +40 XP', 'gold'); duelScreen(); },
     onRematch: async () => { const qs = mixed(8).slice(0, 8); const id = await DB.createDuel(S.team, { from: S.pid, fromName: P().name, to: other, toName: oname, qs }); playDuel({ id, qs, from: S.pid, fromName: P().name, to: other, toName: oname, results: {} }); },
