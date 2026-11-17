@@ -1,6 +1,6 @@
 // MindHero service worker – התקנה כאפליקציה ועבודה בסיסית גם בלי רשת
-const CACHE = 'mindhero-v22';
-self.addEventListener('install', e => { self.skipWaiting(); e.waitUntil(caches.open(CACHE).then(c => c.addAll(['./', './index.html', './css/style.css', './manifest.json', './icon.svg']).catch(() => {}))); });
+const CACHE = 'mindhero-v23';
+self.addEventListener('install', e => { self.skipWaiting(); e.waitUntil(caches.open(CACHE).then(c => c.addAll(['./', './index.html', './css/style.css', './manifest.json', './icon-192.png']).catch(() => {}))); });
 self.addEventListener('activate', e => e.waitUntil(caches.keys().then(ks => Promise.all(ks.filter(k => k !== CACHE).map(k => caches.delete(k)))).then(() => self.clients.claim())));
 // רשת קודם (כדי שעדכונים יגיעו מיד), ומטמון רק כשאין חיבור
 self.addEventListener('fetch', e => {
