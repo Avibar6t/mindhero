@@ -1,14 +1,15 @@
 // MindHero – האפליקציה הראשית
-import * as DB from './store.js?v=23';
-import { LS } from './store.js?v=23';
-import { CHAPTERS, CH_ORDER, VERBAL, ANALOGY, LOGIC, MATH, ACADEMY } from './bank.js?v=23';
-import { generate } from './gen.js?v=23';
-import { STYLES, SKINS, ITEMS, POWERS, SLOT_HE, heroSVG, itemName, strongestPowerColor, levelUpOffers, rankOf, xpForLevel } from './hero.js?v=23';
-import { $, $$, esc, toast, modal, beep, confetti, sound, prepareQ, isCorrect, answerText, renderQuestion, markResult, today, weekKey, fmtTime, isMobile, bars, LETTERS, bm, explainHTML } from './ui.js?v=23';
-import { ic, moodFace, lobbyScene } from './icons.js?v=23';
-import { TOPICS, topicById, grid100 } from './learn.js?v=23';
-import { startExam } from './exam.js?v=23';
-import { parentScreen } from './parent.js?v=23';
+import * as DB from './store.js?v=24';
+import { LS } from './store.js?v=24';
+import { CHAPTERS, CH_ORDER, VERBAL, ANALOGY, LOGIC, MATH, ACADEMY } from './bank.js?v=24';
+import { generate } from './gen.js?v=24';
+import { STYLES, SKINS, ITEMS, POWERS, SLOT_HE, heroSVG, itemName, strongestPowerColor, levelUpOffers, rankOf, xpForLevel } from './hero.js?v=24';
+import { $, $$, esc, toast, modal, beep, confetti, sound, prepareQ, isCorrect, answerText, renderQuestion, markResult, today, weekKey, fmtTime, isMobile, bars, LETTERS, bm, explainHTML } from './ui.js?v=24';
+import { ic, moodFace, lobbyScene } from './icons.js?v=24';
+import { TOPICS, topicById, grid100 } from './learn.js?v=24';
+import { battleScreen, PARENT_HERO } from './battle.js?v=24';
+import { startExam } from './exam.js?v=24';
+import { parentScreen } from './parent.js?v=24';
 
 const app = $('#app');
 export const S = { team: null, teamData: null, pid: null, p: null, active: false, lastInput: Date.now(), inQuestion: null, messages: [] };
@@ -498,12 +499,16 @@ async function home() {
 async function loadMessages() {
   S.messages = await DB.listMessages(S.team);
   const mine = S.messages.filter(m => m.to === S.pid && !m.read);
-  const duels = (await DB.listDuels(S.team)).filter(d => d.to === S.pid && !d.results?.[S.pid]);
+  const allD = await DB.listDuels(S.team);
+  const duels = allD.filter(d => d.to === S.pid && !d.results?.[S.pid]);
+  const ready = allD.filter(d => (d.from === S.pid || d.to === S.pid) && d.results?.[d.from] && d.results?.[d.to] && !d.viewed?.[S.pid]);
   const b = $('#msg-banner'); if (!b) return;
   b.innerHTML = mine.map(m => `<div class="banner msg" data-id="${m.id}">${ic('mail')}<span><b>${esc(m.fromName || 'הורה')}:</b> ${esc(m.text)}</span><button class="btn small">קראתי</button></div>`).join('')
-    + duels.map(d => `<div class="banner duel" data-d="${d.id}">${ic('duel')}<span><b>${esc(d.fromName)}</b> מאתגר אותך לדו-קרב</span><button class="btn small primary">לקרב</button></div>`).join('');
+    + duels.map(d => `<div class="banner duel" data-d="${d.id}">${ic('duel')}<span><b>${esc(d.fromName)}</b> מאתגר אותך לדו-קרב</span><button class="btn small primary">לקרב</button></div>`).join('')
+    + ready.map(d => `<div class="banner duel ready" data-w="${d.id}">${ic('trophy')}<span>תוצאות הקרב מול <b>${esc(d.from === S.pid ? d.toName : d.fromName)}</b> מוכנות!</span><button class="btn small gold">לזירה</button></div>`).join('');
   $$('.banner.msg', b).forEach(x => $('button', x).onclick = async () => { await DB.markRead(S.team, x.dataset.id); x.remove(); addXP(5); save(); beep('coin'); });
-  $$('.banner.duel', b).forEach(x => $('button', x).onclick = () => playDuel(duels.find(d => d.id === x.dataset.d)));
+  $$('.banner.duel[data-d]', b).forEach(x => $('button', x).onclick = () => playDuel(duels.find(d => d.id === x.dataset.d)));
+  $$('.banner.duel[data-w]', b).forEach(x => $('button', x).onclick = () => watchDuel(ready.find(d => d.id === x.dataset.w)));
 }
 // ---------- משימות ----------
 function startMission(m) {
@@ -947,10 +952,10 @@ async function duelScreen() {
   const duels = (await DB.listDuels(S.team)).filter(d => d.from === S.pid || d.to === S.pid);
   const parents = DB.parentsOf(S.teamData);
   setScreen(`<header class="topbar"><button class="icon-btn" id="bk" aria-label="חזרה">${ic('back')}</button><b>${ic('duel')} דו-קרב</b><span></span></header>
-  <main class="list-screen"><p class="lead">שני השחקנים פותרים בדיוק את אותן 8 שאלות. מנצח מי שצדק ביותר שאלות; בתיקו – המהיר. ניצחון שווה 40 XP.</p>
+  <main class="list-screen"><p class="lead">שני השחקנים פותרים בדיוק את אותן 8 שאלות. התוצאות נשארות סודיות עד ששניכם מסיימים – ואז הגיבורים נפגשים בזירה. מנצח מי שצדק ביותר שאלות; בתיקו – המהיר. ניצחון שווה 40 XP.</p>
   <h4>את מי לאתגר?</h4><div class="opp">
-    ${parents.map(pr => `<button class="opp-b" data-to="${pr.id}" data-n="${esc(pr.name)}">${ic('parent')}${esc(pr.name)}</button>`).join('')}
-    ${players.map(x => `<button class="opp-b" data-to="${x.id}" data-n="${esc(x.name)}"><span class="mini-h">${heroSVG(x)}</span>${esc(x.name)}</button>`).join('')}</div>
+    ${parents.map(pr => `<button class="opp-b" data-to="${pr.id}" data-n="${esc(pr.name)}"><span class="mini-h">${heroSVG(PARENT_HERO)}</span>${esc(pr.name)}${rivalry(duels, pr.id)}</button>`).join('')}
+    ${players.map(x => `<button class="opp-b" data-to="${x.id}" data-n="${esc(x.name)}"><span class="mini-h">${heroSVG(x)}</span>${esc(x.name)}${rivalry(duels, x.id)}</button>`).join('')}</div>
   <div class="p-card"><h4>${ic('send')} אתגר פתוח</h4><p class="muted" style="margin:0 0 10px">קישור שאפשר לשלוח לכל אחד – סבא, דודה או חבר. הם כותבים שם ופותרים את אותן 8 שאלות, בלי הרשמה.</p><button class="btn primary" id="opench">יצירת אתגר פתוח</button>
     <div id="chlist"></div></div>
   <h4>הקרבות שלך</h4>${duels.length ? duels.map(d => duelRow(d)).join('') : '<p class="muted">עוד אין קרבות. בחר יריב כדי להתחיל.</p>'}</main>`);
@@ -971,26 +976,51 @@ async function duelScreen() {
     playDuel({ id, qs, from: S.pid, fromName: P().name, to: b.dataset.to, toName: b.dataset.n, results: {} });
   });
   $$('.duel-row [data-play]').forEach(b => b.onclick = () => playDuel(duels.find(d => d.id === b.dataset.play)));
+  $$('.duel-row [data-watch]').forEach(b => b.onclick = () => watchDuel(duels.find(d => d.id === b.dataset.watch)));
 }
 function duelRow(d) {
   const me = d.results?.[S.pid], other = d.from === S.pid ? d.to : d.from, oname = d.from === S.pid ? d.toName : d.fromName, them = d.results?.[other];
-  let status;
-  if (!me) status = `<button class="btn small primary" data-play="${d.id}">לקרב</button>`;
-  else if (!them) status = `<span class="muted">מחכים ל${esc(oname)}</span>`;
-  else { const win = me.ok > them.ok || (me.ok === them.ok && me.t < them.t); const tie = me.ok === them.ok && me.t === them.t; status = `<b class="${win ? 'win' : 'lose'}">${tie ? 'תיקו' : win ? 'ניצחת' : 'הפעם הוא ניצח'}</b>`; }
-  return `<div class="duel-row"><span>מול <b>${esc(oname)}</b></span><span>${me ? `אתה: ${me.ok}/8 · ${fmtTime(me.t)}` : ''}${them ? ` | ${esc(oname)}: ${them.ok}/8 · ${fmtTime(them.t)}` : ''}</span>${status}</div>`;
+  let status, info = '';
+  if (!me) status = `<button class="btn small primary" data-play="${d.id}">לקרב</button>${them ? `<small class="muted">${esc(oname)} כבר סיים – התוצאה סודית</small>` : ''}`;
+  else if (!them) status = `<span class="muted">מחכים ל${esc(oname)} – התוצאות ייחשפו כששניכם תסיימו</span>`;
+  else if (!d.viewed?.[S.pid]) status = `<button class="btn small gold" data-watch="${d.id}">${ic('duel')} לצפייה בקרב</button>`;
+  else { const win = me.ok > them.ok || (me.ok === them.ok && me.t < them.t); const tie = me.ok === them.ok && me.t === them.t; info = `אתה: ${me.ok}/8 · ${fmtTime(me.t)} | ${esc(oname)}: ${them.ok}/8 · ${fmtTime(them.t)}`; status = `<b class="${win ? 'win' : 'lose'}">${tie ? 'תיקו' : win ? 'ניצחת' : 'הפעם הוא ניצח'}</b><button class="btn small" data-watch="${d.id}">צפייה חוזרת</button>`; }
+  return `<div class="duel-row"><span>מול <b>${esc(oname)}</b></span><span class="muted small">${info}</span>${status}</div>`;
+}
+function rivalry(duels, oid) {
+  let w = 0, l = 0; duels.filter(d => (d.from === oid || d.to === oid) && d.results?.[S.pid] && d.results?.[oid] && d.viewed?.[S.pid]).forEach(d => { const a = d.results[S.pid], b = d.results[oid]; if (a.ok > b.ok || (a.ok === b.ok && a.t < b.t)) w++; else if (!(a.ok === b.ok && a.t === b.t)) l++; });
+  return w + l ? `<small class="rival">${w}–${l}</small>` : '';
+}
+async function watchDuel(d) {
+  const players = await DB.listPlayers(S.team);
+  const other = d.from === S.pid ? d.to : d.from, oname = d.from === S.pid ? d.toName : d.fromName;
+  const op = players.find(x => x.id === other);
+  const parent = DB.parentsOf(S.teamData).find(x => x.id === other);
+  const oHero = op || (parent ? PARENT_HERO : { style: 'comic', equip: {} });
+  const me = d.results[S.pid], them = d.results[other];
+  const first = !d.viewed?.[S.pid];
+  await DB.markDuelViewed(S.team, d.id, S.pid); d.viewed = { ...(d.viewed || {}), [S.pid]: true };
+  const win = me.ok > them.ok || (me.ok === them.ok && me.t < them.t);
+  if (first && win) { addXP(40); P().records.duelsWon++; save(true); }
+  S.active = false;
+  battleScreen(app, { name: P().name, hero: P(), res: me }, { name: oname, hero: oHero, res: them }, {
+    onDone: () => { if (first && win) toast('ניצחון בדו-קרב: +40 XP', 'gold'); duelScreen(); },
+    onRematch: async () => { const qs = mixed(8).slice(0, 8); const id = await DB.createDuel(S.team, { from: S.pid, fromName: P().name, to: other, toName: oname, qs }); playDuel({ id, qs, from: S.pid, fromName: P().name, to: other, toName: oname, results: {} }); },
+  });
 }
 function playDuel(d) {
   const qs = d.qs.map(q => JSON.parse(JSON.stringify(q)));
   runQuiz({ title: `דו-קרב מול ${d.from === S.pid ? d.toName : d.fromName}`, qs, kind: 'duel', onDone: async (res) => {
-    const ok = res.filter(x => x.ok).length, t = Math.round(res.reduce((s, x) => s + (x.t || 0), 0));
-    await DB.submitDuel(S.team, d.id, S.pid, { ok, t });
-    const other = d.from === S.pid ? d.to : d.from; const them = d.results?.[other];
-    addXP(15);
-    if (them && (ok > them.ok || (ok === them.ok && t < them.t))) { addXP(40); P().records.duelsWon++; confetti(); toast('ניצחת בדו-קרב! +40 XP', 'gold'); }
-    save(true); duelScreen();
+    const ok = res.filter(x => x.ok).length, t = Math.round(res.reduce((s, x) => s + (x.t || 0), 0)), seq = res.map(x => !!x.ok);
+    await DB.submitDuel(S.team, d.id, S.pid, { ok, t, seq });
+    addXP(15); save(true);
+    const other = d.from === S.pid ? d.to : d.from, oname = d.from === S.pid ? d.toName : d.fromName;
+    const fresh = (await DB.listDuels(S.team)).find(x => x.id === d.id) || d;
+    if (fresh.results?.[other]) { fresh.results[S.pid] = { ok, t, seq }; return mentorPopup(`גם <b>${esc(oname)}</b> כבר סיים את הקרב. הזירה מוכנה – בוא נראה מי ניצח!`, [{ t: 'לזירה', primary: true, fn: () => watchDuel(fresh) }]); }
+    mentorPopup(`סיימת! התוצאה שלך נשמרה בסוד. 🤐<br>כש<b>${esc(oname)}</b> יסיים את הקרב, תקבל הודעה ותוכלו לצפות יחד בקרב בזירה.`, [{ t: 'מעולה', primary: true, fn: duelScreen }]);
   } });
 }
+
 // ---------- טבלת אלופים ושיאים ----------
 async function leaderboard() {
   const wk = weekKey();

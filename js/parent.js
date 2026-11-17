@@ -1,10 +1,11 @@
 // MindHero – מסך הורה (תומך בשני הורים)
-import * as DB from './store.js?v=23';
-import { CHAPTERS, CH_ORDER } from './bank.js?v=23';
-import { heroSVG, rankOf } from './hero.js?v=23';
-import { $, $$, esc, toast, modal, today, bars, fmtTime, renderQuestion, isCorrect, markResult, answerText, bm, explainHTML } from './ui.js?v=23';
-import { ic, moodFace } from './icons.js?v=23';
-import { analysisHTML } from './analysis.js?v=23';
+import * as DB from './store.js?v=24';
+import { CHAPTERS, CH_ORDER } from './bank.js?v=24';
+import { heroSVG, rankOf } from './hero.js?v=24';
+import { $, $$, esc, toast, modal, today, bars, fmtTime, renderQuestion, isCorrect, markResult, answerText, bm, explainHTML } from './ui.js?v=24';
+import { ic, moodFace } from './icons.js?v=24';
+import { battleScreen, PARENT_HERO } from './battle.js?v=24';
+import { analysisHTML } from './analysis.js?v=24';
 
 const ago = ts => { const m = Math.round((Date.now() - ts) / 60000); return m < 1 ? 'עכשיו' : m < 60 ? `לפני ${m} דק׳` : m < 1440 ? `לפני ${Math.round(m / 60)} שע׳` : `לפני ${Math.round(m / 1440)} ימים`; };
 const HARD = ['stressed', 'quit', 'frustrated'];
@@ -176,7 +177,8 @@ export async function parentScreen(ctx) {
     el.innerHTML = `<p class="lead">אתגרו את הגיבור: שניכם פותרים את אותן 8 שאלות מכל הפרקים. מנצח מי שצדק ביותר שאלות; בתיקו – המהיר.</p>
       <div class="opp">${players.map(p => `<button class="opp-b" data-k="${p.id}" data-n="${esc(p.name)}"><span class="mini-h">${heroSVG(p)}</span>לאתגר את ${esc(p.name)}</button>`).join('')}</div>
       <h4>הקרבות שלי</h4>${mine.length ? mine.map(d => { const other = d.from === me.id ? d.to : d.from; const a = d.results?.[me.id], b = d.results?.[other]; const on = d.from === me.id ? d.toName : d.fromName;
-        return `<div class="duel-row"><span>מול <b>${esc(on)}</b></span><span>${a ? `אני: ${a.ok}/8 · ${fmtTime(a.t)}` : ''}${b ? ` | ${esc(on)}: ${b.ok}/8 · ${fmtTime(b.t)}` : ` | ${esc(on)} עוד לא שיחק`}</span>${!a ? `<button class="btn small primary" data-play="${d.id}">לשחק</button>` : ''}</div>`; }).join('') : '<p class="muted">עוד אין קרבות.</p>'}`;
+        const st = !a ? `<button class="btn small primary" data-play="${d.id}">לשחק</button>${b ? `<small class="muted">${esc(on)} כבר סיים – התוצאה סודית</small>` : ''}` : !b ? `<span class="muted">מחכים ל${esc(on)}</span>` : `<button class="btn small gold" data-watch="${d.id}">${ic('duel')} ${d.viewed?.[me.id] ? 'צפייה חוזרת' : 'לצפייה בקרב'}</button>`;
+        return `<div class="duel-row"><span>מול <b>${esc(on)}</b></span><span class="muted small">${a && b && d.viewed?.[me.id] ? `אני: ${a.ok}/8 · ${fmtTime(a.t)} | ${esc(on)}: ${b.ok}/8 · ${fmtTime(b.t)}` : ''}</span>${st}</div>`; }).join('') : '<p class="muted">עוד אין קרבות.</p>'}`;
     $$('.opp-b', el).forEach(b => b.onclick = async () => {
       const qs = ctx.mixed(8);
       const d = { from: me.id, fromName: me.name, to: b.dataset.k, toName: b.dataset.n, qs };
@@ -184,16 +186,23 @@ export async function parentScreen(ctx) {
       playDuel(d);
     });
     $$('[data-play]', el).forEach(b => b.onclick = () => playDuel(duels.find(d => d.id === b.dataset.play)));
+    $$('[data-watch]', el).forEach(b => b.onclick = () => watch(duels.find(d => d.id === b.dataset.watch)));
   }
 
+  async function watch(d) {
+    const other = d.from === me.id ? d.to : d.from, on = d.from === me.id ? d.toName : d.fromName;
+    const kidP = players.find(x => x.id === other) || { style: 'comic', equip: {} };
+    await DB.markDuelViewed(code, d.id, me.id);
+    battleScreen(ctx.app, { name: me.name, hero: PARENT_HERO, res: d.results[me.id] }, { name: on, hero: kidP, res: d.results[other] }, { onDone: async () => { await load(); tab = 'duel'; render(); } });
+  }
   function playDuel(d) {
-    const qs = d.qs; let i = 0, ok = 0; const t0 = Date.now();
+    const qs = d.qs; let i = 0, ok = 0; const t0 = Date.now(); const seq = [];
     const show = () => {
       setScreen(`<div class="quiz"><header class="qbar"><b class="qtitle">${ic('duel')} דו-קרב מול ${esc(d.from === me.id ? d.toName : d.fromName)}</b><span class="qprog">${i + 1}/8</span></header><div class="dots">${qs.map((_, k) => `<i class="${k < i ? 'ok' : k === i ? 'cur' : ''}"></i>`).join('')}</div><div class="qcard" id="pq"></div><div id="pfb"></div></div>`);
       renderQuestion(qs[i], $('#pq'), { onAnswer: (r, final) => {
-        if (!final) return; const good = isCorrect(qs[i], r); if (good) ok++; markResult(qs[i], $('#pq'), r);
+        if (!final) return; const good = isCorrect(qs[i], r); if (good) ok++; seq[i] = good; markResult(qs[i], $('#pq'), r);
         $('#pfb').innerHTML = `<div class="feedback ${good ? 'ok' : 'no'}"><div class="fb-head">${ic(good ? 'check' : 'x')} ${good ? 'נכון' : 'התשובה: ' + answerText(qs[i])}</div><div class="fb-exp">${explainHTML(qs[i])}</div><button class="btn primary big" id="pn">${i < 7 ? 'לשאלה הבאה' : 'סיום'}</button></div>`;
-        $('#pn').onclick = async () => { if (i < qs.length - 1) { i++; show(); } else { const t = Math.round((Date.now() - t0) / 1000); await DB.submitDuel(code, d.id, me.id, { ok, t }); toast(`סיימת: ${ok}/8`); await load(); tab = 'duel'; render(); } };
+        $('#pn').onclick = async () => { if (i < qs.length - 1) { i++; show(); } else { const t = Math.round((Date.now() - t0) / 1000); await DB.submitDuel(code, d.id, me.id, { ok, t, seq }); await load(); const fresh = duels.find(x => x.id === d.id); const other = d.from === me.id ? d.to : d.from; if (fresh?.results?.[other]) { toast('שניכם סיימתם – לזירה!'); return watch(fresh); } toast('סיימת! התוצאה תיחשף כשגם הילד יסיים.'); tab = 'duel'; render(); } };
       } });
     };
     show();
