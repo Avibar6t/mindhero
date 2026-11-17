@@ -1,16 +1,16 @@
 // MindHero – האפליקציה הראשית
-import * as DB from './store.js?v=27';
-import { LS } from './store.js?v=27';
-import { CHAPTERS, CH_ORDER, VERBAL, ANALOGY, LOGIC, MATH, ACADEMY } from './bank.js?v=27';
-import { generate } from './gen.js?v=27';
-import { STYLES, SKINS, ITEMS, POWERS, SLOT_HE, heroSVG, itemName, strongestPowerColor, levelUpOffers, rankOf, xpForLevel } from './hero.js?v=27';
-import { $, $$, esc, toast, modal, beep, confetti, sound, prepareQ, isCorrect, answerText, renderQuestion, markResult, today, weekKey, fmtTime, isMobile, bars, LETTERS, bm, explainHTML } from './ui.js?v=27';
-import { ic, moodFace, lobbyScene } from './icons.js?v=27';
-import { TOPICS, topicById, grid100 } from './learn.js?v=27';
-import { BGS, RAR_NAME, bgScene, heroScene, rollBg, GIFTS, rollGift, addGift, giftHit } from './fun.js?v=27';
-import { battleScreen, PARENT_HERO, REACT_TXT } from './battle.js?v=27';
-import { startExam } from './exam.js?v=27';
-import { parentScreen } from './parent.js?v=27';
+import * as DB from './store.js?v=28';
+import { LS } from './store.js?v=28';
+import { CHAPTERS, CH_ORDER, VERBAL, ANALOGY, LOGIC, MATH, ACADEMY } from './bank.js?v=28';
+import { generate } from './gen.js?v=28';
+import { STYLES, SKINS, ITEMS, POWERS, SLOT_HE, heroSVG, itemName, strongestPowerColor, levelUpOffers, rankOf, xpForLevel } from './hero.js?v=28';
+import { $, $$, esc, toast, modal, beep, confetti, sound, prepareQ, isCorrect, answerText, renderQuestion, markResult, today, weekKey, fmtTime, isMobile, bars, LETTERS, bm, explainHTML } from './ui.js?v=28';
+import { ic, moodFace, lobbyScene } from './icons.js?v=28';
+import { TOPICS, topicById, grid100 } from './learn.js?v=28';
+import { BGS, RAR_NAME, bgScene, heroScene, rollBg, GIFTS, rollGift, addGift, giftHit } from './fun.js?v=28';
+import { battleScreen, PARENT_HERO, REACT_TXT } from './battle.js?v=28';
+import { startExam } from './exam.js?v=28';
+import { parentScreen } from './parent.js?v=28';
 
 const app = $('#app');
 export const S = { team: null, teamData: null, pid: null, p: null, active: false, lastInput: Date.now(), inQuestion: null, messages: [] };
@@ -789,14 +789,27 @@ function wardrobe() {
   <main class="wardrobe"><div class="w-hero">${heroScene(p)}${heroSVG(p, { aura: strongestPowerColor(p) })}</div><div class="w-slots">
   ${slots.map(s => { const own = p.items.filter(id => ITEMS[id].slot === s); const shop = Object.keys(ITEMS).filter(id => ITEMS[id].slot === s && !p.items.includes(id));
     return `<div class="w-slot"><h4>${SLOT_HE[s]}</h4><div class="w-items"><button class="w-item ${!p.equip[s] ? 'on' : ''}" data-s="${s}" data-id="">ללא</button>${own.map(id => `<button class="w-item ${p.equip[s] === id ? 'on' : ''}" data-s="${s}" data-id="${id}">${p.equip[s] === id ? ic('check') : ''}${itemName(id, p.style)}</button>`).join('')}
-    ${shop.map(id => ITEMS[id].tier <= tierMax ? `<button class="w-item buy" data-buy="${id}">${itemName(id, p.style)} · ${ic('coin')}${price(id)}</button>` : `<span class="w-item locked">${ic('lock')}${itemName(id, p.style)} · רמה ${[0, 1, 4, 8, 13][ITEMS[id].tier]}</span>`).join('')}</div></div>`; }).join('')}
+    ${shop.map(id => ITEMS[id].tier <= tierMax ? `<button class="w-item buy" data-buy="${id}">${itemName(id, p.style)} · ${ic('coin')}${price(id)}</button>` : `<button class="w-item locked" data-peek="${id}">${ic('lock')}${itemName(id, p.style)} · רמה ${[0, 1, 4, 8, 13][ITEMS[id].tier]}</button>`).join('')}</div></div>`; }).join('')}
   <div class="w-slot"><h4>רקע</h4><div class="w-items"><button class="w-item ${!p.bg ? 'on' : ''}" data-bg="">רקע הבית</button>${Object.entries(BGS).map(([k, b]) => (p.bgs || []).includes(k) ? `<button class="w-item ${p.bg === k ? 'on' : ''}" data-bg="${k}">${p.bg === k ? ic('check') : ''}${b.name}</button>` : `<span class="w-item locked">${ic('lock')}${b.name} · ${RAR_NAME[b.r]}</span>`).join('')}</div><small class="muted">רקעים חדשים נמצאים בתיבות האוצר.</small></div>
   <div class="w-slot"><h4>מתנות מצחיקות</h4><div class="w-items">${Object.entries(GIFTS).map(([k, g]) => `<span class="w-item ${(p.gifts?.[k] || 0) ? '' : 'locked'}">${g.e} ${g.name} × ${p.gifts?.[k] || 0}</span>`).join('')}</div><small class="muted">שולחים ליריב אחרי דו-קרב. עוד מתנות מחכות בתיבות האוצר.</small></div>
   </div></main>`);
   $('#bk').onclick = home;
   $$('.w-item[data-bg]').forEach(b => b.onclick = () => { p.bg = b.dataset.bg; save(); wardrobe(); });
   $$('.w-item[data-s]').forEach(b => b.onclick = () => { const s = b.dataset.s; if (b.dataset.id) p.equip[s] = b.dataset.id; else delete p.equip[s]; save(); wardrobe(); });
-  $$('.w-item[data-buy]').forEach(b => b.onclick = () => { const id = b.dataset.buy; if (p.coins < price(id)) return toast(`חסרים ${price(id) - p.coins} מטבעות. כל משימה מוסיפה מטבעות.`); p.coins -= price(id); p.items.push(id); p.equip[ITEMS[id].slot] = id; save(true); beep('coin'); confetti(); wardrobe(); });
+  // תצוגה מקדימה לפני רכישה: רואים את הגיבור עם הפריט, ורק אז מחליטים
+  const preview = (id, locked) => {
+    const it = ITEMS[id], cost = price(id), short = cost - p.coins;
+    const m = modal(`<div class="try-on"><div class="to-stage">${heroScene(p)}<div class="to-hero">${heroSVG({ ...p, equip: { ...p.equip, [it.slot]: id } }, { aura: strongestPowerColor(p) })}</div><span class="to-tag">תצוגה מקדימה</span></div>
+      <div class="to-info"><small class="muted">${SLOT_HE[it.slot]}</small><h3>${itemName(id, p.style)}</h3>${it.desc ? `<p class="muted">${it.desc}</p>` : ''}
+      ${locked ? `<p class="to-lock">${ic('lock')} ייפתח לרכישה ברמה ${[0, 1, 4, 8, 13][it.tier]}. אתה ברמה ${p.level}.</p><div class="row-btns"><button class="btn primary" id="tok">הבנתי</button></div>`
+        : `<p class="to-price">${ic('coin')} ${cost} מטבעות <small class="muted">· יש לך ${p.coins}</small></p>
+      <div class="row-btns"><button class="btn gold" id="tbuy" ${short > 0 ? 'disabled' : ''}>${short > 0 ? `חסרים ${short} מטבעות` : 'לקנות ולהלביש'}</button><button class="btn" id="tno">לא עכשיו</button></div>`}</div></div>`, { cls: 'wide' });
+    const ok = $('#tok', m.el); if (ok) ok.onclick = () => m.close();
+    const no = $('#tno', m.el); if (no) no.onclick = () => m.close();
+    const buy = $('#tbuy', m.el); if (buy) buy.onclick = () => { if (p.coins < cost) return; p.coins -= cost; p.items.push(id); p.equip[it.slot] = id; save(true); beep('coin'); confetti(); m.close(); toast(`${itemName(id, p.style)} – שלך!`, 'gold'); wardrobe(); };
+  };
+  $$('.w-item[data-buy]').forEach(b => b.onclick = () => preview(b.dataset.buy, false));
+  $$('.w-item[data-peek]').forEach(b => b.onclick = () => preview(b.dataset.peek, true));
 }
 function powersScreen() {
   const p = P();

@@ -1,5 +1,5 @@
 // רקעים לגיבור ומתנות מצחיקות לדו-קרב
-import { lobbyScene } from './icons.js?v=27';
+import { lobbyScene } from './icons.js?v=28';
 
 // r: 1 רגיל · 2 נדיר · 3 אפי
 export const BGS = {
