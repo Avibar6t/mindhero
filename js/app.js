@@ -1,14 +1,14 @@
 // MindHero – האפליקציה הראשית
-import * as DB from './store.js?v=22';
-import { LS } from './store.js?v=22';
-import { CHAPTERS, CH_ORDER, VERBAL, ANALOGY, LOGIC, MATH, ACADEMY } from './bank.js?v=22';
-import { generate } from './gen.js?v=22';
-import { STYLES, SKINS, ITEMS, POWERS, SLOT_HE, heroSVG, itemName, strongestPowerColor, levelUpOffers, rankOf, xpForLevel } from './hero.js?v=22';
-import { $, $$, esc, toast, modal, beep, confetti, sound, prepareQ, isCorrect, answerText, renderQuestion, markResult, today, weekKey, fmtTime, isMobile, bars, LETTERS, bm, explainHTML } from './ui.js?v=22';
-import { ic, moodFace, lobbyScene } from './icons.js?v=22';
-import { TOPICS, topicById, grid100 } from './learn.js?v=22';
-import { startExam } from './exam.js?v=22';
-import { parentScreen } from './parent.js?v=22';
+import * as DB from './store.js?v=23';
+import { LS } from './store.js?v=23';
+import { CHAPTERS, CH_ORDER, VERBAL, ANALOGY, LOGIC, MATH, ACADEMY } from './bank.js?v=23';
+import { generate } from './gen.js?v=23';
+import { STYLES, SKINS, ITEMS, POWERS, SLOT_HE, heroSVG, itemName, strongestPowerColor, levelUpOffers, rankOf, xpForLevel } from './hero.js?v=23';
+import { $, $$, esc, toast, modal, beep, confetti, sound, prepareQ, isCorrect, answerText, renderQuestion, markResult, today, weekKey, fmtTime, isMobile, bars, LETTERS, bm, explainHTML } from './ui.js?v=23';
+import { ic, moodFace, lobbyScene } from './icons.js?v=23';
+import { TOPICS, topicById, grid100 } from './learn.js?v=23';
+import { startExam } from './exam.js?v=23';
+import { parentScreen } from './parent.js?v=23';
 
 const app = $('#app');
 export const S = { team: null, teamData: null, pid: null, p: null, active: false, lastInput: Date.now(), inQuestion: null, messages: [] };
@@ -18,7 +18,7 @@ const MENTOR = 'פרופסור מיינד';
 // ================== עזרי שחקן ==================
 function newPlayer({ name, style, skin, pinHash }) {
   const ch = {}; CH_ORDER.forEach(c => ch[c] = { lvl: 2, n: 0, ok: 0, time: 0 });
-  return { learned: {}, learnStep: {}, name, style, skin, pinHash, created: Date.now(), level: 1, xp: 0, coins: 50, items: [], equip: {}, powers: {}, ch, seen: {}, mistakes: [], days: {}, streak: 0, bestStreak: 0, lastGoalDay: null, freezeUsed: {}, academy: {}, diag: false, records: { bestBoss: 0, bestCombo: 0, sims: [], totalQ: 0, totalOk: 0, duelsWon: 0 }, daily: null, weekXp: {}, pendingLevels: 0 };
+  return { seenNews: 'n-2026-11-17', learned: {}, learnStep: {}, name, style, skin, pinHash, created: Date.now(), level: 1, xp: 0, coins: 50, items: [], equip: {}, powers: {}, ch, seen: {}, mistakes: [], days: {}, streak: 0, bestStreak: 0, lastGoalDay: null, freezeUsed: {}, academy: {}, diag: false, records: { bestBoss: 0, bestCombo: 0, sims: [], totalQ: 0, totalOk: 0, duelsWon: 0 }, daily: null, weekXp: {}, pendingLevels: 0 };
 }
 const P = () => S.p;
 const save = (now) => DB.savePlayer(S.team, S.pid, S.p, now);
@@ -142,6 +142,19 @@ function rarePick(title, after) {
   const m = modal(`<div class="levelup"><div class="lu-rays"></div><div class="lu-title">${esc(title)}</div><p class="lu-sub">בחר פריט אחד לגיבור</p>
     <div class="offers">${offers.map(id => `<button class="offer ${rar(id)}" data-id="${id}"><div class="o-svg">${heroSVG({ ...p, equip: { ...p.equip, [ITEMS[id].slot]: id } })}</div><span class="o-kind">${rarName[rar(id)]} · ${SLOT_HE[ITEMS[id].slot]}</span><b>${itemName(id, p.style)}</b><small>${ITEMS[id].desc}</small></button>`).join('')}</div></div>`, { closable: false, cls: 'wide' });
   $$('.offer', m.el).forEach(b => b.onclick = () => { const id = b.dataset.id; p.items.push(id); p.equip[ITEMS[id].slot] = id; save(true); beep('coin'); m.close(); after(); });
+}
+// ----- הודעת "מה חדש" מפרופסור מיינד -----
+const NEWS = { id: 'n-2026-11-17', title: 'עדכון חם מהמעבדה!', html: () => `${esc(P().name)}, הבסיס קיבל שדרוג ענק. הנה מה שמחכה לך:<br><br>
+  <b>🎁 שלוש תיבות אוצר בכל יום</b> – אחרי 20, 40 ו-60 דקות אימון. כבר לא צריך לחכות לסוף בשביל פרס.<br><br>
+  <b>⭐ יעד שבועי</b> – השלם את היעד היומי ב-${weekTarget()} ימים בשבוע, ותקבל את <b>תיבת השבוע</b>: 200 מטבעות ופריט נדיר לבחירה. פספסת יום? לא נורא, השבוע לא מתאפס.<br><br>
+  <b>👾 בוס הערב</b> – כל ערב בין ${bossHour()}:00 ל-${bossHour() + 2}:00 מגיע בוס חדש. ניסיון אחד בלבד. מי שמנצח – זוכה בפריט נדיר.<br><br>
+  <b>🔍 שיעור סדרות</b> – ראיתי שסדרות היו מסובכות. בניתי לך שיעור עם 4 כלים סודיים שפורצים כל סדרה. הוא מחכה במסלול היומי.<br><br>
+  <b>💡 הסברים חכמים יותר</b> – כשטועים, אני מסבירה עכשיו צעד אחרי צעד: הכלל, הפתרון, וטיפ לפעם הבאה.<br><br>
+  <b>📱 MindHero כאפליקציה</b> – אפשר להתקין אותי למסך הבית בטלפון, עם אייקון משלי.<br><br>יאללה, הגיבור שלך מחכה. 💪` };
+function showNews(after) {
+  const p = P(); if (p.seenNews === NEWS.id || !p.diag) return after && after();
+  p.seenNews = NEWS.id; save(true);
+  mentorPopup(`<h3 style="margin:0 0 6px">${NEWS.title}</h3>${NEWS.html()}`, [{ t: 'יאללה, לאימון!', primary: true, fn: after }]);
 }
 // ----- בוס הערב -----
 const bossHour = () => S.teamData?.bossHour ?? 18;
@@ -479,6 +492,7 @@ async function home() {
   const nb = $('#noinst'); if (nb) nb.onclick = () => { LS.set('mh_noinstall', true); $('.install-card')?.remove(); };
   if (p.pendingLevels > 0) return levelUpFlow(home);
   if (p.chests?.length) return openChests(home);
+  if (p.diag && p.seenNews !== NEWS.id) return showNews(home);
   loadMessages();
 }
 async function loadMessages() {

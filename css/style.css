@@ -472,3 +472,5 @@ input:focus,textarea:focus,select:focus{outline:none;border-color:var(--mind);bo
   .opt{padding:11px 12px;font-size:1.05rem}
 }
 .install-card .ch-t b{font-size:.98rem}
+.modal .bubble h3{font-family:var(--fd);color:var(--amber)}
+@media (max-width:600px){.modal .mentor-say{flex-direction:column;align-items:center}.modal .mentor-say .bubble{border-radius:var(--r-l);width:100%}.modal{padding:18px 14px}}
