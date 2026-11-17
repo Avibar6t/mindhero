@@ -456,3 +456,19 @@ input:focus,textarea:focus,select:focus{outline:none;border-color:var(--mind);bo
 .chest{height:100%}.chest .glow{opacity:0;transition:opacity .4s}.chest .lid{transition:transform .5s cubic-bezier(.3,1.6,.5,1);transform-origin:20px 42px}
 .chest.open .lid{transform:rotate(-28deg) translate(-6px,-10px)}.chest.open .glow{opacity:1}
 .chest-loot{display:flex;justify-content:center;gap:10px;margin:8px 0;animation:pop .3s}
+.m-only{display:none!important}
+.install-card{display:flex;align-items:center;gap:10px;background:var(--deep);border:1px dashed var(--mind);border-radius:var(--r-l);padding:10px 12px}
+.install-card .ch-t b{font-family:var(--fd)}.install-card .icon-btn{width:34px;height:34px}
+@media (max-width:860px){
+  .m-only{display:inline-flex!important}
+  #comms-btn{display:none!important}
+  .dock button.m-only{display:flex!important}
+  .side>.today{order:1}.side>.quest{order:2}.side>#msg-banner{order:0}.side>.install-card{order:0}.side>.eve-card{order:3}.side>.week-card{order:4}
+  .lobby .stage{height:250px}.lobby .hero-svg{height:210px;margin-bottom:16px}.lobby .hero-svg.pixel{height:200px}.lobby .platform{width:180px;height:36px;bottom:12px}
+  .shapeopts{display:grid;grid-template-columns:repeat(4,1fr);gap:6px}.sopt{padding:4px;align-items:center}.sopt svg{width:100%;max-width:60px;height:auto}
+  .series{white-space:nowrap;overflow-x:auto;font-size:clamp(1rem,5.2vw,1.4rem);letter-spacing:0;padding:12px 8px}
+  .qbar .icon-btn{width:38px;height:38px}
+  .qtext{font-size:1.1rem}
+  .opt{padding:11px 12px;font-size:1.05rem}
+}
+.install-card .ch-t b{font-size:.98rem}

@@ -1,14 +1,14 @@
 // MindHero – האפליקציה הראשית
-import * as DB from './store.js?v=21';
-import { LS } from './store.js?v=21';
-import { CHAPTERS, CH_ORDER, VERBAL, ANALOGY, LOGIC, MATH, ACADEMY } from './bank.js?v=21';
-import { generate } from './gen.js?v=21';
-import { STYLES, SKINS, ITEMS, POWERS, SLOT_HE, heroSVG, itemName, strongestPowerColor, levelUpOffers, rankOf, xpForLevel } from './hero.js?v=21';
-import { $, $$, esc, toast, modal, beep, confetti, sound, prepareQ, isCorrect, answerText, renderQuestion, markResult, today, weekKey, fmtTime, isMobile, bars, LETTERS, bm, explainHTML } from './ui.js?v=21';
-import { ic, moodFace, lobbyScene } from './icons.js?v=21';
-import { TOPICS, topicById, grid100 } from './learn.js?v=21';
-import { startExam } from './exam.js?v=21';
-import { parentScreen } from './parent.js?v=21';
+import * as DB from './store.js?v=22';
+import { LS } from './store.js?v=22';
+import { CHAPTERS, CH_ORDER, VERBAL, ANALOGY, LOGIC, MATH, ACADEMY } from './bank.js?v=22';
+import { generate } from './gen.js?v=22';
+import { STYLES, SKINS, ITEMS, POWERS, SLOT_HE, heroSVG, itemName, strongestPowerColor, levelUpOffers, rankOf, xpForLevel } from './hero.js?v=22';
+import { $, $$, esc, toast, modal, beep, confetti, sound, prepareQ, isCorrect, answerText, renderQuestion, markResult, today, weekKey, fmtTime, isMobile, bars, LETTERS, bm, explainHTML } from './ui.js?v=22';
+import { ic, moodFace, lobbyScene } from './icons.js?v=22';
+import { TOPICS, topicById, grid100 } from './learn.js?v=22';
+import { startExam } from './exam.js?v=22';
+import { parentScreen } from './parent.js?v=22';
 
 const app = $('#app');
 export const S = { team: null, teamData: null, pid: null, p: null, active: false, lastInput: Date.now(), inQuestion: null, messages: [] };
@@ -41,7 +41,7 @@ function snapHist() {
 // ----- יומן פעילות להורה -----
 function startAct(kind, title) {
   if (S.act) endAct();
-  if (!S.p) return; S.act = { kind, title, t: Date.now(), sec: 0, q: 0, ok: 0, xp: 0 };
+  if (!S.p) return; S.act = { kind, title, t: Date.now(), sec: 0, q: 0, ok: 0, xp: 0, dev: isMobile() ? 'm' : 'd' };
 }
 function endAct(extra) {
   snapHist();
@@ -452,6 +452,7 @@ async function home() {
           : st === 'before' ? `<div class="eve-card"><span class="tile">${ic('boss')}</span><span class="ch-t"><b>בוס הערב יופיע ב-${bossHour()}:00</b><small>${name} · פריט נדיר למנצח · ניסיון אחד בערב</small></span></div>`
           : st === 'done' ? `<div class="eve-card done"><span class="tile">${ic('check')}</span><span class="ch-t"><b>נלחמת היום בבוס הערב</b><small>מחר ב-${bossHour()}:00 יופיע בוס חדש</small></span></div>`
           : `<div class="eve-card"><span class="tile">${ic('boss')}</span><span class="ch-t"><b>בוס הערב הסתלק</b><small>מחר ב-${bossHour()}:00 יגיע בוס חדש</small></span></div>`; })() : ''}
+      ${isMobile() && !matchMedia('(display-mode: standalone)').matches && !navigator.standalone && !LS.get('mh_noinstall', false) ? `<div class="install-card"><span class="tile">${ic('star')}</span><span class="ch-t"><b>להתקין את MindHero בטלפון</b><small>${/iphone|ipad/i.test(navigator.userAgent) ? 'בספארי: כפתור השיתוף ← "הוספה למסך הבית"' : 'אייקון במסך הבית, נפתח כמו אפליקציה'}</small></span>${/iphone|ipad/i.test(navigator.userAgent) ? '' : '<button class="btn small primary" id="inst">התקנה</button>'}<button class="icon-btn" id="noinst" aria-label="סגירה">${ic('x')}</button></div>` : ''}
       <div id="msg-banner"></div>
       <section class="quest"><h3>המסלול של היום <small>${doneN}/${plan.missions.length} הושלמו</small></h3><div class="path">
         ${plan.missions.map((m, i) => { const done = plan.done[m.id]; const next = !done && plan.missions.slice(0, i).every(x => plan.done[x.id]); const lock = !p.diag && m.kind !== 'diag'; const dn = m.kind === 'diag' ? (p.diagState?.res?.length || 0) : 0;
@@ -462,17 +463,20 @@ async function home() {
   <footer class="foot"><button class="btn link" id="switch">${ic('switch')} החלפת גיבור</button><button class="btn link" id="parentbtn">${ic('parent')} מסך הורה</button></footer>
   <nav class="dock">
     <button data-go="practice">${ic('target')}אימון</button><button data-go="academy">${ic('academy')}אקדמיה</button><button data-go="sim">${ic('exam')}סימולציה</button>
-    <button data-go="duel">${ic('duel')}דו-קרב</button><button data-go="board">${ic('trophy')}אלופים</button><button data-go="records">${ic('chart')}התקדמות</button>
+    <button data-go="duel">${ic('duel')}דו-קרב</button><button data-go="board">${ic('trophy')}אלופים</button><button data-go="records">${ic('chart')}התקדמות</button><button data-go="comms" class="m-only">${ic('antenna')}קשר</button>
   </nav>`);
   $('#snd').onclick = () => { sound.on = !sound.on; localStorage.setItem('mh_sound', sound.on ? '1' : '0'); home(); };
   $('#wardrobe').onclick = wardrobe; $('#powers').onclick = powersScreen;
   const lockedMsg = () => mentorPopup(`קודם מסיימים את <b>משימת הגילוי</b>. ${p.diagState?.res?.length ? `נשארו לך ${18 - p.diagState.res.length} שאלות.` : '18 שאלות, אפשר לעצור ולחזור מתי שרוצים.'}<br>ככה אדע בדיוק מה הרמה שלך בכל פרק, ואבנה לך אימון שמתאים רק לך. אחרי זה כל המשחק נפתח.`, [{ t: 'למשימת הגילוי', primary: true, fn: () => startMission(plan.missions.find(m => m.kind === 'diag')) }, { t: 'אחר כך' }]);
   $$('.mission').forEach(b => b.onclick = () => b.classList.contains('locked') ? lockedMsg() : startMission(plan.missions.find(m => m.id === b.dataset.id)));
   const go = { practice: practicePick, academy: academy, sim: simPick, duel: duelScreen, board: leaderboard, records: recordsScreen };
-  $$('.dock button').forEach(b => { if (!p.diag) b.classList.add('locked'); b.onclick = () => p.diag ? go[b.dataset.go]() : lockedMsg(); });
+  go.comms = comms;
+  $$('.dock button').forEach(b => { if (!p.diag && b.dataset.go !== 'comms') b.classList.add('locked'); b.onclick = () => (p.diag || b.dataset.go === 'comms') ? go[b.dataset.go]() : lockedMsg(); });
   $('#switch').onclick = () => { DB.flushSave(); LS.set('mh_session', null); S.p = null; joinTeam(S.team); };
   $('#parentbtn').onclick = () => parentEntry(S.team);
   const eb = $('#eveboss'); if (eb) eb.onclick = eveningBoss;
+  const ib = $('#inst'); if (ib) ib.onclick = async () => { if (S.installEvt) { S.installEvt.prompt(); await S.installEvt.userChoice; S.installEvt = null; home(); } else toast('בתפריט הדפדפן (⋮) בחרו "הוספה למסך הבית" או "התקנת אפליקציה"'); };
+  const nb = $('#noinst'); if (nb) nb.onclick = () => { LS.set('mh_noinstall', true); $('.install-card')?.remove(); };
   if (p.pendingLevels > 0) return levelUpFlow(home);
   if (p.chests?.length) return openChests(home);
   loadMessages();
@@ -538,11 +542,12 @@ function runQuiz(cfg) {
     S.inQuestion = { q, hint: giveHint };
     setScreen(`<div class="quiz ${boss ? 'boss' : ''}">
       <header class="qbar"><button class="icon-btn" id="qx">✕</button><b class="qtitle">${esc(cfg.title)}</b>
-        <span class="qprog">${R.i + 1}/${R.qs.length}</span>${cfg.timed ? '<span class="timer" id="timer"></span>' : ''}${!boss ? `<span class="combo ${R.combo >= R.thr ? 'hot' : ''}" title="קומבו – תשובות נכונות ברצף">${ic('flame')}${R.combo}</span>` : ''}<span class="qmin" id="mini-ring">${Math.floor(dayRec().sec / 60)}′</span></header>
+        <span class="qprog">${R.i + 1}/${R.qs.length}</span>${cfg.timed ? '<span class="timer" id="timer"></span>' : ''}${!boss ? `<span class="combo ${R.combo >= R.thr ? 'hot' : ''}" title="קומבו – תשובות נכונות ברצף">${ic('flame')}${R.combo}</span>` : ''}<span class="qmin" id="mini-ring">${Math.floor(dayRec().sec / 60)}′</span><button class="icon-btn m-only" id="qcomms" aria-label="קו פתוח">${ic('antenna')}</button></header>
       ${boss ? `<div class="qnav">${R.qs.map((_, i) => `<button class="${i === R.i ? 'cur' : ''} ${R.resp[i] != null ? 'ans' : ''}" data-i="${i}">${i + 1}</button>`).join('')}</div>` : `<div class="dots">${R.qs.map((_, i) => `<i class="${i < R.res.length ? (R.res[i].ok ? 'ok' : 'no') : i === R.i ? 'cur' : ''}"></i>`).join('')}</div>`}
       <div class="qcard" id="qcard"></div>
       <div class="qtools" id="qtools"></div>
       <div id="fb"></div></div>`, { active: true });
+    $('#qcomms').onclick = comms;
     $('#qx').onclick = () => mentorPopup(boss ? 'לצאת מקרב הבוס? ההתקדמות בקרב לא תישמר.' : cfg.kind === 'diag' ? 'לעצור עכשיו? ההתקדמות נשמרת, ובפעם הבאה ממשיכים מאותה שאלה. כדי לפתוח את שאר המשחק צריך לסיים את משימת הגילוי.' : 'לצאת מהמשימה? מה שכבר פתרת נשמר.', [{ t: 'כן, לצאת', fn: quit }, { t: 'להמשיך', primary: true }]);
     if (cfg.timed) { const tick = () => { const left = (R.endAt - Date.now()) / 1000; const t = $('#timer'); if (t) { t.innerHTML = ic('clock') + fmtTime(left); t.classList.toggle('low', left < 120); } if (left <= 0) { clearInterval(timerInt); finishBoss(); } }; clearInterval(timerInt); tick(); timerInt = setInterval(tick, 500); }
     renderQuestion(q, $('#qcard'), { exam: boss, response: R.resp[R.i], eliminated: R.elim[R.i], onAnswer: (r, final) => boss ? bossAnswer(r) : (final && answer(r)) });
@@ -1058,5 +1063,7 @@ function mixedFor(n) { const out = [], avoid = new Set(); for (let i = 0; i < n;
 
 // ---------- אתחול ----------
 $('#comms-btn').onclick = () => S.p && comms();
+window.addEventListener('beforeinstallprompt', e => { e.preventDefault(); S.installEvt = e; });
+if ('serviceWorker' in navigator) navigator.serviceWorker.register('sw.js').catch(() => {});
 window.addEventListener('beforeunload', () => DB.flushSave());
 boot();

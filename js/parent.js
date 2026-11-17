@@ -1,10 +1,10 @@
 // MindHero – מסך הורה (תומך בשני הורים)
-import * as DB from './store.js?v=21';
-import { CHAPTERS, CH_ORDER } from './bank.js?v=21';
-import { heroSVG, rankOf } from './hero.js?v=21';
-import { $, $$, esc, toast, modal, today, bars, fmtTime, renderQuestion, isCorrect, markResult, answerText, bm, explainHTML } from './ui.js?v=21';
-import { ic, moodFace } from './icons.js?v=21';
-import { analysisHTML } from './analysis.js?v=21';
+import * as DB from './store.js?v=22';
+import { CHAPTERS, CH_ORDER } from './bank.js?v=22';
+import { heroSVG, rankOf } from './hero.js?v=22';
+import { $, $$, esc, toast, modal, today, bars, fmtTime, renderQuestion, isCorrect, markResult, answerText, bm, explainHTML } from './ui.js?v=22';
+import { ic, moodFace } from './icons.js?v=22';
+import { analysisHTML } from './analysis.js?v=22';
 
 const ago = ts => { const m = Math.round((Date.now() - ts) / 60000); return m < 1 ? 'עכשיו' : m < 60 ? `לפני ${m} דק׳` : m < 1440 ? `לפני ${Math.round(m / 60)} שע׳` : `לפני ${Math.round(m / 1440)} ימים`; };
 const HARD = ['stressed', 'quit', 'frustrated'];
@@ -31,7 +31,7 @@ function activityHTML(p, day) {
     <div class="kid-tabs day-tabs">${days.map(d => `<button class="${d === day ? 'on' : ''}" data-day="${d}">${dayName(d)}${log[d]?.length ? ` <small>· ${log[d].length}</small>` : ''}</button>`).join('')}</div>
     ${list.length ? `<div class="act-sum">${Object.entries(byKind).filter(([, v]) => v >= 30).sort((a, b) => b[1] - a[1]).map(([k, v]) => `<span class="stat">${ic(ACT[k]?.[0] || 'star')}${ACT[k]?.[1] || k} · ${mins(v)}</span>`).join('')}</div>
       <div class="act-list">${list.map(a => `<div class="act"><span class="act-time">${new Date(a.t).toLocaleTimeString('he-IL', { hour: '2-digit', minute: '2-digit' })}</span><span class="tile">${ic(ACT[a.kind]?.[0] || 'star')}</span>
-        <span class="act-main"><b>${esc(a.kind === 'learn' ? 'שיעור: ' + a.title : a.title || ACT[a.kind]?.[1])}</b><small>${[mins(a.sec), a.q ? `${a.ok}/${a.q} נכונות (${Math.round(a.ok / a.q * 100)}%)` : '', a.xp ? `<span class="ltrm">+${a.xp} XP</span>` : ''].filter(Boolean).join(' · ')}</small>
+        <span class="act-main"><b>${esc(a.kind === 'learn' ? 'שיעור: ' + a.title : a.title || ACT[a.kind]?.[1])}</b><small>${[a.dev ? (a.dev === 'm' ? 'בטלפון' : 'במחשב') : '', mins(a.sec), a.q ? `${a.ok}/${a.q} נכונות (${Math.round(a.ok / a.q * 100)}%)` : '', a.xp ? `<span class="ltrm">+${a.xp} XP</span>` : ''].filter(Boolean).join(' · ')}</small>
         ${ach(a).length ? `<span class="act-ach">${ach(a).map(x => `<i>${esc(x)}</i>`).join('')}</span>` : ''}</span></div>`).join('')}</div>`
       : `<p class="muted">לא נרשמה פעילות ${dayName(day) === 'היום' ? 'היום עד עכשיו' : 'ביום הזה'}.</p>`}
     <p class="muted small">נספר רק זמן פעיל (בלי מסך פתוח ללא פעילות). היומן נשמר לשבועיים.</p></div>`;
@@ -131,6 +131,8 @@ export async function parentScreen(ctx) {
     else rec.push(`השבוע ${wMin} דקות אימון, ${daysGoal} ימים ביעד. ${daysGoal >= 5 ? 'התמדה מצוינת – שווה לפרגן לו.' : 'כדאי לעודד אותו לשמור על רצף.'}`);
     if (sorted.length >= 2) rec.push(`הפרקים לחיזוק: <b>${CHAPTERS[sorted[0].c].name}</b> ו<b>${CHAPTERS[sorted[1].c].name}</b>. המשימות היומיות כבר מתמקדות בהם.`);
     if (p.diag && !sims.length) rec.push('עוד לא נעשתה סימולציה. מומלץ סימולציה מלאה (90 דקות) במחשב פעם בשבוע.');
+    const recent = Object.entries(p.log || {}).filter(([d]) => d >= days[7].k).flatMap(([, l]) => l); const onPhone = recent.filter(a => a.dev === 'm').reduce((t, a) => t + a.sec, 0), onPc = recent.filter(a => a.dev === 'd').reduce((t, a) => t + a.sec, 0);
+    if (onPhone > 600 && onPhone > onPc * 3) rec.push(`רוב האימון השבוע היה בטלפון (${Math.round(onPhone / 60)} דק׳, לעומת ${Math.round(onPc / 60)} במחשב). זה מצוין לתרגול יומי, אבל המבחן עצמו נעשה במחשב – כדאי לקבוע לו סימולציה אחת בשבוע במחשב, כדי שיתרגל לעכבר, לגרירה ולמסך המבחן.`);
     const stressDays = days.filter(d => HARD.includes(d.mood)).length;
     if (stressDays >= 2) rec.push(`ב-${stressDays} מהימים האחרונים דווח על לחץ או תסכול. שיחה קצרה יכולה לעזור – המטרה היא היכרות עם המבחן, לא ציון.`);
     el.innerHTML = `${kidTabs()}
