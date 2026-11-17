@@ -1,14 +1,14 @@
 // MindHero – האפליקציה הראשית
-import * as DB from './store.js?v=20';
-import { LS } from './store.js?v=20';
-import { CHAPTERS, CH_ORDER, VERBAL, ANALOGY, LOGIC, MATH, ACADEMY } from './bank.js?v=20';
-import { generate } from './gen.js?v=20';
-import { STYLES, SKINS, ITEMS, POWERS, SLOT_HE, heroSVG, itemName, strongestPowerColor, levelUpOffers, rankOf, xpForLevel } from './hero.js?v=20';
-import { $, $$, esc, toast, modal, beep, confetti, sound, prepareQ, isCorrect, answerText, renderQuestion, markResult, today, weekKey, fmtTime, isMobile, bars, LETTERS, bm, explainHTML } from './ui.js?v=20';
-import { ic, moodFace, lobbyScene } from './icons.js?v=20';
-import { TOPICS, topicById, grid100 } from './learn.js?v=20';
-import { startExam } from './exam.js?v=20';
-import { parentScreen } from './parent.js?v=20';
+import * as DB from './store.js?v=21';
+import { LS } from './store.js?v=21';
+import { CHAPTERS, CH_ORDER, VERBAL, ANALOGY, LOGIC, MATH, ACADEMY } from './bank.js?v=21';
+import { generate } from './gen.js?v=21';
+import { STYLES, SKINS, ITEMS, POWERS, SLOT_HE, heroSVG, itemName, strongestPowerColor, levelUpOffers, rankOf, xpForLevel } from './hero.js?v=21';
+import { $, $$, esc, toast, modal, beep, confetti, sound, prepareQ, isCorrect, answerText, renderQuestion, markResult, today, weekKey, fmtTime, isMobile, bars, LETTERS, bm, explainHTML } from './ui.js?v=21';
+import { ic, moodFace, lobbyScene } from './icons.js?v=21';
+import { TOPICS, topicById, grid100 } from './learn.js?v=21';
+import { startExam } from './exam.js?v=21';
+import { parentScreen } from './parent.js?v=21';
 
 const app = $('#app');
 export const S = { team: null, teamData: null, pid: null, p: null, active: false, lastInput: Date.now(), inQuestion: null, messages: [] };
@@ -73,9 +73,12 @@ setInterval(() => {
   const d = dayRec(); d.sec++; tickN++; if (S.act) S.act.sec++;
   if (tickN % 20 === 0) save();
   const ring = $('#mini-ring'); if (ring) ring.textContent = Math.floor(d.sec / 60) + '′';
+  const cps = checkpoints();
+  d.cp = d.cp || {};
+  cps.slice(0, 2).forEach((m, k) => { if (!d.cp[k] && d.sec >= m * 60) checkpointChest(k, m); });
   if (!d.goal && d.sec >= goalMin() * 60) reachGoal();
 }, 1000);
-['pointerdown', 'keydown', 'touchstart'].forEach(ev => window.addEventListener(ev, () => S.lastInput = Date.now(), { passive: true }));
+['pointerdown', 'pointermove', 'keydown', 'touchstart', 'wheel'].forEach(ev => window.addEventListener(ev, () => S.lastInput = Date.now(), { passive: true }));
 document.addEventListener('visibilitychange', () => { if (document.hidden) DB.flushSave(); });
 
 function reachGoal() {
@@ -85,8 +88,80 @@ function reachGoal() {
   else if (gap === 2 && freezeLeft() > 0) { p.streak++; p.freezeUsed[weekKey()] = (p.freezeUsed[weekKey()] || 0) + 1; toast('❄️ קפאון זמן שמר על הרצף שלך!'); }
   else if (gap !== 0) p.streak = 1;
   p.lastGoalDay = today(); p.bestStreak = Math.max(p.bestStreak, p.streak);
-  addCoins(80); addXP(50); save(true); beep('level'); confetti();
-  toast(`השלמת ${goalMin()} דקות אימון היום! +80 מטבעות, +50 XP · רצף: ${p.streak} ימים`, 'gold');
+  addCoins(80); addXP(50); beep('level'); confetti();
+  queueChest({ kind: 'day', title: 'תיבת האוצר היומית', coins: 80, xp: 50, note: `השלמת ${goalMin()} דקות אימון היום · רצף: ${p.streak} ימים` });
+  toast(`השלמת את היעד היומי! תיבת אוצר מחכה לך במסך הבית.`, 'gold');
+  // יעד שבועי
+  const wk = weekKey(); p.weekDone = p.weekDone || {};
+  if (!p.weekDone[wk] && weekDays() >= weekTarget()) {
+    p.weekDone[wk] = true; addCoins(200); addXP(100);
+    queueChest({ kind: 'week', title: 'תיבת השבוע', coins: 200, xp: 100, note: `השלמת את היעד השבועי: ${weekTarget()} ימי אימון!`, pick: true });
+  }
+  save(true);
+}
+// ----- תחנות תגמול, יעד שבועי, תיבות -----
+const checkpoints = () => { const g = goalMin(); return [Math.round(g / 3), Math.round(g * 2 / 3), g]; };
+function checkpointChest(k, m) {
+  const d = dayRec(); d.cp[k] = true;
+  const coins = k === 0 ? 25 : 40, xp = k === 0 ? 20 : 30;
+  addCoins(coins); addXP(xp); beep('coin');
+  queueChest({ kind: 'cp', title: `תחנה ${k + 1}: ${m} דקות`, coins, xp, note: k === 0 ? 'התחלה מצוינת! עוד תחנה בדרך.' : 'עוד תחנה אחת לתיבה היומית.' });
+  toast(`${m} דקות אימון! נפתחה תיבה – +${coins} מטבעות`, 'gold'); save();
+}
+const weekTarget = () => S.teamData?.weekDays || 5;
+function weekDays() { const p = P(); const start = new Date(weekKey()); let n = 0; for (let i = 0; i < 7; i++) { const x = new Date(start); x.setDate(x.getDate() + i); if (p.days[today(x)]?.goal) n++; } return n; }
+function weekStreak() {
+  const p = P(); const wd = p.weekDone || {}; let n = 0; const d = new Date(weekKey());
+  if (!wd[today(d)]) d.setDate(d.getDate() - 7);
+  while (wd[today(d)]) { n++; d.setDate(d.getDate() - 7); }
+  return n;
+}
+function queueChest(c) { const p = P(); (p.chests = p.chests || []).push({ ...c, ts: Date.now() }); }
+const chestSVG = open => `<svg viewBox="0 0 120 100" class="chest ${open ? 'open' : ''}"><ellipse cx="60" cy="92" rx="44" ry="6" fill="#000" opacity=".35"/>
+  <g class="lid"><path d="M18 42 Q18 18 60 18 Q102 18 102 42 Z" fill="#b45309" stroke="#1c1917" stroke-width="3"/><path d="M24 40 Q26 24 60 24 Q94 24 96 40" fill="none" stroke="#fbbf24" stroke-width="3"/></g>
+  <rect x="18" y="42" width="84" height="44" rx="6" fill="#92400e" stroke="#1c1917" stroke-width="3"/><rect x="18" y="42" width="84" height="8" fill="#fbbf24" stroke="#1c1917" stroke-width="2"/>
+  <rect x="52" y="46" width="16" height="18" rx="3" fill="#fde68a" stroke="#1c1917" stroke-width="2.5"/><circle cx="60" cy="55" r="2.5" fill="#1c1917"/>
+  <g class="glow"><circle cx="60" cy="40" r="22" fill="#fde68a" opacity=".55"/><path d="M60 8v10M38 16l6 8M82 16l-6 8" stroke="#fde68a" stroke-width="3" stroke-linecap="round"/></g></svg>`;
+function openChests(after) {
+  const p = P(); const c = (p.chests || []).shift(); if (!c) return after && after();
+  save();
+  const m = modal(`<div class="chest-modal"><div class="chest-stage">${chestSVG(false)}</div><h3 class="center" style="justify-content:center">${esc(c.title)}</h3><p class="muted center">${esc(c.note || '')}</p><button class="btn gold big" id="chopen">פתיחת התיבה</button></div>`, { closable: false });
+  $('#chopen', m.el).onclick = () => {
+    $('.chest-stage', m.el).innerHTML = chestSVG(true); beep('level'); confetti();
+    $('#chopen', m.el).outerHTML = `<div class="chest-loot"><span class="stat">${ic('coin')}+${c.coins}</span><span class="stat">${ic('xp')}+${c.xp} XP</span></div><button class="btn primary big" id="chok">${c.pick ? 'לבחירת פריט נדיר' : 'מעולה'}</button>`;
+    $('#chok', m.el).onclick = () => { m.close(); if (c.pick) rarePick('פריט נדיר מתיבת השבוע', () => openChests(after)); else openChests(after); };
+  };
+}
+// בחירת פריט נדיר (תיבת השבוע / בוס הערב)
+function rarePick(title, after) {
+  const p = P(); const tierMax = Math.min(4, (p.level < 4 ? 1 : p.level < 8 ? 2 : p.level < 13 ? 3 : 4) + 1);
+  const pool = Object.keys(ITEMS).filter(id => !p.items.includes(id) && ITEMS[id].tier <= tierMax).sort((a, b) => ITEMS[b].tier - ITEMS[a].tier + (Math.random() - .5));
+  const offers = pool.slice(0, 3);
+  if (!offers.length) { addCoins(150); save(true); toast('כבר יש לך את כל הפריטים! קיבלת 150 מטבעות במקום.', 'gold'); return after(); }
+  const rar = id => 'r' + Math.min(4, ITEMS[id].tier + 1); const rarName = { r1: 'רגיל', r2: 'נדיר', r3: 'אפי', r4: 'אגדי' };
+  const m = modal(`<div class="levelup"><div class="lu-rays"></div><div class="lu-title">${esc(title)}</div><p class="lu-sub">בחר פריט אחד לגיבור</p>
+    <div class="offers">${offers.map(id => `<button class="offer ${rar(id)}" data-id="${id}"><div class="o-svg">${heroSVG({ ...p, equip: { ...p.equip, [ITEMS[id].slot]: id } })}</div><span class="o-kind">${rarName[rar(id)]} · ${SLOT_HE[ITEMS[id].slot]}</span><b>${itemName(id, p.style)}</b><small>${ITEMS[id].desc}</small></button>`).join('')}</div></div>`, { closable: false, cls: 'wide' });
+  $$('.offer', m.el).forEach(b => b.onclick = () => { const id = b.dataset.id; p.items.push(id); p.equip[ITEMS[id].slot] = id; save(true); beep('coin'); m.close(); after(); });
+}
+// ----- בוס הערב -----
+const bossHour = () => S.teamData?.bossHour ?? 18;
+function eveningState() {
+  const p = P(); const h = new Date().getHours() + new Date().getMinutes() / 60, st = bossHour();
+  if (p.eveBoss === today()) return 'done';
+  if (h < st) return 'before'; if (h < st + 2) return 'open'; return 'after';
+}
+const EVE_BOSSES = ['שומר המבוך', 'הצל הסדרתי', 'מלך החידות', 'טיטאן הצורות', 'רוח המילים', 'הגולם הלוגי', 'דרקון המספרים'];
+function eveningBoss() {
+  const p = P(); const name = EVE_BOSSES[new Date().getDay()];
+  mentorPopup(`<b>בוס הערב: ${name}</b> הופיע – אבל רק עד ${bossHour() + 2}:00!<br>10 שאלות קשות מהרגיל מכל הפרקים, 12 דקות על השעון. ניסיון אחד בכל ערב.<br><br>ניצחון (לפחות 50%) = <b>פריט נדיר לבחירה</b> + 100 מטבעות.`, [{ t: 'לקרב', primary: true, fn: () => {
+    const avoid = new Set(); const qs = Array.from({ length: 10 }, (_, i) => { const ch = CH_ORDER[i % 6]; return pickOne(ch, clampD(p.ch[ch].lvl + 1), avoid); }).sort(() => Math.random() - .5);
+    p.eveBoss = today(); save(true);
+    runQuiz({ title: `בוס הערב: ${name}`, qs, kind: 'boss', timed: Math.round(12 * 60 * (1 + pw('slow') * 0.1)), onDone: (res, extra) => {
+      const win = (extra.score || 0) >= 50;
+      if (win) { addCoins(100); save(true); confetti(); rarePick(`ניצחת את ${name}!`, home); }
+      else { addCoins(30); save(true); mentorPopup(`${name} ניצח הפעם (${extra.score}%). קיבלת 30 מטבעות על האומץ. מחר בערב – הזדמנות חדשה.`, [{ t: 'בסדר', primary: true, fn: home }]); }
+    } });
+  } }, { t: 'אחר כך' }]);
 }
 
 // ================== בחירת שאלות ==================
@@ -363,11 +438,20 @@ async function home() {
     </section>
     <div class="side">
       <section class="today ${d.goal ? 'goal' : ''}">
-        <div class="ring-wrap"><svg viewBox="0 0 120 120" class="ring"><circle cx="60" cy="60" r="52" class="r-bg"/><circle cx="60" cy="60" r="52" class="r-fg" style="stroke-dasharray:${pct * 326.7} 400"/></svg><div class="ring-txt"><b>${min}</b><small>מתוך ${goal} דק׳</small></div></div>
+        <div class="ring-wrap"><svg viewBox="0 0 120 120" class="ring"><circle cx="60" cy="60" r="52" class="r-bg"/><circle cx="60" cy="60" r="52" class="r-fg" style="stroke-dasharray:${pct * 326.7} 400"/>${checkpoints().map((m, k) => { const a = (m / goal) * Math.PI * 2; const got = k < 2 ? d.cp?.[k] : d.goal; return `<circle cx="${60 + 52 * Math.cos(a)}" cy="${60 + 52 * Math.sin(a)}" r="7" class="r-cp ${got ? 'got' : ''}"/>`; }).join('')}</svg><div class="ring-txt"><b>${min}</b><small>מתוך ${goal} דק׳</small></div></div>
         <div><h2>${d.goal ? 'היעד היומי הושלם' : 'האימון של היום'}</h2>
           ${exam != null && exam >= 0 ? `<div class="countdown">${ic('clock')} עוד ${exam} ימים למבחן</div>` : ''}
-          <p class="muted" style="margin:4px 0 0">${d.goal ? 'כל דקה נוספת מוסיפה XP ומטבעות.' : `עוד ${Math.max(0, goal - min)} דקות לתיבת האוצר היומית.`}</p></div>
+          <p class="muted" style="margin:4px 0 0">${d.goal ? 'כל דקה נוספת מוסיפה XP ומטבעות.' : (() => { const nx = checkpoints().find((m, k) => k < 2 ? !d.cp?.[k] : true); return `התיבה הבאה ב-${nx} דקות (עוד ${Math.max(0, nx - min)}). שלוש תיבות ביום: ${checkpoints().join(', ')} דק׳.`; })()}</p></div>
       </section>
+      ${p.diag ? (() => { const ws = new Date(weekKey()); const dn = weekDays(), tg = weekTarget(), wst = weekStreak(); const names = ['א', 'ב', 'ג', 'ד', 'ה', 'ו', 'ש'];
+        return `<section class="week-card"><div class="wk-top"><b>${ic('star')} יעד שבועי: ${dn}/${tg} ימים</b><span class="muted small">${p.weekDone?.[weekKey()] ? 'הושלם השבוע!' : `תיבת השבוע: 200 מטבעות + פריט נדיר`}</span></div>
+          <div class="wk-days">${names.map((n, i) => { const x = new Date(ws); x.setDate(x.getDate() + i); const k = today(x); const got = p.days[k]?.goal; const isT = k === today(); return `<span class="wk-d ${got ? 'got' : ''} ${isT ? 'today' : ''}">${got ? ic('check') : n}</span>`; }).join('')}</div>
+          <small class="muted">${wst ? `${wst} ${wst === 1 ? 'שבוע' : 'שבועות'} ברצף שבהם היעד הושלם. ` : ''}יום שהוחמץ לא שובר את היעד – מספיקים ${tg} ימים מתוך 7.</small></section>`; })() : ''}
+      ${p.diag ? (() => { const st = eveningState(); const name = EVE_BOSSES[new Date().getDay()];
+        return st === 'open' ? `<button class="eve-card open" id="eveboss"><span class="tile">${ic('boss')}</span><span class="ch-t"><b>בוס הערב: ${name}</b><small>זמין עכשיו עד ${bossHour() + 2}:00 · מי שמנצח מקבל פריט נדיר</small></span><span class="go">לקרב</span></button>`
+          : st === 'before' ? `<div class="eve-card"><span class="tile">${ic('boss')}</span><span class="ch-t"><b>בוס הערב יופיע ב-${bossHour()}:00</b><small>${name} · פריט נדיר למנצח · ניסיון אחד בערב</small></span></div>`
+          : st === 'done' ? `<div class="eve-card done"><span class="tile">${ic('check')}</span><span class="ch-t"><b>נלחמת היום בבוס הערב</b><small>מחר ב-${bossHour()}:00 יופיע בוס חדש</small></span></div>`
+          : `<div class="eve-card"><span class="tile">${ic('boss')}</span><span class="ch-t"><b>בוס הערב הסתלק</b><small>מחר ב-${bossHour()}:00 יגיע בוס חדש</small></span></div>`; })() : ''}
       <div id="msg-banner"></div>
       <section class="quest"><h3>המסלול של היום <small>${doneN}/${plan.missions.length} הושלמו</small></h3><div class="path">
         ${plan.missions.map((m, i) => { const done = plan.done[m.id]; const next = !done && plan.missions.slice(0, i).every(x => plan.done[x.id]); const lock = !p.diag && m.kind !== 'diag'; const dn = m.kind === 'diag' ? (p.diagState?.res?.length || 0) : 0;
@@ -388,7 +472,9 @@ async function home() {
   $$('.dock button').forEach(b => { if (!p.diag) b.classList.add('locked'); b.onclick = () => p.diag ? go[b.dataset.go]() : lockedMsg(); });
   $('#switch').onclick = () => { DB.flushSave(); LS.set('mh_session', null); S.p = null; joinTeam(S.team); };
   $('#parentbtn').onclick = () => parentEntry(S.team);
+  const eb = $('#eveboss'); if (eb) eb.onclick = eveningBoss;
   if (p.pendingLevels > 0) return levelUpFlow(home);
+  if (p.chests?.length) return openChests(home);
   loadMessages();
 }
 async function loadMessages() {

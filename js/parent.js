@@ -1,10 +1,10 @@
 // MindHero – מסך הורה (תומך בשני הורים)
-import * as DB from './store.js?v=20';
-import { CHAPTERS, CH_ORDER } from './bank.js?v=20';
-import { heroSVG, rankOf } from './hero.js?v=20';
-import { $, $$, esc, toast, modal, today, bars, fmtTime, renderQuestion, isCorrect, markResult, answerText, bm, explainHTML } from './ui.js?v=20';
-import { ic, moodFace } from './icons.js?v=20';
-import { analysisHTML } from './analysis.js?v=20';
+import * as DB from './store.js?v=21';
+import { CHAPTERS, CH_ORDER } from './bank.js?v=21';
+import { heroSVG, rankOf } from './hero.js?v=21';
+import { $, $$, esc, toast, modal, today, bars, fmtTime, renderQuestion, isCorrect, markResult, answerText, bm, explainHTML } from './ui.js?v=21';
+import { ic, moodFace } from './icons.js?v=21';
+import { analysisHTML } from './analysis.js?v=21';
 
 const ago = ts => { const m = Math.round((Date.now() - ts) / 60000); return m < 1 ? 'עכשיו' : m < 60 ? `לפני ${m} דק׳` : m < 1440 ? `לפני ${Math.round(m / 60)} שע׳` : `לפני ${Math.round(m / 1440)} ימים`; };
 const HARD = ['stressed', 'quit', 'frustrated'];
@@ -207,6 +207,8 @@ export async function parentScreen(ctx) {
       <div class="p-card"><h4>${ic('users')} גיבורים בצוות</h4>${players.length ? players.map(x => `<div class="duel-row"><span class="mini-h">${heroSVG(x)}</span><span style="flex:1"><b>${esc(x.name)}</b> <small class="muted">רמה ${x.level}</small></span><button class="btn small" data-del="${x.id}">מחיקה</button></div>`).join('') : '<p class="muted">אין גיבורים.</p>'}<p class="muted small">מחיקה היא סופית: הגיבור, הציוד וכל ההתקדמות שלו יימחקו.</p></div>
       <div class="p-card"><h4>${ic('clock')} תאריך המבחן</h4><input type="date" id="exd" value="${team.examDate || ''}"/><p class="muted small">כשיפורסם התאריך – עדכנו כאן, ותופיע לילד ספירה לאחור.</p></div>
       <div class="p-card"><h4>${ic('target')} יעד אימון יומי</h4><select id="goal">${[30, 45, 60, 75, 90].map(m => `<option value="${m}" ${(team.goalMin || 60) === m ? 'selected' : ''}>${m} דקות</option>`).join('')}</select><p class="muted small">רצף הימים נספר בימים שבהם היעד הושלם. נספר רק זמן פעיל – לא מסך פתוח בלי פעילות.</p></div>
+      <div class="p-card"><h4>${ic('star')} יעד שבועי</h4><select id="wdays">${[3, 4, 5, 6, 7].map(n => `<option value="${n}" ${(team.weekDays || 5) === n ? 'selected' : ''}>${n} ימים בשבוע</option>`).join('')}</select><p class="muted small">בכמה ימים בשבוע צריך להשלים את היעד היומי כדי לקבל את תיבת השבוע (200 מטבעות ופריט נדיר). יום שהוחמץ לא מאפס את ההתקדמות השבועית.</p></div>
+      <div class="p-card"><h4>${ic('boss')} שעת בוס הערב</h4><select id="bhour">${[15, 16, 17, 18, 19, 20].map(h => `<option value="${h}" ${(team.bossHour ?? 18) === h ? 'selected' : ''}>${h}:00 עד ${h + 2}:00</option>`).join('')}</select><p class="muted small">חלון של שעתיים בכל יום שבו מופיע בוס מיוחד. ניסיון אחד בערב; ניצחון מעניק פריט נדיר.</p></div>
       <button class="btn primary big" id="psave">שמירת הגדרות</button>
       <div class="p-card"><h4>${ic('lock')} החלפת קוד ההורה שלי</h4><div class="parent-row"><input id="npin" inputmode="numeric" maxlength="4" placeholder="קוד חדש – 4 ספרות" dir="ltr"/><button class="btn small" id="npinb">עדכון</button></div></div>`;
     $$('[data-del]', el).forEach(b => b.onclick = () => {
@@ -219,7 +221,7 @@ export async function parentScreen(ctx) {
     $('#cp').onclick = () => { navigator.clipboard?.writeText(link); toast('הקישור הועתק'); };
     $('#psave').onclick = async () => {
       const list = parents().map(x => ({ ...x, name: ($(`.pname[data-pid="${x.id}"]`)?.value.trim()) || x.name }));
-      const patch = { examDate: $('#exd').value || null, goalMin: +$('#goal').value, parents: list };
+      const patch = { examDate: $('#exd').value || null, goalMin: +$('#goal').value, weekDays: +$('#wdays').value, bossHour: +$('#bhour').value, parents: list };
       await DB.updateTeam(code, patch); Object.assign(team, patch); me = list.find(x => x.id === me.id) || me; toast('ההגדרות נשמרו'); render();
     };
     const add = $('#np-add'); if (add) add.onclick = async () => {
