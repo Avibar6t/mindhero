@@ -536,3 +536,10 @@ input:focus,textarea:focus,select:focus{outline:none;border-color:var(--mind);bo
 .banner.ready{border-right-color:var(--amber);background:linear-gradient(90deg,#3a2606,var(--deep))}
 @media (max-width:600px){.fighters{min-height:260px;padding-bottom:24px}.fighter{width:40vw}.hpbox b{font-size:.95rem}.ar-round{font-size:.85rem;padding:4px 10px}.res-side{min-width:110px}}
 @media (prefers-reduced-motion:reduce){.fighter,.proj,.ult,.clash{animation:none!important}}
+.reacts{margin:10px 0 4px}.reacts>div{display:flex;justify-content:center;gap:6px;margin-top:6px;flex-wrap:wrap}
+.react-b{font-size:1.6rem;width:48px;height:48px;border-radius:50%;background:var(--s3);border:2px solid transparent;cursor:pointer;transition:transform .15s}
+.react-b:hover{transform:scale(1.15)}.react-b.on{border-color:var(--amber);background:#3a2606;transform:scale(1.15)}
+.their-react{background:var(--s3);border-radius:var(--r-m);padding:8px 12px;margin:6px auto;display:inline-flex;align-items:center;gap:8px;font-weight:600}
+.rbig{font-size:1.7rem;line-height:1}.rx{font-size:1.15rem;margin-inline-start:6px}
+.banner.react{border-right-color:var(--mind)}
+.ar-card .row-btns{flex-wrap:wrap;justify-content:center}

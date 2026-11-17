@@ -1,11 +1,11 @@
 // MindHero – מסך הורה (תומך בשני הורים)
-import * as DB from './store.js?v=24';
-import { CHAPTERS, CH_ORDER } from './bank.js?v=24';
-import { heroSVG, rankOf } from './hero.js?v=24';
-import { $, $$, esc, toast, modal, today, bars, fmtTime, renderQuestion, isCorrect, markResult, answerText, bm, explainHTML } from './ui.js?v=24';
-import { ic, moodFace } from './icons.js?v=24';
-import { battleScreen, PARENT_HERO } from './battle.js?v=24';
-import { analysisHTML } from './analysis.js?v=24';
+import * as DB from './store.js?v=25';
+import { CHAPTERS, CH_ORDER } from './bank.js?v=25';
+import { heroSVG, rankOf } from './hero.js?v=25';
+import { $, $$, esc, toast, modal, today, bars, fmtTime, renderQuestion, isCorrect, markResult, answerText, bm, explainHTML } from './ui.js?v=25';
+import { ic, moodFace } from './icons.js?v=25';
+import { battleScreen, PARENT_HERO } from './battle.js?v=25';
+import { analysisHTML } from './analysis.js?v=25';
 
 const ago = ts => { const m = Math.round((Date.now() - ts) / 60000); return m < 1 ? 'עכשיו' : m < 60 ? `לפני ${m} דק׳` : m < 1440 ? `לפני ${Math.round(m / 60)} שע׳` : `לפני ${Math.round(m / 1440)} ימים`; };
 const HARD = ['stressed', 'quit', 'frustrated'];
@@ -193,7 +193,7 @@ export async function parentScreen(ctx) {
     const other = d.from === me.id ? d.to : d.from, on = d.from === me.id ? d.toName : d.fromName;
     const kidP = players.find(x => x.id === other) || { style: 'comic', equip: {} };
     await DB.markDuelViewed(code, d.id, me.id);
-    battleScreen(ctx.app, { name: me.name, hero: PARENT_HERO, res: d.results[me.id] }, { name: on, hero: kidP, res: d.results[other] }, { onDone: async () => { await load(); tab = 'duel'; render(); } });
+    battleScreen(ctx.app, { name: me.name, hero: PARENT_HERO, res: d.results[me.id] }, { name: on, hero: kidP, res: d.results[other] }, { myReact: d.reacts?.[me.id], theirReact: d.reacts?.[other], onReact: e => DB.reactDuel(code, d.id, me.id, e), onDone: async () => { await load(); tab = 'duel'; render(); } });
   }
   function playDuel(d) {
     const qs = d.qs; let i = 0, ok = 0; const t0 = Date.now(); const seq = [];

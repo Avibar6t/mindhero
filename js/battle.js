@@ -1,7 +1,7 @@
 // MindHero – זירת הקרב: אנימציה של שני הגיבורים נלחמים לפי התשובות בדו-קרב
-import { heroSVG, POWERS, strongestPowerColor } from './hero.js?v=24';
-import { lobbyScene, ic } from './icons.js?v=24';
-import { $, esc, beep, confetti, fmtTime } from './ui.js?v=24';
+import { heroSVG, POWERS, strongestPowerColor } from './hero.js?v=25';
+import { lobbyScene, ic } from './icons.js?v=25';
+import { $, esc, beep, confetti, fmtTime } from './ui.js?v=25';
 
 // דמות קבועה להורה (אין לו גיבור משלו)
 export const PARENT_HERO = { style: 'tactical', skin: '#e0ac69', equip: { head: 'helmet', weapon: 'hammer', weapon2: 'shield', emblem: 'star', suit: 'silver' }, powers: { shield: 2 } };
@@ -11,7 +11,9 @@ const NAME = { slash: 'מכת חרב', orb: 'כדור אנרגיה', beam: 'קר
 const seqOf = r => r.seq?.length ? r.seq : Array.from({ length: 8 }, (_, i) => i < r.ok); // קרבות ישנים: לפי מספר הנכונות
 
 // L,R: {name, hero, res:{ok,t,seq}}
-export function battleScreen(app, L, R, { onDone, onRematch } = {}) {
+export const REACTS = ['👏', '🔥', '😎', '😤', '🤝', '😂'];
+export const REACT_TXT = { '👏': 'כל הכבוד!', '🔥': 'קרב לוהט!', '😎': 'קל מדי', '😤': 'אני דורש נקמה!', '🤝': 'קרב הוגן', '😂': 'חחח איזה קרב' };
+export function battleScreen(app, L, R, { onDone, onRematch, onReact, myReact = '', theirReact = '' } = {}) {
   const ls = seqOf(L.res), rs = seqOf(R.res);
   const lWin = L.res.ok > R.res.ok || (L.res.ok === R.res.ok && L.res.t < R.res.t);
   const tie = L.res.ok === R.res.ok && L.res.t === R.res.t;
@@ -72,9 +74,17 @@ export function battleScreen(app, L, R, { onDone, onRematch } = {}) {
     const why = tie ? 'אותו מספר תשובות נכונות ואותו זמן – תיקו מושלם!' : L.res.ok === R.res.ok ? `אותו מספר תשובות נכונות – ${esc(W.name)} ניצח כי היה מהיר יותר.` : `${esc(W.name)} צדק ביותר שאלות.`;
     const ov = document.createElement('div'); ov.className = 'ar-result';
     ov.innerHTML = `<div class="ar-card"><h2>${tie ? 'תיקו!' : `${esc(W.name)} ניצח!`}</h2><p class="muted">${why}</p><div class="res-sides">${lineup(L, !tie && lWin)}<span class="vs">VS</span>${lineup(R, !tie && !lWin)}</div>
-      <div class="row-btns">${onRematch ? `<button class="btn gold" id="rematch">${ic('duel')} קרב חוזר</button>` : ''}<button class="btn primary" id="bdone">סיום</button></div></div>`;
+      ${theirReact ? `<div class="their-react"><span class="rbig">${theirReact}</span> ${esc(R.name)}: ${REACT_TXT[theirReact] || ''}</div>` : ''}
+      ${onReact ? `<div class="reacts"><small class="muted">שלח תגובה ל${esc(R.name)}:</small><div>${REACTS.map(e => `<button class="react-b ${e === myReact ? 'on' : ''}" data-e="${e}" title="${REACT_TXT[e]}">${e}</button>`).join('')}</div></div>` : ''}
+      <div class="row-btns"><button class="btn small" id="bshare">${ic('send')} שיתוף בווטסאפ</button>${onRematch ? `<button class="btn gold" id="rematch">${ic('duel')} קרב חוזר</button>` : ''}<button class="btn primary" id="bdone">סיום</button></div></div>`;
     $('.arena').appendChild(ov);
     $('#bdone').onclick = () => { app.className = ''; onDone && onDone(); };
+    ov.querySelectorAll('.react-b').forEach(b => b.onclick = async () => { ov.querySelectorAll('.react-b').forEach(x => x.classList.toggle('on', x === b)); beep('coin'); await onReact(b.dataset.e); });
+    $('#bshare').onclick = async () => {
+      const txt = `⚔️ דו-קרב ב-MindHero!\n${L.name}: ${L.res.ok}/8 (${fmtTime(L.res.t)})\n${R.name}: ${R.res.ok}/8 (${fmtTime(R.res.t)})\n${tie ? '🤝 תיקו!' : `🏆 ${W.name} ניצח!`}`;
+      if (navigator.share) { try { await navigator.share({ text: txt }); return; } catch (e) { if (e.name === 'AbortError') return; } }
+      window.open('https://wa.me/?text=' + encodeURIComponent(txt), '_blank');
+    };
     const rm = $('#rematch'); if (rm) rm.onclick = () => { app.className = ''; onRematch(); };
   };
   $('#skip').onclick = () => { if (!stop) { stop = true; hpL = lWin || tie ? Math.max(hpL, 30) : 0; hpR = !lWin || tie ? Math.max(hpR, 30) : 0; setHP(); } results(); };

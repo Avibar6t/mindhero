@@ -1,15 +1,15 @@
 // MindHero – האפליקציה הראשית
-import * as DB from './store.js?v=24';
-import { LS } from './store.js?v=24';
-import { CHAPTERS, CH_ORDER, VERBAL, ANALOGY, LOGIC, MATH, ACADEMY } from './bank.js?v=24';
-import { generate } from './gen.js?v=24';
-import { STYLES, SKINS, ITEMS, POWERS, SLOT_HE, heroSVG, itemName, strongestPowerColor, levelUpOffers, rankOf, xpForLevel } from './hero.js?v=24';
-import { $, $$, esc, toast, modal, beep, confetti, sound, prepareQ, isCorrect, answerText, renderQuestion, markResult, today, weekKey, fmtTime, isMobile, bars, LETTERS, bm, explainHTML } from './ui.js?v=24';
-import { ic, moodFace, lobbyScene } from './icons.js?v=24';
-import { TOPICS, topicById, grid100 } from './learn.js?v=24';
-import { battleScreen, PARENT_HERO } from './battle.js?v=24';
-import { startExam } from './exam.js?v=24';
-import { parentScreen } from './parent.js?v=24';
+import * as DB from './store.js?v=25';
+import { LS } from './store.js?v=25';
+import { CHAPTERS, CH_ORDER, VERBAL, ANALOGY, LOGIC, MATH, ACADEMY } from './bank.js?v=25';
+import { generate } from './gen.js?v=25';
+import { STYLES, SKINS, ITEMS, POWERS, SLOT_HE, heroSVG, itemName, strongestPowerColor, levelUpOffers, rankOf, xpForLevel } from './hero.js?v=25';
+import { $, $$, esc, toast, modal, beep, confetti, sound, prepareQ, isCorrect, answerText, renderQuestion, markResult, today, weekKey, fmtTime, isMobile, bars, LETTERS, bm, explainHTML } from './ui.js?v=25';
+import { ic, moodFace, lobbyScene } from './icons.js?v=25';
+import { TOPICS, topicById, grid100 } from './learn.js?v=25';
+import { battleScreen, PARENT_HERO, REACT_TXT } from './battle.js?v=25';
+import { startExam } from './exam.js?v=25';
+import { parentScreen } from './parent.js?v=25';
 
 const app = $('#app');
 export const S = { team: null, teamData: null, pid: null, p: null, active: false, lastInput: Date.now(), inQuestion: null, messages: [] };
@@ -501,13 +501,17 @@ async function loadMessages() {
   const mine = S.messages.filter(m => m.to === S.pid && !m.read);
   const allD = await DB.listDuels(S.team);
   const duels = allD.filter(d => d.to === S.pid && !d.results?.[S.pid]);
+  const seenR = P().seenReacts || {};
+  const reacts = allD.filter(d => (d.from === S.pid || d.to === S.pid) && d.viewed?.[S.pid]).map(d => { const o = d.from === S.pid ? d.to : d.from; return d.reacts?.[o] && seenR[d.id] !== d.reacts[o] ? { d, o, e: d.reacts[o], n: d.from === S.pid ? d.toName : d.fromName } : null; }).filter(Boolean);
   const ready = allD.filter(d => (d.from === S.pid || d.to === S.pid) && d.results?.[d.from] && d.results?.[d.to] && !d.viewed?.[S.pid]);
   const b = $('#msg-banner'); if (!b) return;
   b.innerHTML = mine.map(m => `<div class="banner msg" data-id="${m.id}">${ic('mail')}<span><b>${esc(m.fromName || 'הורה')}:</b> ${esc(m.text)}</span><button class="btn small">קראתי</button></div>`).join('')
     + duels.map(d => `<div class="banner duel" data-d="${d.id}">${ic('duel')}<span><b>${esc(d.fromName)}</b> מאתגר אותך לדו-קרב</span><button class="btn small primary">לקרב</button></div>`).join('')
+    + reacts.map(r => `<div class="banner react" data-r="${r.d.id}"><span class="rbig">${r.e}</span><span><b>${esc(r.n)}</b> הגיב לקרב שלכם: ${REACT_TXT[r.e] || ''}</span><button class="btn small">${r.e === '😤' ? 'לקרב חוזר' : 'סגירה'}</button></div>`).join('')
     + ready.map(d => `<div class="banner duel ready" data-w="${d.id}">${ic('trophy')}<span>תוצאות הקרב מול <b>${esc(d.from === S.pid ? d.toName : d.fromName)}</b> מוכנות!</span><button class="btn small gold">לזירה</button></div>`).join('');
   $$('.banner.msg', b).forEach(x => $('button', x).onclick = async () => { await DB.markRead(S.team, x.dataset.id); x.remove(); addXP(5); save(); beep('coin'); });
   $$('.banner.duel[data-d]', b).forEach(x => $('button', x).onclick = () => playDuel(duels.find(d => d.id === x.dataset.d)));
+  $$('.banner.react', b).forEach(x => $('button', x).onclick = () => { const r = reacts.find(y => y.d.id === x.dataset.r); P().seenReacts = { ...(P().seenReacts || {}), [r.d.id]: r.e }; save(true); x.remove(); if (r.e === '😤') { const qs = mixed(8).slice(0, 8); DB.createDuel(S.team, { from: S.pid, fromName: P().name, to: r.o, toName: r.n, qs }).then(id => playDuel({ id, qs, from: S.pid, fromName: P().name, to: r.o, toName: r.n, results: {} })); } });
   $$('.banner.duel[data-w]', b).forEach(x => $('button', x).onclick = () => watchDuel(ready.find(d => d.id === x.dataset.w)));
 }
 // ---------- משימות ----------
@@ -985,7 +989,8 @@ function duelRow(d) {
   else if (!them) status = `<span class="muted">מחכים ל${esc(oname)} – התוצאות ייחשפו כששניכם תסיימו</span>`;
   else if (!d.viewed?.[S.pid]) status = `<button class="btn small gold" data-watch="${d.id}">${ic('duel')} לצפייה בקרב</button>`;
   else { const win = me.ok > them.ok || (me.ok === them.ok && me.t < them.t); const tie = me.ok === them.ok && me.t === them.t; info = `אתה: ${me.ok}/8 · ${fmtTime(me.t)} | ${esc(oname)}: ${them.ok}/8 · ${fmtTime(them.t)}`; status = `<b class="${win ? 'win' : 'lose'}">${tie ? 'תיקו' : win ? 'ניצחת' : 'הפעם הוא ניצח'}</b><button class="btn small" data-watch="${d.id}">צפייה חוזרת</button>`; }
-  return `<div class="duel-row"><span>מול <b>${esc(oname)}</b></span><span class="muted small">${info}</span>${status}</div>`;
+  const rx = d.reacts?.[other] && d.viewed?.[S.pid] ? `<span class="rx" title="${esc(REACT_TXT[d.reacts[other]] || '')}">${d.reacts[other]}</span>` : '';
+  return `<div class="duel-row"><span>מול <b>${esc(oname)}</b>${rx}</span><span class="muted small">${info}</span>${status}</div>`;
 }
 function rivalry(duels, oid) {
   let w = 0, l = 0; duels.filter(d => (d.from === oid || d.to === oid) && d.results?.[S.pid] && d.results?.[oid] && d.viewed?.[S.pid]).forEach(d => { const a = d.results[S.pid], b = d.results[oid]; if (a.ok > b.ok || (a.ok === b.ok && a.t < b.t)) w++; else if (!(a.ok === b.ok && a.t === b.t)) l++; });
@@ -1004,6 +1009,8 @@ async function watchDuel(d) {
   if (first && win) { addXP(40); P().records.duelsWon++; save(true); }
   S.active = false;
   battleScreen(app, { name: P().name, hero: P(), res: me }, { name: oname, hero: oHero, res: them }, {
+    myReact: d.reacts?.[S.pid], theirReact: d.reacts?.[other],
+    onReact: e => { d.reacts = { ...(d.reacts || {}), [S.pid]: e }; return DB.reactDuel(S.team, d.id, S.pid, e); },
     onDone: () => { if (first && win) toast('ניצחון בדו-קרב: +40 XP', 'gold'); duelScreen(); },
     onRematch: async () => { const qs = mixed(8).slice(0, 8); const id = await DB.createDuel(S.team, { from: S.pid, fromName: P().name, to: other, toName: oname, qs }); playDuel({ id, qs, from: S.pid, fromName: P().name, to: other, toName: oname, results: {} }); },
   });

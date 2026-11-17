@@ -1,5 +1,5 @@
 // MindHero – שמירה וסנכרון (Firebase, עם גיבוי מקומי כשאין רשת)
-import { firebaseConfig } from './firebase-config.js?v=24';
+import { firebaseConfig } from './firebase-config.js?v=25';
 
 const V = '10.12.2';
 let fb = null, db = null, cloud = false;
@@ -135,4 +135,9 @@ export async function deletePlayer(code, pid) {
 export async function markDuelViewed(code, id, pid) {
   const lt = localTeam(code); if (lt?.duels[id]) { lt.duels[id].viewed = { ...(lt.duels[id].viewed || {}), [pid]: true }; saveLocalTeam(code, lt); }
   if (cloud) { try { await fb.setDoc(fb.doc(db, 'teams', code, 'duels', id), { viewed: { [pid]: true } }, { merge: true }); } catch (e) { console.warn(e); } }
+}
+
+export async function reactDuel(code, id, pid, emoji) {
+  const lt = localTeam(code); if (lt?.duels[id]) { lt.duels[id].reacts = { ...(lt.duels[id].reacts || {}), [pid]: emoji }; saveLocalTeam(code, lt); }
+  if (cloud) { try { await fb.setDoc(fb.doc(db, 'teams', code, 'duels', id), { reacts: { [pid]: emoji }, reactTs: { [pid]: Date.now() } }, { merge: true }); } catch (e) { console.warn(e); } }
 }
