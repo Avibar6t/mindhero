@@ -601,3 +601,42 @@ input:focus,textarea:focus,select:focus{outline:none;border-color:var(--mind);bo
 .btn:disabled{opacity:.5;cursor:not-allowed}
 button.w-item.locked{cursor:pointer}
 @media (max-width:600px){.try-on{flex-direction:column}.to-stage{min-height:260px}}
+/* ===== דוח PDF ===== */
+.p-head{position:relative}.p-export{margin-inline-start:auto;align-self:center}
+#print-report{position:fixed;inset:0;z-index:200;overflow:auto;background:#e9ecf3;color:#0e1630;font-family:Assistant,system-ui,sans-serif;direction:rtl}
+body.report-open>*:not(#print-report){display:none!important}
+.r-toolbar{position:sticky;top:0;z-index:2;display:flex;flex-wrap:wrap;gap:10px;align-items:center;justify-content:center;padding:10px;background:#0e1630;color:#cdd5f3}
+.r-toolbar small{flex-basis:100%;text-align:center;opacity:.8}
+.r-page{background:#fff;max-width:210mm;margin:16px auto;padding:14mm 13mm;box-shadow:0 6px 24px #0e163033;border-radius:4px}
+.r-head{display:flex;align-items:center;gap:16px;border-bottom:3px solid #0e1630;padding-bottom:12px;margin-bottom:14px}
+.r-logo{display:flex;flex-direction:column;line-height:.9;font:700 1.35rem Fredoka,sans-serif;direction:ltr;background:#0e1630;border-radius:12px;padding:8px 12px}
+.r-logo b:first-child{color:#3ee6d2}.r-logo b:last-child{color:#ffb547}
+.r-title{flex:1}.r-title h1{margin:0;font:700 1.6rem Fredoka,Assistant,sans-serif;color:#0e1630}.r-title p{margin:4px 0 0;color:#4b5573}
+.r-hero{width:70px}.r-hero svg{width:100%;height:auto}
+.r-kpis{display:grid;grid-template-columns:repeat(5,1fr);gap:8px;margin-bottom:14px}
+.r-kpis>div{border:1px solid #d6dbe8;border-radius:10px;padding:8px;display:flex;flex-direction:column;gap:2px;text-align:center}
+.r-kpis b{font:700 1.5rem Fredoka,sans-serif;color:#0e1630}.r-kpis small{color:#4b5573;font-weight:600;font-size:.78rem}.r-kpis em{font-style:normal;color:#6b7591;font-size:.72rem}
+.r-sec{margin:0 0 14px}.r-sec h2{font:700 1.05rem Fredoka,Assistant,sans-serif;margin:0 0 6px;padding-inline-start:8px;border-inline-start:4px solid #3ee6d2;color:#0e1630}
+.r-muted{color:#6b7591;font-size:.82rem;margin:2px 0 6px}
+.r-chart{width:100%;height:auto;display:block}
+.r-table{width:100%;border-collapse:collapse;font-size:.85rem}.r-table th{background:#f1f3f9;color:#4b5573;font-weight:700;text-align:right;padding:5px 6px;border-bottom:1px solid #d6dbe8}
+.r-table td{padding:5px 6px;border-bottom:1px solid #eceff6}.r-dot{display:inline-block;width:9px;height:9px;border-radius:50%;margin-inline-end:6px}
+.r-bar{display:inline-block;width:60px;height:7px;background:#eceff6;border-radius:4px;overflow:hidden;vertical-align:middle}.r-bar i{display:block;height:100%}
+.r-up{color:#16a34a}.r-down{color:#dc2626}
+.r-legend{display:flex;gap:6px 14px;flex-wrap:wrap;align-items:center}.r-legend i{display:inline-block;width:10px;height:10px;border-radius:2px;margin-inline-end:4px}
+.r-diag{display:grid;grid-template-columns:repeat(6,1fr);gap:6px}.r-diag>div{border:1px solid #d6dbe8;border-radius:8px;padding:6px;text-align:center;display:flex;flex-direction:column}
+.r-diag span{font-size:.75rem;color:#4b5573}.r-diag b{font:700 1.15rem Fredoka,sans-serif}
+.r-moods{display:flex;flex-wrap:wrap;gap:8px}.r-moods>div{display:flex;flex-direction:column;align-items:center;width:62px;font-size:.7rem;color:#4b5573;text-align:center}.r-moods svg{width:30px;height:30px}
+.r-recs ul{margin:0;padding-inline-start:20px}.r-recs li{margin:4px 0;font-size:.9rem}
+.r-foot{border-top:1px solid #d6dbe8;padding-top:8px;color:#8a93ad;font-size:.72rem;text-align:center}
+@media (max-width:700px){.r-page{margin:0;padding:16px 12px;border-radius:0}.r-kpis{grid-template-columns:repeat(2,1fr)}.r-diag{grid-template-columns:repeat(3,1fr)}.r-table{font-size:.72rem}.r-hero{display:none}.p-export{width:100%;margin-top:8px}}
+@media print{
+  @page{size:A4;margin:10mm}
+  html,body{background:#fff!important}
+  #print-report{position:static;overflow:visible;background:#fff}
+  .r-toolbar{display:none!important}
+  .r-page{box-shadow:none;margin:0;padding:0;max-width:none}
+  .r-kpis{grid-template-columns:repeat(5,1fr)}.r-diag{grid-template-columns:repeat(6,1fr)}.r-table{font-size:.8rem}.r-hero{display:block}
+  .r-avoid{break-inside:avoid}
+  *{-webkit-print-color-adjust:exact;print-color-adjust:exact}
+}

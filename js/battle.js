@@ -1,8 +1,8 @@
 // MindHero – זירת הקרב: אנימציה של שני הגיבורים נלחמים לפי התשובות בדו-קרב
-import { heroSVG, POWERS, strongestPowerColor } from './hero.js?v=28';
-import { ic } from './icons.js?v=28';
-import { heroScene, GIFTS, giftHit } from './fun.js?v=28';
-import { $, esc, beep, confetti, fmtTime } from './ui.js?v=28';
+import { heroSVG, POWERS, strongestPowerColor } from './hero.js?v=29';
+import { ic } from './icons.js?v=29';
+import { heroScene, GIFTS, giftHit } from './fun.js?v=29';
+import { $, esc, beep, confetti, fmtTime } from './ui.js?v=29';
 
 // דמות קבועה להורה (אין לו גיבור משלו)
 export const PARENT_HERO = { style: 'tactical', skin: '#e0ac69', equip: { head: 'helmet', weapon: 'hammer', weapon2: 'shield', emblem: 'star', suit: 'silver' }, powers: { shield: 2 } };

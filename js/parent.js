@@ -1,11 +1,12 @@
 // MindHero – מסך הורה (תומך בשני הורים)
-import * as DB from './store.js?v=28';
-import { CHAPTERS, CH_ORDER } from './bank.js?v=28';
-import { heroSVG, rankOf } from './hero.js?v=28';
-import { $, $$, esc, toast, modal, today, bars, fmtTime, renderQuestion, isCorrect, markResult, answerText, bm, explainHTML } from './ui.js?v=28';
-import { ic, moodFace } from './icons.js?v=28';
-import { battleScreen, PARENT_HERO } from './battle.js?v=28';
-import { analysisHTML } from './analysis.js?v=28';
+import * as DB from './store.js?v=29';
+import { CHAPTERS, CH_ORDER } from './bank.js?v=29';
+import { heroSVG, rankOf } from './hero.js?v=29';
+import { $, $$, esc, toast, modal, today, bars, fmtTime, renderQuestion, isCorrect, markResult, answerText, bm, explainHTML } from './ui.js?v=29';
+import { ic, moodFace } from './icons.js?v=29';
+import { battleScreen, PARENT_HERO } from './battle.js?v=29';
+import { openReport } from './report.js?v=29';
+import { analysisHTML } from './analysis.js?v=29';
 
 const ago = ts => { const m = Math.round((Date.now() - ts) / 60000); return m < 1 ? 'עכשיו' : m < 60 ? `לפני ${m} דק׳` : m < 1440 ? `לפני ${Math.round(m / 60)} שע׳` : `לפני ${Math.round(m / 1440)} ימים`; };
 const HARD = ['stressed', 'quit', 'frustrated'];
@@ -137,7 +138,7 @@ export async function parentScreen(ctx) {
     const stressDays = days.filter(d => HARD.includes(d.mood)).length;
     if (stressDays >= 2) rec.push(`ב-${stressDays} מהימים האחרונים דווח על לחץ או תסכול. שיחה קצרה יכולה לעזור – המטרה היא היכרות עם המבחן, לא ציון.`);
     el.innerHTML = `${kidTabs()}
-      <div class="p-head"><div class="mini-h big">${heroSVG(p)}</div><div><h2>${esc(p.name)}</h2><p>רמה ${p.level} · ${rankOf(p.level)} · רצף ${p.streak || 0} ימים</p><p class="muted">פעילות אחרונה: ${lastDay || 'עדיין אין'}</p></div></div>
+      <div class="p-head"><div class="mini-h big">${heroSVG(p)}</div><div><h2>${esc(p.name)}</h2><p>רמה ${p.level} · ${rankOf(p.level)} · רצף ${p.streak || 0} ימים</p><p class="muted">פעילות אחרונה: ${lastDay || 'עדיין אין'}</p></div><button class="btn small gold p-export" id="rpdf">${ic('chart')} ייצוא דוח PDF</button></div>
       <div class="rec-grid"><div><b>${days[13].v}′</b><small>היום (יעד ${goal}′)</small></div><div><b>${wMin}′</b><small>7 ימים אחרונים</small></div><div><b>${wQ ? Math.round(wOk / wQ * 100) : 0}%</b><small>דיוק השבוע · ${wQ} שאלות</small></div><div><b>${p.records?.bestBoss || 0}%</b><small>שיא בקרב בוס</small></div></div>
       <p class="muted small">🔥 רצף: <b>${p.streak || 0}</b> ימים · 🏖️ כרטיסי יום חופש שמורים: <b>${p.dayOffs || 0}</b> · ימי חופש שנוצלו: <b>${Object.values(p.days || {}).filter(x => x.off).length}</b>${p.days?.[Object.keys(p.days || {}).sort().pop()]?.off ? ' · היום הוא יום חופש' : ''}</p>
       ${progressHTML(p)}
@@ -155,6 +156,7 @@ export async function parentScreen(ctx) {
       <div class="p-card"><h4>${ic('mail')} מילה טובה ל${esc(p.name)}</h4><div class="quick">${['גאה בך!', 'ראיתי שהתאמנת היום – כל הכבוד!', 'אתה בדרך הנכונה, תמשיך ככה', 'דו-קרב איתי הערב?'].map(t => `<button class="btn small" data-q="${esc(t)}">${esc(t)}</button>`).join('')}</div>
         <textarea id="enc" placeholder="או כתבו הודעה משלכם"></textarea><button class="btn primary" id="encsend">${ic('send')} שליחה – תופיע לו במסך הבית</button></div>`;
     bindKid(el);
+    $('#rpdf', el).onclick = () => openReport(p, team);
     $$('[data-day]', el).forEach(b => b.onclick = () => { actDay = b.dataset.day; render(); });
     bindProgress(el, p);
     $$('[data-q]', el).forEach(b => b.onclick = () => $('#enc').value = b.dataset.q);
