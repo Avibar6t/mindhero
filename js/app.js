@@ -1,16 +1,17 @@
 // MindHero – האפליקציה הראשית
-import * as DB from './store.js?v=30';
-import { LS } from './store.js?v=30';
-import { CHAPTERS, CH_ORDER, VERBAL, ANALOGY, LOGIC, MATH, ACADEMY } from './bank.js?v=30';
-import { generate } from './gen.js?v=30';
-import { STYLES, SKINS, ITEMS, POWERS, SLOT_HE, heroSVG, itemName, strongestPowerColor, levelUpOffers, rankOf, xpForLevel } from './hero.js?v=30';
-import { $, $$, esc, toast, modal, beep, confetti, sound, prepareQ, isCorrect, answerText, renderQuestion, markResult, today, weekKey, fmtTime, isMobile, bars, LETTERS, bm, explainHTML } from './ui.js?v=30';
-import { ic, moodFace, lobbyScene } from './icons.js?v=30';
-import { TOPICS, topicById, grid100 } from './learn.js?v=30';
-import { BGS, RAR_NAME, bgScene, heroScene, rollBg, GIFTS, rollGift, addGift, giftHit } from './fun.js?v=30';
-import { battleScreen, PARENT_HERO, REACT_TXT } from './battle.js?v=30';
-import { startExam } from './exam.js?v=30';
-import { parentScreen } from './parent.js?v=30';
+import * as DB from './store.js?v=31';
+import { LS } from './store.js?v=31';
+import { CHAPTERS, CH_ORDER, VERBAL, ANALOGY, LOGIC, MATH, ACADEMY } from './bank.js?v=31';
+import { generate } from './gen.js?v=31';
+import { STYLES, SKINS, ITEMS, POWERS, SLOT_HE, heroSVG, itemName, strongestPowerColor, levelUpOffers, rankOf, xpForLevel } from './hero.js?v=31';
+import { $, $$, esc, toast, modal, beep, confetti, sound, prepareQ, isCorrect, answerText, renderQuestion, markResult, today, weekKey, fmtTime, isMobile, bars, LETTERS, bm, explainHTML } from './ui.js?v=31';
+import { ic, moodFace, lobbyScene } from './icons.js?v=31';
+import { TOPICS, topicById, grid100 } from './learn.js?v=31';
+import { SUPER, checkSupers, heroWithFx, powerFx, PLACES, goldQuest, GOLD_NEED, legendShop, goldCoinSVG, shareHero } from './legend.js?v=31';
+import { BGS, RAR_NAME, bgScene, heroScene, rollBg, GIFTS, rollGift, addGift, giftHit } from './fun.js?v=31';
+import { battleScreen, PARENT_HERO, REACT_TXT } from './battle.js?v=31';
+import { startExam } from './exam.js?v=31';
+import { parentScreen } from './parent.js?v=31';
 
 const app = $('#app');
 export const S = { team: null, teamData: null, pid: null, p: null, active: false, lastInput: Date.now(), inQuestion: null, messages: [] };
@@ -20,7 +21,7 @@ const MENTOR = 'פרופסור מיינד';
 // ================== עזרי שחקן ==================
 function newPlayer({ name, style, skin, pinHash }) {
   const ch = {}; CH_ORDER.forEach(c => ch[c] = { lvl: 2, n: 0, ok: 0, time: 0 });
-  return { seenNews: 'n-2026-11-17b', bgs: [], bg: '', gifts: { pie: 2, banana: 1, chicken: 1 }, dayOffs: 0, learned: {}, learnStep: {}, name, style, skin, pinHash, created: Date.now(), level: 1, xp: 0, coins: 50, items: [], equip: {}, powers: {}, ch, seen: {}, mistakes: [], days: {}, streak: 0, bestStreak: 0, lastGoalDay: null, freezeUsed: {}, academy: {}, diag: false, records: { bestBoss: 0, bestCombo: 0, sims: [], totalQ: 0, totalOk: 0, duelsWon: 0 }, daily: null, weekXp: {}, pendingLevels: 0 };
+  return { seenNews: 'n-2026-11-22', cpowers: [], fpow: '', gold: 0, bgs: [], bg: '', gifts: { pie: 2, banana: 1, chicken: 1 }, dayOffs: 0, learned: {}, learnStep: {}, name, style, skin, pinHash, created: Date.now(), level: 1, xp: 0, coins: 50, items: [], equip: {}, powers: {}, ch, seen: {}, mistakes: [], days: {}, streak: 0, bestStreak: 0, lastGoalDay: null, freezeUsed: {}, academy: {}, diag: false, records: { bestBoss: 0, bestCombo: 0, sims: [], totalQ: 0, totalOk: 0, duelsWon: 0 }, daily: null, weekXp: {}, pendingLevels: 0 };
 }
 const P = () => S.p;
 const save = (now) => DB.savePlayer(S.team, S.pid, S.p, now);
@@ -180,12 +181,11 @@ function rarePick(title, after) {
   $$('.offer', m.el).forEach(b => b.onclick = () => { const id = b.dataset.id; p.items.push(id); p.equip[ITEMS[id].slot] = id; save(true); beep('coin'); m.close(); after(); });
 }
 // ----- הודעת "מה חדש" מפרופסור מיינד -----
-const NEWS = { id: 'n-2026-11-17b', title: 'עוד הפתעות מהמעבדה!', html: () => `${esc(P().name)}, חזרתי עם עוד שדרוגים:<br><br>
-  <b>🏟️ זירת קרב</b> – בדו-קרב התוצאות סודיות עד ששניכם מסיימים. אחר כך הגיבורים נפגשים בזירה ונלחמים עם הציוד והכוחות שלכם.<br><br>
-  <b>🖼️ רקעים לגיבור</b> – בתיבות האוצר מסתתרים רקעים חדשים: הר געש, חלל, אוקיינוס, אולם שחמט ועוד. מחליפים אותם במסך הציוד.<br><br>
-  <b>🥧 מתנות מצחיקות</b> – עוגת קצפת, גרב מסריחה, דג רטוב… שולחים ליריב אחרי דו-קרב. קיבלת כמה מתנות להתחלה!<br><br>
-  <b>⭐ יעד שבועי: 7 ימים</b> – מי שמתאמן כל השבוע מקבל את תיבת השבוע עם פריט נדיר ורקע.<br><br>
-  <b>🏖️ יום חופש</b> – כל 7 ימים ברצף מזכים בכרטיס יום חופש. אתה בוחר מתי לנצל אותו: הרצף נשמר ומקבלים תיבת פרסים.<br><br>יאללה, לאימון! 💪` };
+const NEWS = { id: 'n-2026-11-22', title: 'שלושה חידושים מהמעבדה!', html: () => `${esc(P().name)}, ביקשת – קיבלת:<br><br>
+  <b>🌟 כוחות-על לאוסף</b> – 14 כוחות-על מיוחדים: ברק מחשבתי, כנפי הפניקס, מוח השחמט, רוח הדרקון ועוד. כל הישג פותח כוח, ואתה בוחר איזה מהם יופיע סביב הגיבור שלך.<br><br>
+  <b>🪙 מטבע הזהב היומי</b> – כל יום מטבע זהב אחד מסתתר במקום אחר: מבוך הסדרות, מגדל החידות, מכרה המספרים… מצא אותו!<br><br>
+  <b>🏛️ חנות האגדות</b> – עם מטבעות זהב קונים פריטים שאין בשום מקום אחר. ${P().style === 'pixel' ? 'למשל: <b>מכוש היהלום האגדי</b> ⛏️💎' : P().style === 'tactical' ? 'למשל: <b>להב הקוונטים</b>' : 'למשל: <b>שרביט הגלקסיה</b>'}.<br><br>
+  <b>📤 להתגאות</b> – כפתור חדש ליד הגיבור: יוצרים תמונה של הגיבור עם ההישגים ושולחים בווטסאפ.<br><br>יאללה, לחפש את מטבע הזהב של היום! 💪` };
 function showNews(after) {
   const p = P(); if (p.seenNews === NEWS.id || !p.diag) return after && after();
   p.seenNews = NEWS.id; save(true);
@@ -206,7 +206,7 @@ function eveningBoss() {
     p.eveBoss = today(); save(true);
     runQuiz({ title: `בוס הערב: ${name}`, qs, kind: 'boss', timed: Math.round(12 * 60 * (1 + pw('slow') * 0.1)), onDone: (res, extra) => {
       const win = (extra.score || 0) >= 50;
-      if (win) { addCoins(100); save(true); confetti(); rarePick(`ניצחת את ${name}!`, home); }
+      if (win) { addCoins(100); p.records.eveWins = (p.records.eveWins || 0) + 1; save(true); confetti(); rarePick(`ניצחת את ${name}!`, home); }
       else { addCoins(30); save(true); mentorPopup(`${name} ניצח הפעם (${extra.score}%). קיבלת 30 מטבעות על האומץ. מחר בערב – הזדמנות חדשה.`, [{ t: 'בסדר', primary: true, fn: home }]); }
     } });
   } }, { t: 'אחר כך' }]);
@@ -507,12 +507,12 @@ async function home() {
     <div class="tb-stats"><span class="stat" title="מטבעות">${ic('coin')}${p.coins}</span><span class="stat streak ${st ? '' : 'off'}" title="ימים ברצף שבהם הושלם היעד">${ic('flame')}${st}</span><button class="icon-btn" id="snd" aria-label="צלילים">${ic(sound.on ? 'sound' : 'mute')}</button></div></header>
   <main class="home">
     <section class="lobby">
-      <div class="stage">${heroScene(p)}<div class="platform"></div>${heroSVG(p, { aura: strongestPowerColor(p) })}</div>
+      <div class="stage ${p.fpow === 'gravity' ? 'levitate' : ''}">${heroScene(p)}<div class="platform"></div>${heroWithFx(p, { aura: strongestPowerColor(p) })}<button class="brag-btn" id="brag" title="שיתוף הגיבור בווטסאפ">📤 להתגאות</button>${p.fpow ? `<span class="fpow-tag" style="--c:${SUPER[p.fpow].c}">${SUPER[p.fpow].g} ${SUPER[p.fpow].name}</span>` : ''}</div>
       <div class="lobby-info">
         <div class="xpbar"><div style="width:${(p.xp / xpNeed) * 100}%"></div></div>
         <div class="xp-row"><span>עוד ${xpNeed - p.xp} XP לרמה ${p.level + 1}</span><b>${p.xp}/${xpNeed}</b></div>
         <div class="powers-row">${Object.entries(p.powers).map(([k, l]) => `<span class="pw-chip" style="--c:${POWERS[k].color}" title="${POWERS[k].name}: ${POWERS[k].desc(l)}">${ic(k)}${l}</span>`).join('') || '<small class="muted">כוחות תודעה נפתחים בעליית רמה</small>'}</div>
-        <div class="hero-actions"><button class="btn small" id="wardrobe">${ic('armor')} ציוד</button><button class="btn small" id="powers">${ic('spark')} כוחות</button></div>
+        <div class="hero-actions"><button class="btn small" id="wardrobe">${ic('armor')} ציוד</button><button class="btn small" id="powers">${ic('spark')} כוחות</button><button class="btn small" id="supers">🌟 כוחות-על <b class="cnt">${(p.cpowers || []).length}/${Object.keys(SUPER).length}</b></button><button class="btn small gold" id="lshop">${goldCoinSVG(18)} חנות האגדות <b class="cnt">${p.gold || 0}</b></button></div>
       </div>
     </section>
     <div class="side">
@@ -526,6 +526,8 @@ async function home() {
         return `<section class="week-card"><div class="wk-top"><b>${ic('star')} יעד שבועי: ${dn}/${tg} ימים</b><span class="muted small">${p.weekDone?.[weekKey()] ? 'הושלם השבוע!' : `תיבת השבוע: 200 מטבעות, פריט נדיר ורקע חדש`}</span></div>
           <div class="wk-days">${names.map((n, i) => { const x = new Date(ws); x.setDate(x.getDate() + i); const k = today(x); const got = p.days[k]?.goal; const isT = k === today(); return `<span class="wk-d ${got ? 'got' : ''} ${isT ? 'today' : ''}">${got ? ic('check') : n}</span>`; }).join('')}</div>
           <small class="muted">${wst ? `${wst} ${wst === 1 ? 'שבוע' : 'שבועות'} ברצף שבהם היעד הושלם. ` : ''}🏖️ 7 ימים ברצף = יום חופש עם פרסים · עוד ${7 - ((p.streak || 0) % 7)} ${7 - ((p.streak || 0) % 7) === 1 ? 'יום' : 'ימים'}</small></section>`; })() : ''}
+      ${p.diag ? (() => { const gq = goldQuest(p); const pl = PLACES[gq.place];
+        return `<div class="gold-card ${gq.done ? 'done' : ''}"><span class="gc-coin">${goldCoinSVG(46)}</span><span class="ch-t"><small>מטבע הזהב של היום · יש לך ${p.gold || 0}</small><b>${pl.g} ${pl.name}</b><small>${gq.done ? 'אספת את מטבע הזהב של היום! מחר הוא יחכה במקום אחר.' : `${pl.desc} צריך ${GOLD_NEED} נכונות מתוך 8.`}</small></span>${gq.done ? `<span class="gc-ok">${ic('check')}</span>` : `<button class="btn small gold" id="goldq">למשימה</button>`}</div>`; })() : ''}
       ${p.dayOffs > 0 && !d.goal ? `<div class="off-card"><span class="tile">🏖️</span><span class="ch-t"><b>יש לך ${p.dayOffs === 1 ? 'כרטיס יום חופש' : p.dayOffs + ' כרטיסי יום חופש'}</b><small>לוקחים היום חופש: הרצף נשמר, היום נחשב ליעד השבועי, ומקבלים תיבת פרסים עם רקע ומתנות.</small></span><button class="btn small gold" id="dayoff">לקחת חופש היום</button></div>` : p.dayOffs > 0 ? `<div class="off-card"><span class="tile">🏖️</span><span class="ch-t"><b>שמור לך ${p.dayOffs === 1 ? 'כרטיס יום חופש' : p.dayOffs + ' כרטיסי יום חופש'}</b><small>אפשר להשתמש בו בכל יום שעוד לא התאמנת בו.</small></span></div>` : ''}
       ${p.diag ? (() => { const st = eveningState(); const name = EVE_BOSSES[new Date().getDay()];
         return st === 'open' ? `<button class="eve-card open" id="eveboss"><span class="tile">${ic('boss')}</span><span class="ch-t"><b>בוס הערב: ${name}</b><small>זמין עכשיו עד ${bossHour() + 2}:00 · מי שמנצח מקבל פריט נדיר</small></span><span class="go">לקרב</span></button>`
@@ -547,6 +549,9 @@ async function home() {
   </nav>`);
   $('#snd').onclick = () => { sound.on = !sound.on; localStorage.setItem('mh_sound', sound.on ? '1' : '0'); home(); };
   $('#wardrobe').onclick = wardrobe; $('#powers').onclick = powersScreen;
+  $('#supers').onclick = supersScreen; $('#lshop').onclick = legendShopScreen;
+  const gqb = $('#goldq'); if (gqb) gqb.onclick = startGoldQuest;
+  $('#brag').onclick = () => shareHero(p, { headline: `${p.name} – רמה ${p.level}`, sub: p.fpow ? `כוח-על: ${SUPER[p.fpow].name}` : rankOf(p.level), chips: [`🔥 ${p.streak || 0} ימים ברצף`, `🌟 ${(p.cpowers || []).length} כוחות-על`, `🪙 ${p.gold || 0} זהב`] }, `תראו את הגיבור שלי ב-MindHero! ${p.name}, רמה ${p.level} (${rankOf(p.level)}) 💪`);
   const lockedMsg = () => mentorPopup(`קודם מסיימים את <b>משימת הגילוי</b>. ${p.diagState?.res?.length ? `נשארו לך ${18 - p.diagState.res.length} שאלות.` : '18 שאלות, אפשר לעצור ולחזור מתי שרוצים.'}<br>ככה אדע בדיוק מה הרמה שלך בכל פרק, ואבנה לך אימון שמתאים רק לך. אחרי זה כל המשחק נפתח.`, [{ t: 'למשימת הגילוי', primary: true, fn: () => startMission(plan.missions.find(m => m.kind === 'diag')) }, { t: 'אחר כך' }]);
   $$('.mission').forEach(b => b.onclick = () => b.classList.contains('locked') ? lockedMsg() : startMission(plan.missions.find(m => m.id === b.dataset.id)));
   const go = { practice: practicePick, academy: academy, sim: simPick, duel: duelScreen, board: leaderboard, records: recordsScreen };
@@ -561,6 +566,7 @@ async function home() {
   if (p.pendingLevels > 0) return levelUpFlow(home);
   if (p.chests?.length) return openChests(home);
   if (p.diag && p.seenNews !== NEWS.id) return showNews(home);
+  const fresh = p.diag ? checkSupers(p) : []; if (fresh.length) { save(true); return superReveal(fresh, home); }
   loadMessages();
 }
 async function loadMessages() {
@@ -645,7 +651,7 @@ function runQuiz(cfg) {
       <div id="fb"></div></div>`, { active: true });
     $('#qcomms').onclick = comms;
     $('#qx').onclick = () => mentorPopup(boss ? 'לצאת מקרב הבוס? ההתקדמות בקרב לא תישמר.' : cfg.kind === 'diag' ? 'לעצור עכשיו? ההתקדמות נשמרת, ובפעם הבאה ממשיכים מאותה שאלה. כדי לפתוח את שאר המשחק צריך לסיים את משימת הגילוי.' : 'לצאת מהמשימה? מה שכבר פתרת נשמר.', [{ t: 'כן, לצאת', fn: quit }, { t: 'להמשיך', primary: true }]);
-    if (cfg.timed) { const tick = () => { const left = (R.endAt - Date.now()) / 1000; const t = $('#timer'); if (t) { t.innerHTML = ic('clock') + fmtTime(left); t.classList.toggle('low', left < 120); } if (left <= 0) { clearInterval(timerInt); finishBoss(); } }; clearInterval(timerInt); tick(); timerInt = setInterval(tick, 500); }
+    if (cfg.timed) { const tick = () => { const left = (R.endAt - Date.now()) / 1000; const t = $('#timer'); if (t) { t.innerHTML = ic('clock') + fmtTime(left); t.classList.toggle('low', left < 120); } if (left <= 0) { clearInterval(timerInt); if (boss) finishBoss(); else finish({ timeout: true }); } }; clearInterval(timerInt); tick(); timerInt = setInterval(tick, 500); }
     renderQuestion(q, $('#qcard'), { exam: boss, response: R.resp[R.i], eliminated: R.elim[R.i], onAnswer: (r, final) => boss ? bossAnswer(r) : (final && answer(r)) });
     tools();
     if (boss) $$('.qnav button').forEach(b => b.onclick = () => { R.i = +b.dataset.i; show(); });
@@ -726,7 +732,7 @@ function runQuiz(cfg) {
   function finishBoss() {
     clearInterval(timerInt); const p = P();
     R.qs.forEach((q, i) => {
-      const r = R.resp[i]; const ok = isCorrect(q, r); R.res.push({ q, ok, r });
+      const r = R.resp[i]; const ok = isCorrect(q, r); R.res.push({ q, ok, r }); useQ(p, q, 'b');
       const c = p.ch[q.ch]; c.n++; if (ok) c.ok++;
       c.lvl = Math.max(1, Math.min(5, c.lvl + (ok ? 0.15 : -0.15)));
       p.records.totalQ++; if (ok) p.records.totalOk++; const d = dayRec(); d.q++; if (ok) d.ok++; if (S.act) { S.act.q++; if (ok) S.act.ok++; }
@@ -743,7 +749,9 @@ function runQuiz(cfg) {
     clearInterval(timerInt); const p = P();
     const okN = R.res.filter(x => x.ok).length;
     endAct({ done: true, score: extra.score, combo: R.maxCombo, total: R.res.length, totalOk: okN });
-    addCoins(R.coins); p.records.bestCombo = Math.max(p.records.bestCombo, R.maxCombo); save(true);
+    addCoins(R.coins); p.records.bestCombo = Math.max(p.records.bestCombo, R.maxCombo);
+    if (R.res.length >= 8 && okN === R.res.length && !extra.timeout) p.records.perfect = (p.records.perfect || 0) + 1;
+    save(true);
     S.active = false;
     const review = R.res.filter(x => !x.ok);
     setScreen(`<div class="center-screen results">
@@ -752,8 +760,9 @@ function runQuiz(cfg) {
       <div class="res-stats"><div><b>${okN}/${R.res.length}</b><small>נכונות</small></div><div class="gold"><b>+${R.xp}</b><small>XP</small></div><div class="gold"><b>+${Math.round(R.coins * (1 + pw('telek') * .1))}</b><small>מטבעות</small></div>${!boss ? `<div><b>${R.maxCombo}</b><small>קומבו שיא</small></div>` : `<div><b>${extra.score}%</b><small>ציון</small></div>`}</div>
       ${boss && extra.empty ? `<p class="warn">השארת ${extra.empty} שאלות ריקות. במבחן האמיתי – תמיד מנחשים.</p>` : ''}
       ${boss && review.length ? `<details class="review"><summary>מה היה כדאי לעשות אחרת? (${review.length})</summary>${review.map(x => `<div class="rv"><div class="rv-q">${x.q.q}</div><div class="rv-a">✔ ${answerText(x.q)}</div><div class="rv-e">${explainHTML(x.q)}</div></div>`).join('')}</details>` : ''}
-      <button class="btn primary big" id="cont">המשך</button></div>`);
+      <div class="row-btns">${okN / Math.max(1, R.res.length) >= 0.75 && R.res.length >= 6 ? `<button class="btn gold" id="brag">📤 להתגאות בווטסאפ</button>` : ''}<button class="btn primary big" id="cont">המשך</button></div></div>`);
     if (okN / R.res.length >= 0.8) confetti();
+    const brag = $('#brag'); if (brag) brag.onclick = () => shareHero(P(), { headline: okN === R.res.length ? 'משימה מושלמת!' : `${okN}/${R.res.length} נכונות!`, sub: cfg.title, chips: [`רמה ${P().level}`, `🔥 ${P().streak || 0} ימים`, `⚡ קומבו ${R.maxCombo}`] }, `${P().name} השלים את "${cfg.title}" ב-MindHero עם ${okN}/${R.res.length} תשובות נכונות! 💪`);
     $('#cont').onclick = () => { if (P().pendingLevels > 0) levelUpFlow(() => cfg.onDone(R.res, extra)); else cfg.onDone(R.res, extra); };
   }
   show();
@@ -781,13 +790,82 @@ function levelUpFlow(after) {
   });
 }
 // ---------- ארון וכוחות ----------
+// ---------- כוחות-על לאוסף ----------
+function superReveal(ids, after) {
+  const p = P(); const id = ids[0], s = SUPER[id];
+  beep('level'); confetti();
+  const m = modal(`<div class="sup-reveal" style="--c:${s.c}"><div class="sr-rays"></div><small>כוח-על חדש נפתח!</small><h2>${s.g} ${s.name}</h2>
+    <div class="sr-stage">${heroScene(p)}${heroWithFx({ ...p, fpow: id })}</div><p class="sr-lore">${s.lore}</p><p class="muted small">הושג על: ${s.how}</p>
+    <div class="row-btns"><button class="btn gold" id="srshare">📤 להתגאות</button><button class="btn primary" id="sron">להפעיל עכשיו</button><button class="btn" id="srlater">אחר כך</button></div></div>`, { cls: 'wide', closable: false });
+  const next = () => { m.close(); ids.length > 1 ? superReveal(ids.slice(1), after) : after(); };
+  $('#sron', m.el).onclick = () => { p.fpow = id; save(true); next(); };
+  $('#srlater', m.el).onclick = next;
+  $('#srshare', m.el).onclick = () => shareHero({ ...p, fpow: id }, { headline: `השגתי כוח-על!`, sub: `${s.g} ${s.name}`, chips: [`רמה ${p.level}`, `🌟 ${p.cpowers.length} כוחות-על`, `🔥 ${p.streak || 0} ימים`] }, `${p.name} השיג כוח-על חדש ב-MindHero: ${s.name}! ${s.g}`);
+}
+function supersScreen() {
+  const p = P(); checkSupers(p);
+  setScreen(`<header class="topbar"><button class="icon-btn" id="bk" aria-label="חזרה">${ic('back')}</button><b>🌟 אוסף כוחות-על · ${(p.cpowers || []).length}/${Object.keys(SUPER).length}</b><span></span></header>
+  <main class="list-screen"><p class="lead">כוחות-על נפתחים כשמגיעים להישגים. הם לא משנים את המשחק – הם מראים לכולם מה עברת. בחר כוח אחד שיופיע סביב הגיבור שלך.</p>
+  <div class="sup-grid">${Object.entries(SUPER).map(([k, s]) => { const own = (p.cpowers || []).includes(k);
+    return `<button class="sup-card ${own ? 'own' : 'lock'} ${p.fpow === k ? 'on' : ''}" data-k="${k}" style="--c:${s.c}"><span class="sup-ic">${own ? s.g : '🔒'}</span><b>${s.name}</b><small>${own ? s.lore : 'איך משיגים: ' + s.how}</small>${p.fpow === k ? '<em>מוצג עכשיו</em>' : own ? '<em class="pick">להציג</em>' : s.legend ? '<em class="leg">חנות האגדות</em>' : ''}</button>`; }).join('')}</div>
+  ${p.fpow ? `<div class="row-btns" style="margin-top:14px"><button class="btn" id="noshow">להסתיר את הכוח</button></div>` : ''}</main>`);
+  $('#bk').onclick = home;
+  $$('.sup-card.own').forEach(b => b.onclick = () => { p.fpow = b.dataset.k; save(true); beep('coin'); supersScreen(); });
+  $$('.sup-card.lock').forEach(b => b.onclick = () => { const s = SUPER[b.dataset.k]; s.legend ? legendShopScreen() : toast(`${s.name}: ${s.how}`); });
+  const ns = $('#noshow'); if (ns) ns.onclick = () => { p.fpow = ''; save(true); supersScreen(); };
+}
+// ---------- מטבע הזהב היומי ----------
+function startGoldQuest() {
+  const p = P(); const gq = goldQuest(p); const pl = PLACES[gq.place]; if (gq.done) return;
+  const qs = pl.ch ? buildQs([{ ch: pl.ch, n: 8 }]) : mixed(8);
+  mentorPopup(`<b>${pl.g} ${pl.name}</b><br>${pl.desc}<br><br>8 שאלות${pl.timed ? `, ${pl.timed / 60} דקות על השעון` : ''}. צריך לפחות <b>${GOLD_NEED} נכונות</b> כדי לזכות במטבע הזהב.`, [{ t: 'יוצאים לדרך!', primary: true, fn: () => {
+    gq.tries = (gq.tries || 0) + 1; save(true);
+    runQuiz({ title: pl.name, qs, kind: 'practice', timed: pl.timed, onDone: (res) => {
+      const ok = res.filter(x => x.ok).length;
+      if (ok >= GOLD_NEED) {
+        gq.done = true; p.goldLast = gq.place; p.gold = (p.gold || 0) + 1; p.goldTotal = (p.goldTotal || 0) + 1; save(true);
+        beep('level'); confetti();
+        const m = modal(`<div class="gold-win"><div class="gw-coin">${goldCoinSVG(120)}</div><h2>מטבע זהב!</h2><p>מצאת את המטבע ב<b>${pl.name}</b> (${ok}/8 נכונות).<br>יש לך עכשיו <b>${p.gold}</b> מטבעות זהב.</p>
+          <p class="muted small">${legendShop(p).filter(x => x.price > p.gold).map(x => `עוד ${x.price - p.gold} ל${x.kind === 'item' ? itemName(x.item, p.style) : x.kind === 'bg' ? BGS[x.bg].name : SUPER[x.power].name}`)[0] || 'אפשר לקנות פריט אגדי בחנות!'}</p>
+          <div class="row-btns"><button class="btn gold" id="gws">${goldCoinSVG(18)} לחנות האגדות</button><button class="btn primary" id="gwo">מעולה</button></div></div>`, { closable: false });
+        $('#gws', m.el).onclick = () => { m.close(); legendShopScreen(); };
+        $('#gwo', m.el).onclick = () => { m.close(); home(); };
+      } else mentorPopup(`כמעט! ${ok}/8 נכונות – צריך ${GOLD_NEED}. המטבע עדיין מחכה ב${pl.name}, ואפשר לנסות שוב עם שאלות חדשות.`, [{ t: 'לנסות שוב', primary: true, fn: startGoldQuest }, { t: 'אחר כך', fn: home }]);
+    } });
+  } }, { t: 'לא עכשיו' }]);
+}
+// ---------- חנות האגדות ----------
+function legendShopScreen() {
+  const p = P(); const items = legendShop(p);
+  const owned = x => x.kind === 'item' ? p.items.includes(x.item) : x.kind === 'bg' ? (p.bgs || []).includes(x.bg) : (p.cpowers || []).includes(x.power);
+  const title = x => x.kind === 'item' ? itemName(x.item, p.style) : x.kind === 'bg' ? BGS[x.bg].name : SUPER[x.power].name;
+  const look = x => x.kind === 'item' ? { ...p, equip: { ...p.equip, [ITEMS[x.item].slot]: x.item } } : x.kind === 'bg' ? { ...p, bg: x.bg } : { ...p, fpow: x.power };
+  setScreen(`<header class="topbar"><button class="icon-btn" id="bk" aria-label="חזרה">${ic('back')}</button><b>${goldCoinSVG(20)} חנות האגדות</b><span class="stat gold-stat">${goldCoinSVG(18)} ${p.gold || 0}</span></header>
+  <main class="list-screen"><p class="lead">פריטים שאי אפשר להשיג בשום מקום אחר. משלמים רק במטבעות זהב – מטבע אחד ביום, ממשימת הזהב היומית.</p>
+  <div class="leg-grid">${items.map(x => { const own = owned(x), h = look(x);
+    return `<div class="leg-card ${own ? 'own' : ''}"><div class="leg-stage ${x.kind === 'power' && x.power === 'gravity' ? 'levitate' : ''}">${heroScene(h)}${heroWithFx(h)}<span class="leg-rar">${x.rar}</span></div>
+      <b>${title(x)}</b><small class="muted">${x.kind === 'item' ? ITEMS[x.item].desc : x.kind === 'bg' ? 'רקע אגדי לגיבור' : SUPER[x.power].lore}</small>
+      ${own ? `<span class="leg-own">${ic('check')} שלך</span>` : `<button class="btn gold" data-buy="${x.id}" ${p.gold >= x.price ? '' : 'disabled'}>${goldCoinSVG(18)} ${x.price} ${p.gold >= x.price ? '· לקנות' : `· חסרים ${x.price - (p.gold || 0)}`}</button>`}</div>`; }).join('')}</div></main>`);
+  $('#bk').onclick = home;
+  $$('[data-buy]').forEach(b => b.onclick = () => {
+    const x = items.find(y => y.id === b.dataset.buy); if (!x || p.gold < x.price) return;
+    mentorPopup(`לקנות את <b>${title(x)}</b> ב-${x.price} מטבעות זהב?`, [{ t: 'כן, לקנות!', primary: true, fn: () => {
+      p.gold -= x.price;
+      if (x.kind === 'item') { p.items.push(x.item); p.equip[ITEMS[x.item].slot] = x.item; }
+      else if (x.kind === 'bg') { p.bgs = [...(p.bgs || []), x.bg]; p.bg = x.bg; }
+      else { p.cpowers = [...(p.cpowers || []), x.power]; p.fpow = x.power; }
+      save(true); beep('level'); confetti();
+      mentorPopup(`<b>${title(x)}</b> שלך! זה פריט אגדי – מעטים מאוד מחזיקים בו.`, [{ t: '📤 להתגאות', primary: true, fn: () => { shareHero(P(), { headline: 'פריט אגדי!', sub: title(x), chips: [`רמה ${p.level}`, `🔥 ${p.streak || 0} ימים`, `🪙 ${p.goldTotal || 0} זהב שנאסף`] }, `${p.name} השיג פריט אגדי ב-MindHero: ${title(x)}! 🏆`); legendShopScreen(); } }, { t: 'מעולה', fn: legendShopScreen }]);
+    } }, { t: 'לא עכשיו' }]);
+  });
+}
 function wardrobe() {
   const p = P(); const slots = ['head', 'back', 'weapon', 'weapon2', 'emblem', 'suit'];
   const tierMax = p.level < 4 ? 1 : p.level < 8 ? 2 : p.level < 13 ? 3 : 4;
   const price = id => ITEMS[id].tier * 150;
   setScreen(`<header class="topbar"><button class="icon-btn" id="bk" aria-label="חזרה">${ic('back')}</button><b>${ic('armor')} ציוד</b><span class="stat">${ic('coin')}${p.coins}</span></header>
-  <main class="wardrobe"><div class="w-hero">${heroScene(p)}${heroSVG(p, { aura: strongestPowerColor(p) })}</div><div class="w-slots">
-  ${slots.map(s => { const own = p.items.filter(id => ITEMS[id].slot === s); const shop = Object.keys(ITEMS).filter(id => ITEMS[id].slot === s && !p.items.includes(id));
+  <main class="wardrobe"><div class="w-hero ${p.fpow === 'gravity' ? 'levitate' : ''}">${heroScene(p)}${heroWithFx(p, { aura: strongestPowerColor(p) })}</div><div class="w-slots">
+  ${slots.map(s => { const own = p.items.filter(id => ITEMS[id].slot === s); const shop = Object.keys(ITEMS).filter(id => ITEMS[id].slot === s && !p.items.includes(id) && !ITEMS[id].legend);
     return `<div class="w-slot"><h4>${SLOT_HE[s]}</h4><div class="w-items"><button class="w-item ${!p.equip[s] ? 'on' : ''}" data-s="${s}" data-id="">ללא</button>${own.map(id => `<button class="w-item ${p.equip[s] === id ? 'on' : ''}" data-s="${s}" data-id="${id}">${p.equip[s] === id ? ic('check') : ''}${itemName(id, p.style)}</button>`).join('')}
     ${shop.map(id => ITEMS[id].tier <= tierMax ? `<button class="w-item buy" data-buy="${id}">${itemName(id, p.style)} · ${ic('coin')}${price(id)}</button>` : `<button class="w-item locked" data-peek="${id}">${ic('lock')}${itemName(id, p.style)} · רמה ${[0, 1, 4, 8, 13][ITEMS[id].tier]}</button>`).join('')}</div></div>`; }).join('')}
   <div class="w-slot"><h4>רקע</h4><div class="w-items"><button class="w-item ${!p.bg ? 'on' : ''}" data-bg="">רקע הבית</button>${Object.entries(BGS).map(([k, b]) => (p.bgs || []).includes(k) ? `<button class="w-item ${p.bg === k ? 'on' : ''}" data-bg="${k}">${p.bg === k ? ic('check') : ''}${b.name}</button>` : `<span class="w-item locked">${ic('lock')}${b.name} · ${RAR_NAME[b.r]}</span>`).join('')}</div><small class="muted">רקעים חדשים נמצאים בתיבות האוצר.</small></div>
@@ -1089,7 +1167,7 @@ function duelRow(d) {
   return `<div class="duel-row"><span>מול <b>${esc(oname)}</b>${rx}</span><span class="muted small">${info}</span>${status}</div>`;
 }
 function sendGift(d, g) {
-  const p = P(); if (!(p.gifts?.[g] > 0)) return; p.gifts[g]--; save(true);
+  const p = P(); if (!(p.gifts?.[g] > 0)) return; p.gifts[g]--; p.records.giftsSent = (p.records.giftsSent || 0) + 1; save(true);
   return DB.giftDuel(S.team, d.id, S.pid, g);
 }
 function giftPicker(d, oname) {

@@ -1,8 +1,9 @@
 // MindHero – זירת הקרב: אנימציה של שני הגיבורים נלחמים לפי התשובות בדו-קרב
-import { heroSVG, POWERS, strongestPowerColor } from './hero.js?v=30';
-import { ic } from './icons.js?v=30';
-import { heroScene, GIFTS, giftHit } from './fun.js?v=30';
-import { $, esc, beep, confetti, fmtTime, toast } from './ui.js?v=30';
+import { heroSVG, POWERS, strongestPowerColor } from './hero.js?v=31';
+import { ic } from './icons.js?v=31';
+import { heroWithFx } from './legend.js?v=31';
+import { heroScene, GIFTS, giftHit } from './fun.js?v=31';
+import { $, esc, beep, confetti, fmtTime, toast } from './ui.js?v=31';
 
 // דמות קבועה להורה (אין לו גיבור משלו)
 export const PARENT_HERO = { style: 'tactical', skin: '#e0ac69', equip: { head: 'helmet', weapon: 'hammer', weapon2: 'shield', emblem: 'star', suit: 'silver' }, powers: { shield: 2 } };
@@ -31,9 +32,9 @@ export function battleScreen(app, L, R, { onDone, onRematch, onReact, myReact = 
       <div class="hpbox r"><b>${esc(R.name)}</b><div class="hpbar"><i id="hpR" style="width:100%"></i></div></div>
     </div>
     <div class="fighters">
-      <div class="fighter l" id="fL" style="--c:${colorOf(L.hero)}"><div class="aura"></div>${heroSVG(L.hero)}<div class="dmg" id="dL"></div></div>
+      <div class="fighter l" id="fL" style="--c:${colorOf(L.hero)}"><div class="aura"></div>${heroWithFx(L.hero)}<div class="dmg" id="dL"></div></div>
       <div class="fx" id="fx"></div>
-      <div class="fighter r" id="fR" style="--c:${colorOf(R.hero)}"><div class="aura"></div><div class="flip">${heroSVG(R.hero)}</div><div class="dmg" id="dR"></div></div>
+      <div class="fighter r" id="fR" style="--c:${colorOf(R.hero)}"><div class="aura"></div><div class="flip">${heroWithFx(R.hero)}</div><div class="dmg" id="dR"></div></div>
     </div>
     <div class="ar-log" id="log"></div>
     <div class="ar-bottom"><button class="btn small" id="skip">דילוג לתוצאה</button></div>

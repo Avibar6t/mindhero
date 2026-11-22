@@ -1,5 +1,5 @@
 // רקעים לגיבור ומתנות מצחיקות לדו-קרב
-import { lobbyScene } from './icons.js?v=30';
+import { lobbyScene } from './icons.js?v=31';
 
 // r: 1 רגיל · 2 נדיר · 3 אפי
 export const BGS = {
@@ -10,8 +10,9 @@ export const BGS = {
   space:   { name: 'תחנת חלל',          r: 2 },
   neon:    { name: 'כביש הניאון',       r: 3 },
   chess:   { name: 'אולם השחמט',        r: 3 },
+  goldpalace: { name: 'ארמון הזהב',     r: 4 },
 };
-export const RAR_NAME = { 1: 'רגיל', 2: 'נדיר', 3: 'אפי' };
+export const RAR_NAME = { 1: 'רגיל', 2: 'נדיר', 3: 'אפי', 4: 'אגדי' };
 
 const S = (inner, defs = '') => `<svg class="scene" viewBox="0 0 320 200" preserveAspectRatio="xMidYMax slice"><defs>${defs}</defs>${inner}</svg>`;
 const rnd = seed => () => { seed = (seed * 9301 + 49297) % 233280; return seed / 233280; };
@@ -112,7 +113,21 @@ function chess() {
     ${tiles.join('')}`,
     `<linearGradient id="chs1" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#1c1410"/><stop offset="1" stop-color="#57351c"/></linearGradient>`);
 }
-const SCENES = { ocean, snow, jungle, volcano, space, neon, chess };
+function goldpalace() {
+  const r = rnd(17);
+  const sparks = Array.from({ length: 26 }, () => `<circle cx="${(r() * 320).toFixed(0)}" cy="${(r() * 150).toFixed(0)}" r="${(0.6 + r() * 1.4).toFixed(1)}" fill="#fef3c7" opacity="${(.4 + r() * .6).toFixed(2)}"/>`).join('');
+  const col = x => `<rect x="${x}" y="40" width="18" height="130" fill="url(#gp2)"/><rect x="${x - 4}" y="34" width="26" height="8" fill="#d97706"/><rect x="${x - 4}" y="168" width="26" height="8" fill="#d97706"/>`;
+  return S(`<rect width="320" height="200" fill="url(#gp1)"/>
+    <path d="M110 40 Q160 -10 210 40 Z" fill="#b45309" opacity=".7"/><circle cx="160" cy="26" r="9" fill="#fde68a"/>
+    ${col(40)}${col(100)}${col(202)}${col(262)}
+    <path d="M130 170 V90 Q160 56 190 90 V170 Z" fill="#451a03" stroke="#fbbf24" stroke-width="3"/><path d="M160 66 v10 M154 72 h12" stroke="#fde68a" stroke-width="2"/>
+    <rect y="170" width="320" height="30" fill="url(#gp3)"/><path d="M120 200 L140 170 H180 L200 200 Z" fill="#b91c1c" opacity=".85"/>
+    ${sparks}`,
+    `<linearGradient id="gp1" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#1c0f02"/><stop offset="1" stop-color="#78350f"/></linearGradient>
+     <linearGradient id="gp2" x1="0" y1="0" x2="1" y2="0"><stop offset="0" stop-color="#92400e"/><stop offset=".4" stop-color="#fde68a"/><stop offset="1" stop-color="#b45309"/></linearGradient>
+     <linearGradient id="gp3" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#fbbf24"/><stop offset="1" stop-color="#92400e"/></linearGradient>`);
+}
+const SCENES = { ocean, snow, jungle, volcano, space, neon, chess, goldpalace };
 export function bgScene(id) { return SCENES[id] ? SCENES[id]() : ''; }
 export function heroScene(p) { return p?.bg && SCENES[p.bg] ? SCENES[p.bg]() : lobbyScene(p?.style || 'comic'); }
 

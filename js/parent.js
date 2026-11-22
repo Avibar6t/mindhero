@@ -1,12 +1,12 @@
 // MindHero – מסך הורה (תומך בשני הורים)
-import * as DB from './store.js?v=30';
-import { CHAPTERS, CH_ORDER } from './bank.js?v=30';
-import { heroSVG, rankOf } from './hero.js?v=30';
-import { $, $$, esc, toast, modal, today, bars, fmtTime, renderQuestion, isCorrect, markResult, answerText, bm, explainHTML } from './ui.js?v=30';
-import { ic, moodFace } from './icons.js?v=30';
-import { battleScreen, PARENT_HERO } from './battle.js?v=30';
-import { openReport } from './report.js?v=30';
-import { analysisHTML } from './analysis.js?v=30';
+import * as DB from './store.js?v=31';
+import { CHAPTERS, CH_ORDER } from './bank.js?v=31';
+import { heroSVG, rankOf } from './hero.js?v=31';
+import { $, $$, esc, toast, modal, today, bars, fmtTime, renderQuestion, isCorrect, markResult, answerText, bm, explainHTML } from './ui.js?v=31';
+import { ic, moodFace } from './icons.js?v=31';
+import { battleScreen, PARENT_HERO } from './battle.js?v=31';
+import { openReport } from './report.js?v=31';
+import { analysisHTML } from './analysis.js?v=31';
 
 const ago = ts => { const m = Math.round((Date.now() - ts) / 60000); return m < 1 ? 'עכשיו' : m < 60 ? `לפני ${m} דק׳` : m < 1440 ? `לפני ${Math.round(m / 60)} שע׳` : `לפני ${Math.round(m / 1440)} ימים`; };
 const HARD = ['stressed', 'quit', 'frustrated'];

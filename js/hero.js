@@ -32,6 +32,10 @@ export const ITEMS = {
   // שריון
   silver:   { slot: 'suit', tier: 2, name: { pixel: 'שריון ברזל', comic: 'חליפת כסף', tactical: 'שריון קרמי' }, desc: 'שדרוג לחליפה' },
   gold:     { slot: 'suit', tier: 3, name: { pixel: 'שריון זהב', comic: 'חליפת זהב', tactical: 'שריון נאנו-זהב' }, desc: 'שדרוג מלכותי' },
+  // אגדיים – רק בחנות האגדות (מטבעות זהב), אחד לכל עולם
+  pickaxe:  { slot: 'weapon', tier: 5, legend: 'pixel', name: { pixel: 'מכוש היהלום האגדי', comic: 'מכוש היהלום האגדי', tactical: 'מכוש היהלום האגדי' }, desc: 'חוצב דרך בכל סלע. נמצא רק בעמקי המכרות' },
+  scepter:  { slot: 'weapon', tier: 5, legend: 'comic', name: { pixel: 'שרביט הגלקסיה', comic: 'שרביט הגלקסיה', tactical: 'שרביט הגלקסיה' }, desc: 'כוכב אמיתי נלכד בקצה השרביט' },
+  qblade:   { slot: 'weapon', tier: 5, legend: 'tactical', name: { pixel: 'להב הקוונטים', comic: 'להב הקוונטים', tactical: 'להב הקוונטים' }, desc: 'נמצא בשני מקומות בו-זמנית' },
   cosmic:   { slot: 'suit', tier: 4, name: { pixel: 'שריון אובסידיאן', comic: 'חליפה קוסמית', tactical: 'שריון קוונטי' }, desc: 'השדרוג האגדי' },
 };
 export const SLOT_HE = { head: 'ראש', back: 'גב', weapon: 'נשק', weapon2: 'יד שנייה', emblem: 'סמל', suit: 'חליפה' };
@@ -54,7 +58,7 @@ export const xpForLevel = lvl => Math.round(120 + (lvl - 1) * 60);
 export function itemName(id, style) { const it = ITEMS[id]; return it ? it.name[style] || it.name.comic : id; }
 
 // ---------- ציור ----------
-export { heroSVG } from './heroart.js?v=30';
+export { heroSVG } from './heroart.js?v=31';
 
 export function strongestPowerColor(h) {
   const p = Object.entries(h.powers || {}).sort((a, b) => b[1] - a[1])[0];

@@ -133,6 +133,18 @@ function chibiHero(h, opts, tac) {
   if (wp === 'blaster') o.push(`<g><path d="M130 164 H174 Q180 164 180 170 V176 H150 L146 186 H136 L138 176 H130 Z" fill="${tac ? '#1f2937' : '#e2e8f0'}" ${st}/><rect x="150" y="158" width="18" height="6" rx="2" fill="${tac ? '#374151' : '#94a3b8'}" ${st}/><rect x="176" y="166" width="10" height="8" rx="2" fill="${acc}" ${st}/><path d="M136 169 H168" stroke="${acc}" stroke-width="2.5"/></g>`, `<circle cx="140" cy="176" r="9.5" fill="${P.glove}" ${st}/>`);
   if (wp === 'hammer') o.push(`<g transform="rotate(-12 142 174)"><rect x="138.5" y="94" width="8" height="96" rx="3" fill="#78350f" ${st}/><rect x="118" y="70" width="48" height="32" rx="6" fill="url(#${u}m)" ${st}/><path d="M124 76 V96 M160 76 V96" stroke="${OL}" stroke-width="2" opacity=".5"/><path d="M136 80 l6 7 l-5 3 l9 9" stroke="${acc}" stroke-width="2.5" fill="none"/></g>`, `<circle cx="142" cy="174" r="9.5" fill="${P.glove}" ${st}/>`);
 
+  if (wp === 'scepter') o.push(`<defs><radialGradient id="${u}st" cx=".4" cy=".35"><stop offset="0" stop-color="#fff"/><stop offset=".5" stop-color="#f0abfc"/><stop offset="1" stop-color="#7c3aed"/></radialGradient></defs>
+    <rect x="139" y="62" width="7" height="180" rx="3.5" fill="url(#${u}g)" ${st}/><circle cx="142.5" cy="46" r="24" fill="#c084fc" opacity=".35" filter="url(#${u}f)"><animate attributeName="r" values="22;27;22" dur="2s" repeatCount="indefinite"/></circle>
+    <path d="M142.5 22 l6.5 14 15.5 2 -11.3 10.6 2.8 15.3 -13.5-7.4 -13.5 7.4 2.8-15.3 -11.3-10.6 15.5-2z" fill="url(#${u}st)" ${st}/>
+    <circle cx="122" cy="30" r="2" fill="#fff"><animate attributeName="opacity" values="0;1;0" dur="1.4s" repeatCount="indefinite"/></circle><circle cx="164" cy="58" r="2.4" fill="#fff"><animate attributeName="opacity" values="1;0;1" dur="1.8s" repeatCount="indefinite"/></circle>
+    <path d="M134 74 Q142.5 66 151 74" stroke="#f0abfc" stroke-width="4" fill="none"/>`, `<circle cx="142" cy="174" r="9.5" fill="${P.glove}" ${st}/>`);
+  if (wp === 'qblade') o.push(`<defs><linearGradient id="${u}qb" x1="0" y1="0" x2="1" y2="0"><stop offset="0" stop-color="#bbf7d0"/><stop offset=".5" stop-color="#fff"/><stop offset="1" stop-color="#4ade80"/></linearGradient></defs>
+    <g transform="rotate(16 142 174)"><rect x="134" y="66" width="17" height="100" rx="8.5" fill="#22c55e" opacity=".45" filter="url(#${u}f)"><animate attributeName="opacity" values=".35;.7;.35" dur="1.2s" repeatCount="indefinite"/></rect>
+    <path d="M137 164 L137 80 Q142.5 62 148 80 L148 164 Z" fill="url(#${u}qb)" stroke="#16a34a" stroke-width="2"/>
+    <path d="M140 150 L145 120 L140 104 L145 86" stroke="#16a34a" stroke-width="1.6" fill="none" opacity=".7"/>
+    <rect x="128" y="162" width="29" height="8" rx="3" fill="#1f2937" ${st}/><rect x="138" y="169" width="9" height="20" rx="3" fill="#374151" ${st}/><circle cx="142.5" cy="166" r="3" fill="#4ade80"/></g>`, `<circle cx="142" cy="174" r="9.5" fill="${P.glove}" ${st}/>`);
+  if (wp === 'pickaxe') o.push(`<g transform="rotate(-10 142 174)"><rect x="138.5" y="80" width="8" height="112" rx="3" fill="#92400e" ${st}/><path d="M104 92 Q142 58 181 92 L176 98 Q142 72 109 98 Z" fill="#67e8f9" ${st}/><path d="M118 84 Q142 68 166 84" stroke="#ecfeff" stroke-width="3" fill="none"/><rect x="134" y="76" width="17" height="14" rx="3" fill="#0891b2" ${st}/></g>`, `<circle cx="142" cy="174" r="9.5" fill="${P.glove}" ${st}/>`);
+
   return `<svg viewBox="0 0 200 260" class="hero-svg" xmlns="http://www.w3.org/2000/svg">${o.join('')}</svg>`;
 }
 
@@ -202,6 +214,18 @@ function pixelHero(h, opts) {
   if (eq.weapon === 'sword') { for (let k = 0; k < 11; k++) { px(hx + 1, hy - 3 - k, k % 3 === 0 ? '#f8fafc' : '#cbd5e1'); px(hx + 2, hy - 3 - k, k % 2 ? '#94a3b8' : '#cbd5e1'); } px(hx + 1, hy - 14, '#f8fafc'); fill(hx - 1, hy - 2, 5, 1, '#eab308', 'flat'); px(hx + 1, hy - 2, '#ef4444'); fill(hx + 1, hy - 1, 2, 3, '#7a4a20', 'flat'); }
   if (eq.weapon === 'staff') { fill(hx + 1, hy - 14, 1, 30, '#7a4a20', 'flat'); fill(hx, hy - 17, 3, 3, '#a855f7', 'flat'); px(hx + 1, hy - 16, '#f0abfc'); }
   if (eq.weapon === 'blaster') { for (let k = 0; k < 13; k++) { const off = Math.round(Math.abs(k - 6) * 0.5); px(hx + 3 - off, hy - 6 + k, '#7a4a20'); } fill(hx + 3, hy - 6, 1, 13, '#e5e7eb', 'flat'); }
+  if (eq.weapon === 'pickaxe') {
+    // ידית אנכית מהיד ועד מעל הראש, וראש מכוש מקושת מיהלום
+    fill(hx + 1, OY - 1, 1, hy - OY + 3, '#8b5a2b', 'flat'); fill(hx + 2, OY - 1, 1, hy - OY + 3, '#5c3715', 'flat');
+    for (let x = hx - 3; x <= hx + 5; x++) {
+      const d = Math.abs(x - (hx + 1)), y = OY - 3 + Math.round(d * d / 6);
+      px(x, y, x % 3 === 0 ? '#ecfeff' : '#a5f3fc'); px(x, y + 1, '#22d3ee'); px(x, y + 2, d > 4 ? '#0e7490' : '#0891b2');
+    }
+    px(hx - 3, OY + 2, '#0e7490'); px(hx + 5, OY + 2, '#0e7490');
+    fill(hx + 1, OY - 2, 2, 2, '#334155', 'flat');
+  }
+  if (eq.weapon === 'scepter') { fill(hx + 1, hy - 14, 1, 30, '#eab308', 'flat'); fill(hx - 1, hy - 19, 5, 5, '#c084fc', 'flat'); px(hx + 1, hy - 21, '#f0abfc'); px(hx + 1, hy - 20, '#f0abfc'); px(hx - 2, hy - 17, '#f0abfc'); px(hx + 4, hy - 17, '#f0abfc'); px(hx + 1, hy - 17, '#ffffff'); }
+  if (eq.weapon === 'qblade') { for (let k = 0; k < 13; k++) { px(hx + 1, hy - 3 - k, k % 2 ? '#bbf7d0' : '#ffffff'); px(hx + 2, hy - 3 - k, '#4ade80'); px(hx, hy - 3 - k, '#86efac'); } fill(hx - 1, hy - 2, 5, 1, '#1f2937', 'flat'); px(hx + 1, hy - 2, '#4ade80'); fill(hx + 1, hy - 1, 2, 3, '#374151', 'flat'); }
   if (eq.weapon === 'hammer') { fill(hx + 1, hy - 10, 1, 14, '#7a4a20', 'flat'); fill(hx - 2, hy - 14, 7, 4, '#4b4b5a', 'shade'); fill(hx - 1, hy - 13, 5, 1, '#6b6b7a', 'flat'); }
 
   const rects = [];
