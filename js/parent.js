@@ -1,12 +1,12 @@
 // MindHero – מסך הורה (תומך בשני הורים)
-import * as DB from './store.js?v=29';
-import { CHAPTERS, CH_ORDER } from './bank.js?v=29';
-import { heroSVG, rankOf } from './hero.js?v=29';
-import { $, $$, esc, toast, modal, today, bars, fmtTime, renderQuestion, isCorrect, markResult, answerText, bm, explainHTML } from './ui.js?v=29';
-import { ic, moodFace } from './icons.js?v=29';
-import { battleScreen, PARENT_HERO } from './battle.js?v=29';
-import { openReport } from './report.js?v=29';
-import { analysisHTML } from './analysis.js?v=29';
+import * as DB from './store.js?v=30';
+import { CHAPTERS, CH_ORDER } from './bank.js?v=30';
+import { heroSVG, rankOf } from './hero.js?v=30';
+import { $, $$, esc, toast, modal, today, bars, fmtTime, renderQuestion, isCorrect, markResult, answerText, bm, explainHTML } from './ui.js?v=30';
+import { ic, moodFace } from './icons.js?v=30';
+import { battleScreen, PARENT_HERO } from './battle.js?v=30';
+import { openReport } from './report.js?v=30';
+import { analysisHTML } from './analysis.js?v=30';
 
 const ago = ts => { const m = Math.round((Date.now() - ts) / 60000); return m < 1 ? 'עכשיו' : m < 60 ? `לפני ${m} דק׳` : m < 1440 ? `לפני ${Math.round(m / 60)} שע׳` : `לפני ${Math.round(m / 1440)} ימים`; };
 const HARD = ['stressed', 'quit', 'frustrated'];
@@ -196,7 +196,7 @@ export async function parentScreen(ctx) {
     const other = d.from === me.id ? d.to : d.from, on = d.from === me.id ? d.toName : d.fromName;
     const kidP = players.find(x => x.id === other) || { style: 'comic', equip: {} };
     await DB.markDuelViewed(code, d.id, me.id);
-    battleScreen(ctx.app, { name: me.name, hero: PARENT_HERO, res: d.results[me.id] }, { name: on, hero: kidP, res: d.results[other] }, { myReact: d.reacts?.[me.id], theirReact: d.reacts?.[other], theirGift: d.gifts?.[other]?.id, gifts: null, onGift: g => DB.giftDuel(code, d.id, me.id, g), onReact: e => DB.reactDuel(code, d.id, me.id, e), onDone: async () => { await load(); tab = 'duel'; render(); } });
+    battleScreen(ctx.app, { name: me.name, hero: PARENT_HERO, res: d.results[me.id] }, { name: on, hero: kidP, res: d.results[other] }, { myReact: d.reacts?.[me.id], theirReact: d.reacts?.[other], theirGift: d.gifts?.[other]?.id, gifts: null, onGift: g => DB.giftDuel(code, d.id, me.id, g), onReact: e => DB.reactDuel(code, d.id, me.id, e), onDone: async () => { await Promise.race([load(), new Promise(r => setTimeout(r, 5000))]); tab = 'duel'; render(); } });
   }
   function playDuel(d) {
     const qs = d.qs; let i = 0, ok = 0; const t0 = Date.now(); const seq = [];

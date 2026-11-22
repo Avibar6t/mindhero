@@ -1,16 +1,16 @@
 // MindHero – האפליקציה הראשית
-import * as DB from './store.js?v=29';
-import { LS } from './store.js?v=29';
-import { CHAPTERS, CH_ORDER, VERBAL, ANALOGY, LOGIC, MATH, ACADEMY } from './bank.js?v=29';
-import { generate } from './gen.js?v=29';
-import { STYLES, SKINS, ITEMS, POWERS, SLOT_HE, heroSVG, itemName, strongestPowerColor, levelUpOffers, rankOf, xpForLevel } from './hero.js?v=29';
-import { $, $$, esc, toast, modal, beep, confetti, sound, prepareQ, isCorrect, answerText, renderQuestion, markResult, today, weekKey, fmtTime, isMobile, bars, LETTERS, bm, explainHTML } from './ui.js?v=29';
-import { ic, moodFace, lobbyScene } from './icons.js?v=29';
-import { TOPICS, topicById, grid100 } from './learn.js?v=29';
-import { BGS, RAR_NAME, bgScene, heroScene, rollBg, GIFTS, rollGift, addGift, giftHit } from './fun.js?v=29';
-import { battleScreen, PARENT_HERO, REACT_TXT } from './battle.js?v=29';
-import { startExam } from './exam.js?v=29';
-import { parentScreen } from './parent.js?v=29';
+import * as DB from './store.js?v=30';
+import { LS } from './store.js?v=30';
+import { CHAPTERS, CH_ORDER, VERBAL, ANALOGY, LOGIC, MATH, ACADEMY } from './bank.js?v=30';
+import { generate } from './gen.js?v=30';
+import { STYLES, SKINS, ITEMS, POWERS, SLOT_HE, heroSVG, itemName, strongestPowerColor, levelUpOffers, rankOf, xpForLevel } from './hero.js?v=30';
+import { $, $$, esc, toast, modal, beep, confetti, sound, prepareQ, isCorrect, answerText, renderQuestion, markResult, today, weekKey, fmtTime, isMobile, bars, LETTERS, bm, explainHTML } from './ui.js?v=30';
+import { ic, moodFace, lobbyScene } from './icons.js?v=30';
+import { TOPICS, topicById, grid100 } from './learn.js?v=30';
+import { BGS, RAR_NAME, bgScene, heroScene, rollBg, GIFTS, rollGift, addGift, giftHit } from './fun.js?v=30';
+import { battleScreen, PARENT_HERO, REACT_TXT } from './battle.js?v=30';
+import { startExam } from './exam.js?v=30';
+import { parentScreen } from './parent.js?v=30';
 
 const app = $('#app');
 export const S = { team: null, teamData: null, pid: null, p: null, active: false, lastInput: Date.now(), inQuestion: null, messages: [] };

@@ -1,8 +1,8 @@
 // MindHero – זירת הקרב: אנימציה של שני הגיבורים נלחמים לפי התשובות בדו-קרב
-import { heroSVG, POWERS, strongestPowerColor } from './hero.js?v=29';
-import { ic } from './icons.js?v=29';
-import { heroScene, GIFTS, giftHit } from './fun.js?v=29';
-import { $, esc, beep, confetti, fmtTime } from './ui.js?v=29';
+import { heroSVG, POWERS, strongestPowerColor } from './hero.js?v=30';
+import { ic } from './icons.js?v=30';
+import { heroScene, GIFTS, giftHit } from './fun.js?v=30';
+import { $, esc, beep, confetti, fmtTime, toast } from './ui.js?v=30';
 
 // דמות קבועה להורה (אין לו גיבור משלו)
 export const PARENT_HERO = { style: 'tactical', skin: '#e0ac69', equip: { head: 'helmet', weapon: 'hammer', weapon2: 'shield', emblem: 'star', suit: 'silver' }, powers: { shield: 2 } };
@@ -81,7 +81,11 @@ export function battleScreen(app, L, R, { onDone, onRematch, onReact, myReact = 
       ${onGift ? `<div class="reacts gifts-row"><small class="muted">שלח ל${esc(R.name)} מתנה מצחיקה:</small><div>${Object.entries(GIFTS).map(([k, g]) => { const n = gifts == null ? '∞' : (gifts[k] || 0); return `<button class="react-b gift-b" data-g="${k}" title="${g.name}" ${n === 0 ? 'disabled' : ''}>${g.e}<i>${n}</i></button>`; }).join('')}</div></div>` : ''}
       <div class="row-btns"><button class="btn small" id="bshare">${ic('send')} שיתוף בווטסאפ</button>${onRematch ? `<button class="btn gold" id="rematch">${ic('duel')} קרב חוזר</button>` : ''}<button class="btn primary" id="bdone">סיום</button></div></div>`;
     $('.arena').appendChild(ov);
-    $('#bdone').onclick = () => { app.className = ''; onDone && onDone(); };
+    $('#bdone').onclick = async () => {
+      const b = $('#bdone'); b.disabled = true; b.textContent = 'רגע…';
+      app.className = '';
+      try { await onDone?.(); } catch (e) { console.error(e); location.reload(); }
+    };
     ov.querySelectorAll('.gift-b').forEach(b => b.onclick = async () => {
       const row = ov.querySelector('.gifts-row'); row.querySelectorAll('button').forEach(x => x.disabled = true);
       const sides = ov.querySelectorAll('.res-side .mini-h'); giftHit(sides[sides.length - 1], b.dataset.g); beep('bad');
@@ -91,8 +95,11 @@ export function battleScreen(app, L, R, { onDone, onRematch, onReact, myReact = 
     ov.querySelectorAll('.react-b:not(.gift-b)').forEach(b => b.onclick = async () => { ov.querySelectorAll('.react-b:not(.gift-b)').forEach(x => x.classList.toggle('on', x === b)); beep('coin'); await onReact(b.dataset.e); });
     $('#bshare').onclick = async () => {
       const txt = `⚔️ דו-קרב ב-MindHero!\n${L.name}: ${L.res.ok}/8 (${fmtTime(L.res.t)})\n${R.name}: ${R.res.ok}/8 (${fmtTime(R.res.t)})\n${tie ? '🤝 תיקו!' : `🏆 ${W.name} ניצח!`}`;
-      if (navigator.share) { try { await navigator.share({ text: txt }); return; } catch (e) { if (e.name === 'AbortError') return; } }
-      window.open('https://wa.me/?text=' + encodeURIComponent(txt), '_blank');
+      // בטלפון: חלון השיתוף של המכשיר. במחשב: ישר לווטסאפ (חלון השיתוף של Windows עלול "לתקוע" את הדף)
+      const touch = matchMedia('(pointer: coarse)').matches;
+      if (touch && navigator.share) { try { await navigator.share({ text: txt }); return; } catch (e) { if (e.name === 'AbortError') return; } }
+      const w = window.open('https://wa.me/?text=' + encodeURIComponent(txt), '_blank', 'noopener');
+      if (!w) { try { await navigator.clipboard.writeText(txt); toast('התוצאה הועתקה – אפשר להדביק בווטסאפ'); } catch { toast('לא הצלחתי לפתוח את ווטסאפ'); } }
     };
     const rm = $('#rematch'); if (rm) rm.onclick = () => { app.className = ''; onRematch(); };
   };
