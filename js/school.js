@@ -1,7 +1,7 @@
 // MindHero – מבחנים בבית הספר: עולם נפרד, עם שותף שגדל בתוך ביצה ובוקע בערב המבחן
-import { $, $$, esc, modal, toast, beep, confetti, today } from './ui.js?v=34';
-import { GEO_TOPICS, FRAC_TOPICS, gcd, genQ, checkAnswer, answerHTML, prismSVG, pyramidSVG, roundSVG, netSVG, boxSVG, F, M, X } from './schoolgen.js?v=34';
-import { CREATURES, STAGE_NAME, creatureSVG, eggSVG } from './creatures.js?v=34';
+import { $, $$, esc, modal, toast, beep, confetti, today } from './ui.js?v=35';
+import { GEO_TOPICS, FRAC_TOPICS, gcd, genQ, checkAnswer, answerHTML, prismSVG, pyramidSVG, roundSVG, netSVG, boxSVG, F, M, X } from './schoolgen.js?v=35';
+import { CREATURES, STAGE_NAME, creatureSVG, eggSVG } from './creatures.js?v=35';
 
 let C = null; // הקשר מהאפליקציה: P, save, setScreen, home, bossHour, mentorFace
 export function initSchool(ctx) { C = ctx; }

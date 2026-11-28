@@ -1,6 +1,6 @@
 // MindHero – מחוללי שאלות לפרקים המילוליים: הקשר מילולי, אנלוגיות, היגיון
 // כל שאלה נבנית מטבלאות תוכן מקוריות, עם רמזים והסבר מלא
-import { rng } from './gen.js?v=34';
+import { rng } from './gen.js?v=35';
 
 const ri = (r, a, b) => a + Math.floor(r() * (b - a + 1));
 const pick = (r, arr) => arr[Math.floor(r() * arr.length)];

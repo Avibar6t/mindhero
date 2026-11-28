@@ -1,18 +1,18 @@
 // MindHero – האפליקציה הראשית
-import * as DB from './store.js?v=34';
-import { LS } from './store.js?v=34';
-import { CHAPTERS, CH_ORDER, VERBAL, ANALOGY, LOGIC, MATH, ACADEMY } from './bank.js?v=34';
-import { generate } from './gen.js?v=34';
-import { STYLES, SKINS, ITEMS, POWERS, SLOT_HE, heroSVG, itemName, strongestPowerColor, levelUpOffers, rankOf, xpForLevel } from './hero.js?v=34';
-import { $, $$, esc, toast, modal, beep, confetti, sound, prepareQ, isCorrect, answerText, renderQuestion, markResult, today, weekKey, fmtTime, isMobile, bars, LETTERS, bm, explainHTML } from './ui.js?v=34';
-import { ic, moodFace, lobbyScene } from './icons.js?v=34';
-import { TOPICS, topicById, grid100 } from './learn.js?v=34';
-import { initSchool, schoolHub, homeCardHTML, alliesHTML } from './school.js?v=34';
-import { SUPER, checkSupers, heroWithFx, powerFx, PLACES, goldQuest, GOLD_NEED, legendShop, goldCoinSVG, shareHero } from './legend.js?v=34';
-import { BGS, RAR_NAME, bgScene, heroScene, rollBg, GIFTS, rollGift, addGift, giftHit } from './fun.js?v=34';
-import { battleScreen, PARENT_HERO, REACT_TXT } from './battle.js?v=34';
-import { startExam } from './exam.js?v=34';
-import { parentScreen } from './parent.js?v=34';
+import * as DB from './store.js?v=35';
+import { LS } from './store.js?v=35';
+import { CHAPTERS, CH_ORDER, VERBAL, ANALOGY, LOGIC, MATH, ACADEMY } from './bank.js?v=35';
+import { generate } from './gen.js?v=35';
+import { STYLES, SKINS, ITEMS, POWERS, SLOT_HE, heroSVG, itemName, strongestPowerColor, levelUpOffers, rankOf, xpForLevel } from './hero.js?v=35';
+import { $, $$, esc, toast, modal, beep, confetti, sound, prepareQ, isCorrect, answerText, renderQuestion, markResult, today, weekKey, fmtTime, isMobile, bars, LETTERS, bm, explainHTML } from './ui.js?v=35';
+import { ic, moodFace, lobbyScene } from './icons.js?v=35';
+import { TOPICS, topicById, grid100 } from './learn.js?v=35';
+import { initSchool, schoolHub, homeCardHTML, alliesHTML } from './school.js?v=35';
+import { SUPER, checkSupers, heroWithFx, powerFx, PLACES, goldQuest, GOLD_NEED, legendShop, goldCoinSVG, shareHero } from './legend.js?v=35';
+import { BGS, RAR_NAME, bgScene, heroScene, rollBg, GIFTS, rollGift, addGift, giftHit } from './fun.js?v=35';
+import { battleScreen, PARENT_HERO, REACT_TXT } from './battle.js?v=35';
+import { startExam } from './exam.js?v=35';
+import { parentScreen } from './parent.js?v=35';
 
 const app = $('#app');
 export const S = { team: null, teamData: null, pid: null, p: null, active: false, lastInput: Date.now(), inQuestion: null, messages: [] };
@@ -22,7 +22,7 @@ const MENTOR = 'פרופסור מיינד';
 // ================== עזרי שחקן ==================
 function newPlayer({ name, style, skin, pinHash }) {
   const ch = {}; CH_ORDER.forEach(c => ch[c] = { lvl: 2, n: 0, ok: 0, time: 0 });
-  return { seenNews: 'n-2026-11-28', cpowers: [], fpow: '', gold: 0, bgs: [], bg: '', gifts: { pie: 2, banana: 1, chicken: 1 }, dayOffs: 0, learned: {}, learnStep: {}, name, style, skin, pinHash, created: Date.now(), level: 1, xp: 0, coins: 50, items: [], equip: {}, powers: {}, ch, seen: {}, mistakes: [], days: {}, streak: 0, bestStreak: 0, lastGoalDay: null, freezeUsed: {}, academy: {}, diag: false, records: { bestBoss: 0, bestCombo: 0, sims: [], totalQ: 0, totalOk: 0, duelsWon: 0 }, daily: null, weekXp: {}, pendingLevels: 0 };
+  return { seenNews: NEWS_LATEST, cpowers: [], fpow: '', gold: 0, bgs: [], bg: '', gifts: { pie: 2, banana: 1, chicken: 1 }, dayOffs: 0, learned: {}, learnStep: {}, name, style, skin, pinHash, created: Date.now(), level: 1, xp: 0, coins: 50, items: [], equip: {}, powers: {}, ch, seen: {}, mistakes: [], days: {}, streak: 0, bestStreak: 0, lastGoalDay: null, freezeUsed: {}, academy: {}, diag: false, records: { bestBoss: 0, bestCombo: 0, sims: [], totalQ: 0, totalOk: 0, duelsWon: 0 }, daily: null, weekXp: {}, pendingLevels: 0 };
 }
 const P = () => S.p;
 const save = (now) => DB.savePlayer(S.team, S.pid, S.p, now);
@@ -182,15 +182,27 @@ function rarePick(title, after) {
   $$('.offer', m.el).forEach(b => b.onclick = () => { const id = b.dataset.id; p.items.push(id); p.equip[ITEMS[id].slot] = id; save(true); beep('coin'); m.close(); after(); });
 }
 // ----- הודעת "מה חדש" מפרופסור מיינד -----
-const NEWS = { id: 'n-2026-11-28', title: 'עולם חדש נפתח: מבחנים בבית הספר!', html: () => `${esc(P().name)}, שמעתי שיש לך שני מבחנים בכיתה – אז בניתי לך עולם מיוחד בשבילם:<br><br>
+// ----- יומן עדכונים: כל עדכון מוסיף רשומה בסוף. הגיבור יראה את כל מה שעוד לא ראה, לפי הסדר -----
+const NEWS_LOG = [
+  { id: 'n-2026-11-17' }, { id: 'n-2026-11-17b' }, { id: 'n-2026-11-22' },
+  { id: 'n-2026-11-28', title: 'עולם חדש נפתח: מבחנים בבית הספר!', html: () => `${esc(P().name)}, שמעתי שיש לך שני מבחנים בכיתה – אז בניתי לך עולם מיוחד בשבילם:<br><br>
   <b>💎 ממלכת המנסרות</b> – הכנה למבחן בגיאומטריה (יום חמישי, 3.12). כאן גדל לך <b>שותף הולך</b>.<br><br>
   <b>☁️ שמי השברים</b> – הכנה למבחן בכפל וחילוק שברים (יום שני, 14.12). כאן גדל לך <b>שותף מעופף</b>.<br><br>
   <b>🥚 איך זה עובד?</b> בוחרים יצור, והוא גדל בתוך ביצה בכל פעם שאתה מבין משהו חדש. הוא בוקע <b>בערב המבחן בשעה 18:00</b>. אם יגיע לשלב <b>בוגר</b> – הוא מצטרף אליך לקרבות!<br><br>
-  בכל עולם יש שיעורים קצרים, תרגול, דף סיכום ומבחן דמה. הכניסה – מהכרטיס "מבחנים בבית הספר" בדף הבית. בהצלחה! 💪` };
+  בכל עולם יש שיעורים קצרים, תרגול, דף סיכום ומבחן דמה. הכניסה – מהכרטיס "מבחנים בבית הספר" בדף הבית. בהצלחה! 💪` },
+  { id: 'n-2026-11-28b', title: 'פרס חדש בחנות: יום חופש!', html: () => `${esc(P().name)}, חדשות טובות מהמעבדה! 🏖️<br><br>
+  בראש <b>חנות האגדות</b> מחכה עכשיו פרס מיוחד: <b>כרטיס יום חופש עם פרסים</b> – ב-<b>2,500 מטבעות</b> רגילים.<br><br>
+  ביום שתבחר: לא מתאמנים, <b>הרצף נשמר</b>, היום נספר ליעד השבועי, ונפתחת <b>תיבת פרסים</b> עם רקע חדש ומתנות מצחיקות.<br><br>
+  יש לך עכשיו ${P().coins} מטבעות. כל משימה מקרבת אותך! 💰` },
+];
+const NEWS_LATEST = NEWS_LOG[NEWS_LOG.length - 1].id;
+function unseenNews(p) { const i = NEWS_LOG.findIndex(n => n.id === p.seenNews); return NEWS_LOG.slice(i < 0 ? NEWS_LOG.length - 1 : i + 1).filter(n => n.html); }
 function showNews(after) {
-  const p = P(); if (p.seenNews === NEWS.id || !p.diag) return after && after();
-  p.seenNews = NEWS.id; save(true);
-  mentorPopup(`<h3 style="margin:0 0 6px">${NEWS.title}</h3>${NEWS.html()}`, [{ t: 'יאללה, לאימון!', primary: true, fn: after }]);
+  const p = P(); const list = unseenNews(p);
+  if (!list.length || !p.diag) return after && after();
+  const n = list[0]; p.seenNews = n.id; save(true);
+  const more = list.length > 1;
+  mentorPopup(`<h3 style="margin:0 0 6px">${n.title}</h3>${n.html()}`, [{ t: more ? 'עוד עדכון ›' : 'יאללה, לאימון!', primary: true, fn: () => showNews(after) }]);
 }
 // ----- בוס הערב -----
 const bossHour = () => S.teamData?.bossHour ?? 18;
@@ -568,7 +580,7 @@ async function home() {
   const nb = $('#noinst'); if (nb) nb.onclick = () => { LS.set('mh_noinstall', true); $('.install-card')?.remove(); };
   if (p.pendingLevels > 0) return levelUpFlow(home);
   if (p.chests?.length) return openChests(home);
-  if (p.diag && p.seenNews !== NEWS.id) return showNews(home);
+  if (p.diag && unseenNews(p).length) return showNews(home);
   const fresh = p.diag ? checkSupers(p) : []; if (fresh.length) { save(true); return superReveal(fresh, home); }
   loadMessages();
 }
