@@ -1,9 +1,10 @@
 // MindHero – זירת הקרב: אנימציה של שני הגיבורים נלחמים לפי התשובות בדו-קרב
-import { heroSVG, POWERS, strongestPowerColor } from './hero.js?v=31';
-import { ic } from './icons.js?v=31';
-import { heroWithFx } from './legend.js?v=31';
-import { heroScene, GIFTS, giftHit } from './fun.js?v=31';
-import { $, esc, beep, confetti, fmtTime, toast } from './ui.js?v=31';
+import { heroSVG, POWERS, strongestPowerColor } from './hero.js?v=32';
+import { ic } from './icons.js?v=32';
+import { heroWithFx } from './legend.js?v=32';
+import { alliesHTML } from './school.js?v=32';
+import { heroScene, GIFTS, giftHit } from './fun.js?v=32';
+import { $, esc, beep, confetti, fmtTime, toast } from './ui.js?v=32';
 
 // דמות קבועה להורה (אין לו גיבור משלו)
 export const PARENT_HERO = { style: 'tactical', skin: '#e0ac69', equip: { head: 'helmet', weapon: 'hammer', weapon2: 'shield', emblem: 'star', suit: 'silver' }, powers: { shield: 2 } };
@@ -32,9 +33,9 @@ export function battleScreen(app, L, R, { onDone, onRematch, onReact, myReact = 
       <div class="hpbox r"><b>${esc(R.name)}</b><div class="hpbar"><i id="hpR" style="width:100%"></i></div></div>
     </div>
     <div class="fighters">
-      <div class="fighter l" id="fL" style="--c:${colorOf(L.hero)}"><div class="aura"></div>${heroWithFx(L.hero)}<div class="dmg" id="dL"></div></div>
+      <div class="fighter l" id="fL" style="--c:${colorOf(L.hero)}"><div class="aura"></div>${heroWithFx(L.hero)}<div class="allies">${alliesHTML(L.hero, 74)}</div><div class="dmg" id="dL"></div></div>
       <div class="fx" id="fx"></div>
-      <div class="fighter r" id="fR" style="--c:${colorOf(R.hero)}"><div class="aura"></div><div class="flip">${heroWithFx(R.hero)}</div><div class="dmg" id="dR"></div></div>
+      <div class="fighter r" id="fR" style="--c:${colorOf(R.hero)}"><div class="aura"></div><div class="flip">${heroWithFx(R.hero)}<div class="allies">${alliesHTML(R.hero, 74)}</div></div><div class="dmg" id="dR"></div></div>
     </div>
     <div class="ar-log" id="log"></div>
     <div class="ar-bottom"><button class="btn small" id="skip">דילוג לתוצאה</button></div>
@@ -64,7 +65,7 @@ export function battleScreen(app, L, R, { onDone, onRematch, onReact, myReact = 
     $('#rnd').textContent = tie ? 'תיקו!' : 'מכת הסיום'; if (tie) say('כוחות שווים – אף אחד לא נפל!');
     const ws = lWin ? 'L' : 'R', loser = lWin ? 'R' : 'L';
     if (!tie) {
-      fx.innerHTML = `<div class="ult from-${ws}" style="--c:${colorOf(W.hero)}"></div>`; const f = $('#f' + ws); f.classList.add('power-up'); say(`<b>${esc(W.name)}</b> משחרר את מכת הסיום – ${NAME.mind}!`);
+      fx.innerHTML = `<div class="ult from-${ws}" style="--c:${colorOf(W.hero)}"></div>`; const f = $('#f' + ws); f.classList.add('power-up'); const al = (W.hero.allies || []); f.querySelectorAll('.ally').forEach(a => a.classList.add('assist')); say(`<b>${esc(W.name)}</b> משחרר את מכת הסיום – ${NAME.mind}!${al.length ? ` ו${al.map(a => esc(a.name)).join(' ו')} מצטרף/ים להתקפה!` : ''}`);
       setTimeout(() => { if (lWin) hpR = 0; else hpL = 0; setHP(); $('#f' + loser).classList.add('ko'); beep('level'); confetti(); }, 900);
     }
     setTimeout(results, tie ? 600 : 2200);

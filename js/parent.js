@@ -1,12 +1,13 @@
 // MindHero – מסך הורה (תומך בשני הורים)
-import * as DB from './store.js?v=31';
-import { CHAPTERS, CH_ORDER } from './bank.js?v=31';
-import { heroSVG, rankOf } from './hero.js?v=31';
-import { $, $$, esc, toast, modal, today, bars, fmtTime, renderQuestion, isCorrect, markResult, answerText, bm, explainHTML } from './ui.js?v=31';
-import { ic, moodFace } from './icons.js?v=31';
-import { battleScreen, PARENT_HERO } from './battle.js?v=31';
-import { openReport } from './report.js?v=31';
-import { analysisHTML } from './analysis.js?v=31';
+import * as DB from './store.js?v=32';
+import { CHAPTERS, CH_ORDER } from './bank.js?v=32';
+import { heroSVG, rankOf } from './hero.js?v=32';
+import { $, $$, esc, toast, modal, today, bars, fmtTime, renderQuestion, isCorrect, markResult, answerText, bm, explainHTML } from './ui.js?v=32';
+import { ic, moodFace } from './icons.js?v=32';
+import { battleScreen, PARENT_HERO } from './battle.js?v=32';
+import { parentSchoolHTML } from './school.js?v=32';
+import { openReport } from './report.js?v=32';
+import { analysisHTML } from './analysis.js?v=32';
 
 const ago = ts => { const m = Math.round((Date.now() - ts) / 60000); return m < 1 ? 'עכשיו' : m < 60 ? `לפני ${m} דק׳` : m < 1440 ? `לפני ${Math.round(m / 60)} שע׳` : `לפני ${Math.round(m / 1440)} ימים`; };
 const HARD = ['stressed', 'quit', 'frustrated'];
@@ -104,12 +105,12 @@ export async function parentScreen(ctx) {
   const render = () => {
     const unread = msgs.filter(m => m.to === 'parent' && !(m.readBy || {})[me.id] && !m.read).length;
     setScreen(`<header class="topbar"><button class="icon-btn" id="pbk" aria-label="חזרה">${ic('back')}</button><b>${ic('parent')} מסך הורה · ${esc(me.name)}</b><button class="icon-btn" id="pref" aria-label="רענון">${ic('refresh')}</button></header>
-    <nav class="ptabs">${[['overview', 'chart', 'סקירה'], ['messages', 'chat', 'הודעות' + (unread ? ` <i class="badge">${unread}</i>` : '')], ['duel', 'duel', 'דו-קרב'], ['settings', 'gear', 'הגדרות']].map(([k, i, t]) => `<button class="${tab === k ? 'on' : ''}" data-t="${k}">${ic(i)}${t}</button>`).join('')}</nav>
+    <nav class="ptabs">${[['overview', 'chart', 'סקירה'], ['messages', 'chat', 'הודעות' + (unread ? ` <i class="badge">${unread}</i>` : '')], ['school', 'academy', 'בית ספר'], ['duel', 'duel', 'דו-קרב'], ['settings', 'gear', 'הגדרות']].map(([k, i, t]) => `<button class="${tab === k ? 'on' : ''}" data-t="${k}">${ic(i)}${t}</button>`).join('')}</nav>
     <main class="parent-main" id="pm"></main>`);
     $('#comms-btn').style.display = 'none';
     $('#pbk').onclick = back; $('#pref').onclick = async () => { await load(); render(); toast('הנתונים עודכנו'); };
     $$('.ptabs button').forEach(b => b.onclick = () => { tab = b.dataset.t; render(); });
-    ({ overview, messages, duel, settings })[tab]($('#pm'));
+    ({ overview, messages, school, duel, settings })[tab]($('#pm'));
   };
 
   const kidTabs = () => players.length > 1 ? `<div class="kid-tabs">${players.map(p => `<button class="${p.id === kid ? 'on' : ''}" data-k="${p.id}">${esc(p.name)}</button>`).join('')}</div>` : '';
@@ -163,6 +164,12 @@ export async function parentScreen(ctx) {
     $('#encsend').onclick = async () => { const t = $('#enc').value.trim(); if (!t) return toast('כתבו הודעה'); await DB.addMessage(code, { from: me.id, fromName: me.name, to: p.id, kind: 'encourage', text: t }); $('#enc').value = ''; toast('ההודעה נשלחה'); };
   }
 
+  function school(el) {
+    if (!players.length) { el.innerHTML = '<p class="muted">עוד אין גיבורים.</p>'; return; }
+    const p = players.find(x => x.id === kid) || players[0];
+    el.innerHTML = `${kidTabs()}<p class="muted">ההכנה למבחנים בכיתה נשמרת בנפרד מההכנה למבחן המחוננים.</p>${parentSchoolHTML(p)}`;
+    bindKid(el);
+  }
   function messages(el) {
     const inbox = msgs.filter(m => m.to === 'parent');
     const sent = msgs.filter(m => parents().some(x => x.id === m.from)).slice(0, 10);

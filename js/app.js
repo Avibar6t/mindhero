@@ -1,17 +1,18 @@
 // MindHero – האפליקציה הראשית
-import * as DB from './store.js?v=31';
-import { LS } from './store.js?v=31';
-import { CHAPTERS, CH_ORDER, VERBAL, ANALOGY, LOGIC, MATH, ACADEMY } from './bank.js?v=31';
-import { generate } from './gen.js?v=31';
-import { STYLES, SKINS, ITEMS, POWERS, SLOT_HE, heroSVG, itemName, strongestPowerColor, levelUpOffers, rankOf, xpForLevel } from './hero.js?v=31';
-import { $, $$, esc, toast, modal, beep, confetti, sound, prepareQ, isCorrect, answerText, renderQuestion, markResult, today, weekKey, fmtTime, isMobile, bars, LETTERS, bm, explainHTML } from './ui.js?v=31';
-import { ic, moodFace, lobbyScene } from './icons.js?v=31';
-import { TOPICS, topicById, grid100 } from './learn.js?v=31';
-import { SUPER, checkSupers, heroWithFx, powerFx, PLACES, goldQuest, GOLD_NEED, legendShop, goldCoinSVG, shareHero } from './legend.js?v=31';
-import { BGS, RAR_NAME, bgScene, heroScene, rollBg, GIFTS, rollGift, addGift, giftHit } from './fun.js?v=31';
-import { battleScreen, PARENT_HERO, REACT_TXT } from './battle.js?v=31';
-import { startExam } from './exam.js?v=31';
-import { parentScreen } from './parent.js?v=31';
+import * as DB from './store.js?v=32';
+import { LS } from './store.js?v=32';
+import { CHAPTERS, CH_ORDER, VERBAL, ANALOGY, LOGIC, MATH, ACADEMY } from './bank.js?v=32';
+import { generate } from './gen.js?v=32';
+import { STYLES, SKINS, ITEMS, POWERS, SLOT_HE, heroSVG, itemName, strongestPowerColor, levelUpOffers, rankOf, xpForLevel } from './hero.js?v=32';
+import { $, $$, esc, toast, modal, beep, confetti, sound, prepareQ, isCorrect, answerText, renderQuestion, markResult, today, weekKey, fmtTime, isMobile, bars, LETTERS, bm, explainHTML } from './ui.js?v=32';
+import { ic, moodFace, lobbyScene } from './icons.js?v=32';
+import { TOPICS, topicById, grid100 } from './learn.js?v=32';
+import { initSchool, schoolHub, homeCardHTML, alliesHTML } from './school.js?v=32';
+import { SUPER, checkSupers, heroWithFx, powerFx, PLACES, goldQuest, GOLD_NEED, legendShop, goldCoinSVG, shareHero } from './legend.js?v=32';
+import { BGS, RAR_NAME, bgScene, heroScene, rollBg, GIFTS, rollGift, addGift, giftHit } from './fun.js?v=32';
+import { battleScreen, PARENT_HERO, REACT_TXT } from './battle.js?v=32';
+import { startExam } from './exam.js?v=32';
+import { parentScreen } from './parent.js?v=32';
 
 const app = $('#app');
 export const S = { team: null, teamData: null, pid: null, p: null, active: false, lastInput: Date.now(), inQuestion: null, messages: [] };
@@ -21,7 +22,7 @@ const MENTOR = 'פרופסור מיינד';
 // ================== עזרי שחקן ==================
 function newPlayer({ name, style, skin, pinHash }) {
   const ch = {}; CH_ORDER.forEach(c => ch[c] = { lvl: 2, n: 0, ok: 0, time: 0 });
-  return { seenNews: 'n-2026-11-22', cpowers: [], fpow: '', gold: 0, bgs: [], bg: '', gifts: { pie: 2, banana: 1, chicken: 1 }, dayOffs: 0, learned: {}, learnStep: {}, name, style, skin, pinHash, created: Date.now(), level: 1, xp: 0, coins: 50, items: [], equip: {}, powers: {}, ch, seen: {}, mistakes: [], days: {}, streak: 0, bestStreak: 0, lastGoalDay: null, freezeUsed: {}, academy: {}, diag: false, records: { bestBoss: 0, bestCombo: 0, sims: [], totalQ: 0, totalOk: 0, duelsWon: 0 }, daily: null, weekXp: {}, pendingLevels: 0 };
+  return { seenNews: 'n-2026-11-28', cpowers: [], fpow: '', gold: 0, bgs: [], bg: '', gifts: { pie: 2, banana: 1, chicken: 1 }, dayOffs: 0, learned: {}, learnStep: {}, name, style, skin, pinHash, created: Date.now(), level: 1, xp: 0, coins: 50, items: [], equip: {}, powers: {}, ch, seen: {}, mistakes: [], days: {}, streak: 0, bestStreak: 0, lastGoalDay: null, freezeUsed: {}, academy: {}, diag: false, records: { bestBoss: 0, bestCombo: 0, sims: [], totalQ: 0, totalOk: 0, duelsWon: 0 }, daily: null, weekXp: {}, pendingLevels: 0 };
 }
 const P = () => S.p;
 const save = (now) => DB.savePlayer(S.team, S.pid, S.p, now);
@@ -181,11 +182,11 @@ function rarePick(title, after) {
   $$('.offer', m.el).forEach(b => b.onclick = () => { const id = b.dataset.id; p.items.push(id); p.equip[ITEMS[id].slot] = id; save(true); beep('coin'); m.close(); after(); });
 }
 // ----- הודעת "מה חדש" מפרופסור מיינד -----
-const NEWS = { id: 'n-2026-11-22', title: 'שלושה חידושים מהמעבדה!', html: () => `${esc(P().name)}, ביקשת – קיבלת:<br><br>
-  <b>🌟 כוחות-על לאוסף</b> – 14 כוחות-על מיוחדים: ברק מחשבתי, כנפי הפניקס, מוח השחמט, רוח הדרקון ועוד. כל הישג פותח כוח, ואתה בוחר איזה מהם יופיע סביב הגיבור שלך.<br><br>
-  <b>🪙 מטבע הזהב היומי</b> – כל יום מטבע זהב אחד מסתתר במקום אחר: מבוך הסדרות, מגדל החידות, מכרה המספרים… מצא אותו!<br><br>
-  <b>🏛️ חנות האגדות</b> – עם מטבעות זהב קונים פריטים שאין בשום מקום אחר. ${P().style === 'pixel' ? 'למשל: <b>מכוש היהלום האגדי</b> ⛏️💎' : P().style === 'tactical' ? 'למשל: <b>להב הקוונטים</b>' : 'למשל: <b>שרביט הגלקסיה</b>'}.<br><br>
-  <b>📤 להתגאות</b> – כפתור חדש ליד הגיבור: יוצרים תמונה של הגיבור עם ההישגים ושולחים בווטסאפ.<br><br>יאללה, לחפש את מטבע הזהב של היום! 💪` };
+const NEWS = { id: 'n-2026-11-28', title: 'עולם חדש נפתח: מבחנים בבית הספר!', html: () => `${esc(P().name)}, שמעתי שיש לך שני מבחנים בכיתה – אז בניתי לך עולם מיוחד בשבילם:<br><br>
+  <b>💎 ממלכת המנסרות</b> – הכנה למבחן בגיאומטריה (יום חמישי, 3.12). כאן גדל לך <b>שותף הולך</b>.<br><br>
+  <b>☁️ שמי השברים</b> – הכנה למבחן בכפל וחילוק שברים (יום שני, 14.12). כאן גדל לך <b>שותף מעופף</b>.<br><br>
+  <b>🥚 איך זה עובד?</b> בוחרים יצור, והוא גדל בתוך ביצה בכל פעם שאתה מבין משהו חדש. הוא בוקע <b>בערב המבחן בשעה 18:00</b>. אם יגיע לשלב <b>בוגר</b> – הוא מצטרף אליך לקרבות!<br><br>
+  בכל עולם יש שיעורים קצרים, תרגול, דף סיכום ומבחן דמה. הכניסה – מהכרטיס "מבחנים בבית הספר" בדף הבית. בהצלחה! 💪` };
 function showNews(after) {
   const p = P(); if (p.seenNews === NEWS.id || !p.diag) return after && after();
   p.seenNews = NEWS.id; save(true);
@@ -193,6 +194,7 @@ function showNews(after) {
 }
 // ----- בוס הערב -----
 const bossHour = () => S.teamData?.bossHour ?? 18;
+initSchool({ P, save, setScreen, home, bossHour, mentorPopup });
 function eveningState() {
   const p = P(); const h = new Date().getHours() + new Date().getMinutes() / 60, st = bossHour();
   if (p.eveBoss === today()) return 'done';
@@ -507,7 +509,7 @@ async function home() {
     <div class="tb-stats"><span class="stat" title="מטבעות">${ic('coin')}${p.coins}</span><span class="stat streak ${st ? '' : 'off'}" title="ימים ברצף שבהם הושלם היעד">${ic('flame')}${st}</span><button class="icon-btn" id="snd" aria-label="צלילים">${ic(sound.on ? 'sound' : 'mute')}</button></div></header>
   <main class="home">
     <section class="lobby">
-      <div class="stage ${p.fpow === 'gravity' ? 'levitate' : ''}">${heroScene(p)}<div class="platform"></div>${heroWithFx(p, { aura: strongestPowerColor(p) })}<button class="brag-btn" id="brag" title="שיתוף הגיבור בווטסאפ">📤 להתגאות</button>${p.fpow ? `<span class="fpow-tag" style="--c:${SUPER[p.fpow].c}">${SUPER[p.fpow].g} ${SUPER[p.fpow].name}</span>` : ''}</div>
+      <div class="stage ${p.fpow === 'gravity' ? 'levitate' : ''}">${heroScene(p)}<div class="platform"></div>${heroWithFx(p, { aura: strongestPowerColor(p) })}<div class="allies">${alliesHTML(p, 84)}</div><button class="brag-btn" id="brag" title="שיתוף הגיבור בווטסאפ">📤 להתגאות</button>${p.fpow ? `<span class="fpow-tag" style="--c:${SUPER[p.fpow].c}">${SUPER[p.fpow].g} ${SUPER[p.fpow].name}</span>` : ''}</div>
       <div class="lobby-info">
         <div class="xpbar"><div style="width:${(p.xp / xpNeed) * 100}%"></div></div>
         <div class="xp-row"><span>עוד ${xpNeed - p.xp} XP לרמה ${p.level + 1}</span><b>${p.xp}/${xpNeed}</b></div>
@@ -516,6 +518,7 @@ async function home() {
       </div>
     </section>
     <div class="side">
+      ${homeCardHTML()}
       <section class="today ${d.goal ? 'goal' : ''}">
         <div class="ring-wrap"><svg viewBox="0 0 120 120" class="ring"><circle cx="60" cy="60" r="52" class="r-bg"/><circle cx="60" cy="60" r="52" class="r-fg" style="stroke-dasharray:${pct * 326.7} 400"/>${checkpoints().map((m, k) => { const a = (m / goal) * Math.PI * 2; const got = k < 2 ? d.cp?.[k] : d.goal; return `<circle cx="${60 + 52 * Math.cos(a)}" cy="${60 + 52 * Math.sin(a)}" r="7" class="r-cp ${got ? 'got' : ''}"/>`; }).join('')}</svg><div class="ring-txt"><b>${min}</b><small>מתוך ${goal} דק׳</small></div></div>
         <div><h2>${d.goal ? 'היעד היומי הושלם' : 'האימון של היום'}</h2>
@@ -549,7 +552,7 @@ async function home() {
   </nav>`);
   $('#snd').onclick = () => { sound.on = !sound.on; localStorage.setItem('mh_sound', sound.on ? '1' : '0'); home(); };
   $('#wardrobe').onclick = wardrobe; $('#powers').onclick = powersScreen;
-  $('#supers').onclick = supersScreen; $('#lshop').onclick = legendShopScreen;
+  $('#supers').onclick = supersScreen; const sbt = $('#schoolbtn'); if (sbt) sbt.onclick = schoolHub; $('#lshop').onclick = legendShopScreen;
   const gqb = $('#goldq'); if (gqb) gqb.onclick = startGoldQuest;
   $('#brag').onclick = () => shareHero(p, { headline: `${p.name} – רמה ${p.level}`, sub: p.fpow ? `כוח-על: ${SUPER[p.fpow].name}` : rankOf(p.level), chips: [`🔥 ${p.streak || 0} ימים ברצף`, `🌟 ${(p.cpowers || []).length} כוחות-על`, `🪙 ${p.gold || 0} זהב`] }, `תראו את הגיבור שלי ב-MindHero! ${p.name}, רמה ${p.level} (${rankOf(p.level)}) 💪`);
   const lockedMsg = () => mentorPopup(`קודם מסיימים את <b>משימת הגילוי</b>. ${p.diagState?.res?.length ? `נשארו לך ${18 - p.diagState.res.length} שאלות.` : '18 שאלות, אפשר לעצור ולחזור מתי שרוצים.'}<br>ככה אדע בדיוק מה הרמה שלך בכל פרק, ואבנה לך אימון שמתאים רק לך. אחרי זה כל המשחק נפתח.`, [{ t: 'למשימת הגילוי', primary: true, fn: () => startMission(plan.missions.find(m => m.kind === 'diag')) }, { t: 'אחר כך' }]);

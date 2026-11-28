@@ -1,8 +1,8 @@
 // MindHero – דוח מצב להדפסה / שמירה כ-PDF (עיצוב בהיר, A4)
-import { CHAPTERS, CH_ORDER } from './bank.js?v=31';
-import { heroSVG, rankOf } from './hero.js?v=31';
-import { esc, today } from './ui.js?v=31';
-import { moodFace } from './icons.js?v=31';
+import { CHAPTERS, CH_ORDER } from './bank.js?v=32';
+import { heroSVG, rankOf } from './hero.js?v=32';
+import { esc, today } from './ui.js?v=32';
+import { moodFace } from './icons.js?v=32';
 
 const MOOD_HE = { great: 'מעולה', ok: 'בסדר', tired: 'עייף', confused: 'לא מבין משהו', frustrated: 'מתוסכל', stressed: 'לחוץ מהמבחן', quit: 'רוצה לוותר' };
 const HARD = ['stressed', 'quit', 'frustrated'];
