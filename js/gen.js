@@ -299,7 +299,7 @@ export function cellSVG(c, size = 80) {
   return `<svg viewBox="0 0 80 80" width="${size}" height="${size}"><g ${st}>${body}</g></svg>`;
 }
 
-import { genVerbal, genAnalogy, genLogic } from './gen2.js?v=32';
+import { genVerbal, genAnalogy, genLogic } from './gen2.js?v=33';
 export const GEN_CH = ['verbal', 'series', 'analogy', 'logic', 'math', 'shapes'];
 export function generate(ch, diff, seed, learned) {
   if (ch === 'verbal') return genVerbal(diff, seed);

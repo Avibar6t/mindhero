@@ -1,18 +1,18 @@
 // MindHero – האפליקציה הראשית
-import * as DB from './store.js?v=32';
-import { LS } from './store.js?v=32';
-import { CHAPTERS, CH_ORDER, VERBAL, ANALOGY, LOGIC, MATH, ACADEMY } from './bank.js?v=32';
-import { generate } from './gen.js?v=32';
-import { STYLES, SKINS, ITEMS, POWERS, SLOT_HE, heroSVG, itemName, strongestPowerColor, levelUpOffers, rankOf, xpForLevel } from './hero.js?v=32';
-import { $, $$, esc, toast, modal, beep, confetti, sound, prepareQ, isCorrect, answerText, renderQuestion, markResult, today, weekKey, fmtTime, isMobile, bars, LETTERS, bm, explainHTML } from './ui.js?v=32';
-import { ic, moodFace, lobbyScene } from './icons.js?v=32';
-import { TOPICS, topicById, grid100 } from './learn.js?v=32';
-import { initSchool, schoolHub, homeCardHTML, alliesHTML } from './school.js?v=32';
-import { SUPER, checkSupers, heroWithFx, powerFx, PLACES, goldQuest, GOLD_NEED, legendShop, goldCoinSVG, shareHero } from './legend.js?v=32';
-import { BGS, RAR_NAME, bgScene, heroScene, rollBg, GIFTS, rollGift, addGift, giftHit } from './fun.js?v=32';
-import { battleScreen, PARENT_HERO, REACT_TXT } from './battle.js?v=32';
-import { startExam } from './exam.js?v=32';
-import { parentScreen } from './parent.js?v=32';
+import * as DB from './store.js?v=33';
+import { LS } from './store.js?v=33';
+import { CHAPTERS, CH_ORDER, VERBAL, ANALOGY, LOGIC, MATH, ACADEMY } from './bank.js?v=33';
+import { generate } from './gen.js?v=33';
+import { STYLES, SKINS, ITEMS, POWERS, SLOT_HE, heroSVG, itemName, strongestPowerColor, levelUpOffers, rankOf, xpForLevel } from './hero.js?v=33';
+import { $, $$, esc, toast, modal, beep, confetti, sound, prepareQ, isCorrect, answerText, renderQuestion, markResult, today, weekKey, fmtTime, isMobile, bars, LETTERS, bm, explainHTML } from './ui.js?v=33';
+import { ic, moodFace, lobbyScene } from './icons.js?v=33';
+import { TOPICS, topicById, grid100 } from './learn.js?v=33';
+import { initSchool, schoolHub, homeCardHTML, alliesHTML } from './school.js?v=33';
+import { SUPER, checkSupers, heroWithFx, powerFx, PLACES, goldQuest, GOLD_NEED, legendShop, goldCoinSVG, shareHero } from './legend.js?v=33';
+import { BGS, RAR_NAME, bgScene, heroScene, rollBg, GIFTS, rollGift, addGift, giftHit } from './fun.js?v=33';
+import { battleScreen, PARENT_HERO, REACT_TXT } from './battle.js?v=33';
+import { startExam } from './exam.js?v=33';
+import { parentScreen } from './parent.js?v=33';
 
 const app = $('#app');
 export const S = { team: null, teamData: null, pid: null, p: null, active: false, lastInput: Date.now(), inQuestion: null, messages: [] };
