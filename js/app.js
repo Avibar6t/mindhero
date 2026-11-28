@@ -1,18 +1,18 @@
 // MindHero – האפליקציה הראשית
-import * as DB from './store.js?v=33';
-import { LS } from './store.js?v=33';
-import { CHAPTERS, CH_ORDER, VERBAL, ANALOGY, LOGIC, MATH, ACADEMY } from './bank.js?v=33';
-import { generate } from './gen.js?v=33';
-import { STYLES, SKINS, ITEMS, POWERS, SLOT_HE, heroSVG, itemName, strongestPowerColor, levelUpOffers, rankOf, xpForLevel } from './hero.js?v=33';
-import { $, $$, esc, toast, modal, beep, confetti, sound, prepareQ, isCorrect, answerText, renderQuestion, markResult, today, weekKey, fmtTime, isMobile, bars, LETTERS, bm, explainHTML } from './ui.js?v=33';
-import { ic, moodFace, lobbyScene } from './icons.js?v=33';
-import { TOPICS, topicById, grid100 } from './learn.js?v=33';
-import { initSchool, schoolHub, homeCardHTML, alliesHTML } from './school.js?v=33';
-import { SUPER, checkSupers, heroWithFx, powerFx, PLACES, goldQuest, GOLD_NEED, legendShop, goldCoinSVG, shareHero } from './legend.js?v=33';
-import { BGS, RAR_NAME, bgScene, heroScene, rollBg, GIFTS, rollGift, addGift, giftHit } from './fun.js?v=33';
-import { battleScreen, PARENT_HERO, REACT_TXT } from './battle.js?v=33';
-import { startExam } from './exam.js?v=33';
-import { parentScreen } from './parent.js?v=33';
+import * as DB from './store.js?v=34';
+import { LS } from './store.js?v=34';
+import { CHAPTERS, CH_ORDER, VERBAL, ANALOGY, LOGIC, MATH, ACADEMY } from './bank.js?v=34';
+import { generate } from './gen.js?v=34';
+import { STYLES, SKINS, ITEMS, POWERS, SLOT_HE, heroSVG, itemName, strongestPowerColor, levelUpOffers, rankOf, xpForLevel } from './hero.js?v=34';
+import { $, $$, esc, toast, modal, beep, confetti, sound, prepareQ, isCorrect, answerText, renderQuestion, markResult, today, weekKey, fmtTime, isMobile, bars, LETTERS, bm, explainHTML } from './ui.js?v=34';
+import { ic, moodFace, lobbyScene } from './icons.js?v=34';
+import { TOPICS, topicById, grid100 } from './learn.js?v=34';
+import { initSchool, schoolHub, homeCardHTML, alliesHTML } from './school.js?v=34';
+import { SUPER, checkSupers, heroWithFx, powerFx, PLACES, goldQuest, GOLD_NEED, legendShop, goldCoinSVG, shareHero } from './legend.js?v=34';
+import { BGS, RAR_NAME, bgScene, heroScene, rollBg, GIFTS, rollGift, addGift, giftHit } from './fun.js?v=34';
+import { battleScreen, PARENT_HERO, REACT_TXT } from './battle.js?v=34';
+import { startExam } from './exam.js?v=34';
+import { parentScreen } from './parent.js?v=34';
 
 const app = $('#app');
 export const S = { team: null, teamData: null, pid: null, p: null, active: false, lastInput: Date.now(), inQuestion: null, messages: [] };
@@ -528,7 +528,7 @@ async function home() {
       ${p.diag ? (() => { const ws = new Date(weekKey()); const dn = weekDays(), tg = weekTarget(), wst = weekStreak(); const names = ['א', 'ב', 'ג', 'ד', 'ה', 'ו', 'ש'];
         return `<section class="week-card"><div class="wk-top"><b>${ic('star')} יעד שבועי: ${dn}/${tg} ימים</b><span class="muted small">${p.weekDone?.[weekKey()] ? 'הושלם השבוע!' : `תיבת השבוע: 200 מטבעות, פריט נדיר ורקע חדש`}</span></div>
           <div class="wk-days">${names.map((n, i) => { const x = new Date(ws); x.setDate(x.getDate() + i); const k = today(x); const got = p.days[k]?.goal; const isT = k === today(); return `<span class="wk-d ${got ? 'got' : ''} ${isT ? 'today' : ''}">${got ? ic('check') : n}</span>`; }).join('')}</div>
-          <small class="muted">${wst ? `${wst} ${wst === 1 ? 'שבוע' : 'שבועות'} ברצף שבהם היעד הושלם. ` : ''}🏖️ 7 ימים ברצף = יום חופש עם פרסים · עוד ${7 - ((p.streak || 0) % 7)} ${7 - ((p.streak || 0) % 7) === 1 ? 'יום' : 'ימים'}</small></section>`; })() : ''}
+          <small class="muted">${wst ? `${wst} ${wst === 1 ? 'שבוע' : 'שבועות'} ברצף שבהם היעד הושלם. ` : ''}🏖️ 7 ימים ברצף = יום חופש עם פרסים · עוד ${7 - ((p.streak || 0) % 7)} ${7 - ((p.streak || 0) % 7) === 1 ? 'יום' : 'ימים'} · או לקנות ב-2,500 מטבעות בחנות האגדות</small></section>`; })() : ''}
       ${p.diag ? (() => { const gq = goldQuest(p); const pl = PLACES[gq.place];
         return `<div class="gold-card ${gq.done ? 'done' : ''}"><span class="gc-coin">${goldCoinSVG(46)}</span><span class="ch-t"><small>מטבע הזהב של היום · יש לך ${p.gold || 0}</small><b>${pl.g} ${pl.name}</b><small>${gq.done ? 'אספת את מטבע הזהב של היום! מחר הוא יחכה במקום אחר.' : `${pl.desc} צריך ${GOLD_NEED} נכונות מתוך 8.`}</small></span>${gq.done ? `<span class="gc-ok">${ic('check')}</span>` : `<button class="btn small gold" id="goldq">למשימה</button>`}</div>`; })() : ''}
       ${p.dayOffs > 0 && !d.goal ? `<div class="off-card"><span class="tile">🏖️</span><span class="ch-t"><b>יש לך ${p.dayOffs === 1 ? 'כרטיס יום חופש' : p.dayOffs + ' כרטיסי יום חופש'}</b><small>לוקחים היום חופש: הרצף נשמר, היום נחשב ליעד השבועי, ומקבלים תיבת פרסים עם רקע ומתנות.</small></span><button class="btn small gold" id="dayoff">לקחת חופש היום</button></div>` : p.dayOffs > 0 ? `<div class="off-card"><span class="tile">🏖️</span><span class="ch-t"><b>שמור לך ${p.dayOffs === 1 ? 'כרטיס יום חופש' : p.dayOffs + ' כרטיסי יום חופש'}</b><small>אפשר להשתמש בו בכל יום שעוד לא התאמנת בו.</small></span></div>` : ''}
@@ -838,18 +838,25 @@ function startGoldQuest() {
   } }, { t: 'לא עכשיו' }]);
 }
 // ---------- חנות האגדות ----------
+const DAYOFF_PRICE = 2500;
 function legendShopScreen() {
   const p = P(); const items = legendShop(p);
   const owned = x => x.kind === 'item' ? p.items.includes(x.item) : x.kind === 'bg' ? (p.bgs || []).includes(x.bg) : (p.cpowers || []).includes(x.power);
   const title = x => x.kind === 'item' ? itemName(x.item, p.style) : x.kind === 'bg' ? BGS[x.bg].name : SUPER[x.power].name;
   const look = x => x.kind === 'item' ? { ...p, equip: { ...p.equip, [ITEMS[x.item].slot]: x.item } } : x.kind === 'bg' ? { ...p, bg: x.bg } : { ...p, fpow: x.power };
   setScreen(`<header class="topbar"><button class="icon-btn" id="bk" aria-label="חזרה">${ic('back')}</button><b>${goldCoinSVG(20)} חנות האגדות</b><span class="stat gold-stat">${goldCoinSVG(18)} ${p.gold || 0}</span></header>
-  <main class="list-screen"><p class="lead">פריטים שאי אפשר להשיג בשום מקום אחר. משלמים רק במטבעות זהב – מטבע אחד ביום, ממשימת הזהב היומית.</p>
+  <main class="list-screen"><p class="lead">יום החופש נקנה במטבעות רגילים. הפריטים האגדיים – רק במטבעות זהב (מטבע אחד ביום, ממשימת הזהב היומית).</p>
+  <div class="dayoff-buy"><span class="db-ic">🏖️</span><div class="db-t"><small>פרס מיוחד · משלמים במטבעות רגילים</small><b>יום חופש עם פרסים</b><small>יום שלם בלי אימון: הרצף נשמר, היום נחשב ליעד השבועי, ונפתחת תיבת פרסים עם רקע ומתנות.${p.dayOffs ? ` יש לך כבר ${p.dayOffs} ${p.dayOffs === 1 ? 'כרטיס' : 'כרטיסים'}.` : ''}</small>
+    <span class="db-bar"><i style="width:${Math.min(100, p.coins / DAYOFF_PRICE * 100)}%"></i></span><small>${p.coins >= DAYOFF_PRICE ? 'יש לך מספיק מטבעות!' : `יש לך ${p.coins} מתוך ${DAYOFF_PRICE} – עוד ${DAYOFF_PRICE - p.coins}`}</small></div>
+    <button class="btn gold" id="buyoff" ${p.coins >= DAYOFF_PRICE ? '' : 'disabled'}>${ic('coin')} ${DAYOFF_PRICE.toLocaleString('he-IL')}</button></div>
   <div class="leg-grid">${items.map(x => { const own = owned(x), h = look(x);
     return `<div class="leg-card ${own ? 'own' : ''}"><div class="leg-stage ${x.kind === 'power' && x.power === 'gravity' ? 'levitate' : ''}">${heroScene(h)}${heroWithFx(h)}<span class="leg-rar">${x.rar}</span></div>
       <b>${title(x)}</b><small class="muted">${x.kind === 'item' ? ITEMS[x.item].desc : x.kind === 'bg' ? 'רקע אגדי לגיבור' : SUPER[x.power].lore}</small>
       ${own ? `<span class="leg-own">${ic('check')} שלך</span>` : `<button class="btn gold" data-buy="${x.id}" ${p.gold >= x.price ? '' : 'disabled'}>${goldCoinSVG(18)} ${x.price} ${p.gold >= x.price ? '· לקנות' : `· חסרים ${x.price - (p.gold || 0)}`}</button>`}</div>`; }).join('')}</div></main>`);
   $('#bk').onclick = home;
+  $('#buyoff').onclick = () => { if (p.coins < DAYOFF_PRICE) return; mentorPopup(`לקנות <b>כרטיס יום חופש</b> ב-${DAYOFF_PRICE.toLocaleString('he-IL')} מטבעות?<br>תוכל לבחור מתי להשתמש בו – מהכרטיס בדף הבית.`, [{ t: 'כן, לקנות!', primary: true, fn: () => {
+    p.coins -= DAYOFF_PRICE; p.dayOffs = (p.dayOffs || 0) + 1; p.records.dayOffsBought = (p.records.dayOffsBought || 0) + 1; save(true); beep('level'); confetti();
+    mentorPopup(`🏖️ קנית כרטיס יום חופש! עבדת קשה בשבילו.<br>ביום שתבחר: לא מתאמנים, הרצף נשמר, ומקבלים תיבת פרסים.`, [{ t: 'מעולה', primary: true, fn: legendShopScreen }]); } }, { t: 'לא עכשיו' }]); };
   $$('[data-buy]').forEach(b => b.onclick = () => {
     const x = items.find(y => y.id === b.dataset.buy); if (!x || p.gold < x.price) return;
     mentorPopup(`לקנות את <b>${title(x)}</b> ב-${x.price} מטבעות זהב?`, [{ t: 'כן, לקנות!', primary: true, fn: () => {

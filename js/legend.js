@@ -1,8 +1,8 @@
 // MindHero – כוחות-על לאוסף (אפקטים חזותיים בלבד), הישגים, מטבע הזהב היומי, חנות האגדות וכרטיס שיתוף
-import { heroSVG, rankOf } from './hero.js?v=33';
-import { heroScene } from './fun.js?v=33';
-import { CHAPTERS, CH_ORDER } from './bank.js?v=33';
-import { today } from './ui.js?v=33';
+import { heroSVG, rankOf } from './hero.js?v=34';
+import { heroScene } from './fun.js?v=34';
+import { CHAPTERS, CH_ORDER } from './bank.js?v=34';
+import { today } from './ui.js?v=34';
 
 // ---------------------------------------------------------------
 // כוחות-על לאוסף: לא משנים את המשחק – רק נראים מדהים ומספרים סיפור

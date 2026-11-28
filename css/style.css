@@ -824,3 +824,7 @@ body.report-open>*:not(#print-report){display:none!important}
 .hatch-s{overflow:hidden}.hatch-stage{overflow:hidden;border-radius:24px}
 .school-quiz .qsent,.school-res .qsent{background:#ede9fe;color:#1e1b4b;border-color:#7c3aed;font-weight:700}
 .world-frac .school-quiz .qsent{background:#fce7f3;color:#500724;border-color:#db2777}
+.dayoff-buy{display:flex;align-items:center;gap:12px;padding:14px;margin-bottom:14px;border-radius:var(--r-l);background:linear-gradient(100deg,#0e3a4a,var(--deep) 70%);border:1px solid #22d3ee88}
+.db-ic{font-size:2.4rem}.db-t{flex:1;display:flex;flex-direction:column;gap:3px}.db-t b{font:700 1.2rem var(--fd)}.db-t small{color:var(--mut)}
+.db-bar{display:block;height:8px;border-radius:99px;background:#ffffff1a;overflow:hidden;margin-top:4px}.db-bar i{display:block;height:100%;background:linear-gradient(270deg,#22d3ee,#fbbf24);border-radius:99px}
+@media (max-width:600px){.dayoff-buy{flex-wrap:wrap}.dayoff-buy .btn{flex:1 1 100%}}

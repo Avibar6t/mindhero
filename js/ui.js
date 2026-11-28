@@ -1,7 +1,7 @@
 // MindHero – רכיבי ממשק משותפים והצגת שאלות
-import { cellSVG } from './gen.js?v=33';
-import { CHAPTERS } from './bank.js?v=33';
-import { ic } from './icons.js?v=33';
+import { cellSVG } from './gen.js?v=34';
+import { CHAPTERS } from './bank.js?v=34';
+import { ic } from './icons.js?v=34';
 
 export const $ = (s, el = document) => el.querySelector(s);
 export const $$ = (s, el = document) => [...el.querySelectorAll(s)];
